@@ -1,3 +1,3 @@
 # PurringCat
 
-PurringCat is a reference implementation of HVML for Python.
+PurringCat is a reference implementation of HVML.
