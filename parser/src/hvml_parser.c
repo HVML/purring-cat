@@ -28,6 +28,9 @@ typedef enum {
   MKSTATE(END),
 } HVML_PARSER_STATE;
 
+#define IS_NAMESTART(c)  (c==':' || c=='_' || isalpha(c))
+#define IS_NAME(c)       (c==':' || c=='_' || c=='-' || c=='.' || isalnum(c))
+
 
 typedef struct string_s                             string_t;
 struct string_s {
@@ -105,7 +108,7 @@ static int hvml_parser_at_begin(hvml_parser_t *parser, const char c, const char 
 }
 
 static int hvml_parser_at_markup(hvml_parser_t *parser, const char c, const char *str_state) {
-  if (c==':' || c=='_' || isalpha(c)) {
+  if (IS_NAMESTART(c)) {
     if (parser->declared==0) parser->declared = 3;
     hvml_parser_pop_state(parser);
     if (parser->tags == 0) {
@@ -236,7 +239,7 @@ static int hvml_parser_at_hvml(hvml_parser_t *parser, const char c, const char *
 }
 
 static int hvml_parser_at_stag(hvml_parser_t *parser, const char c, const char *str_state) {
-  if (c==':' || c=='_' || c=='-' || c=='.' || isalnum(c)) {
+  if (IS_NAME(c)) {
     string_append(&parser->cache, c);
     return 0;
   }
@@ -293,7 +296,7 @@ static int hvml_parser_at_emptytag(hvml_parser_t *parser, const char c, const ch
 
 static int hvml_parser_at_attr_or_end(hvml_parser_t *parser, const char c, const char *str_state) {
   if (isspace(c)) return 0;
-  if (c==':' || c=='_' || isalpha(c)) {
+  if (IS_NAMESTART(c)) {
     hvml_parser_chg_state(parser, MKSTATE(ATTR));
     return 1; // retry
   }
@@ -317,7 +320,7 @@ static int hvml_parser_at_attr_or_end(hvml_parser_t *parser, const char c, const
 }
 
 static int hvml_parser_at_attr(hvml_parser_t *parser, const char c, const char *str_state) {
-  if (c==':' || c=='_' || c=='-' || c=='.' || isalnum(c)) {
+  if (IS_NAME(c)) {
     string_append(&parser->cache, c);
     return 0;
   }
@@ -369,6 +372,12 @@ static int hvml_parser_at_attr_done(hvml_parser_t *parser, const char c, const c
   if (c=='>') {
     hvml_parser_pop_state(parser);
     hvml_parser_push_state(parser, MKSTATE(ELEMENT));
+    return 0;
+  }
+  if (IS_NAMESTART(c)) {
+    hvml_parser_chg_state(parser, MKSTATE(ATTR));
+    string_reset(&parser->cache);
+    string_append(&parser->cache, c);
     return 0;
   }
   switch (c) {
@@ -458,7 +467,7 @@ static int hvml_parser_at_element(hvml_parser_t *parser, const char c, const cha
 }
 
 static int hvml_parser_at_etag(hvml_parser_t *parser, const char c, const char *str_state) {
-  if (c==':' || c=='_' || c=='-' || c=='.' || isalnum(c)) {
+  if (IS_NAME(c)) {
     string_append(&parser->cache, c);
     return 0;
   }
