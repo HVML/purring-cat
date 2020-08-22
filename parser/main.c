@@ -2,6 +2,7 @@
 
 #include "hvml_log.h"
 
+#include <inttypes.h>
 #include <stdio.h>
 
 static int on_open_tag(void *arg, const char *tag) {
@@ -81,7 +82,7 @@ static int on_string(void *arg, const char *val) {
 }
 
 static int on_integer(void *arg, const char *origin, int64_t val) {
-  printf("json integer: %s/%ld\n", origin, val);
+  printf("json integer: %s/%"PRId64"\n", origin, val);
   return 0;
 }
 
