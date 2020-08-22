@@ -23,6 +23,7 @@ typedef enum {
       MKSTATE(ATTR_VAL),
         MKSTATE(STR),
         MKSTATE(STR1),
+          MKSTATE(ESCAPE),
       MKSTATE(ELEMENT),
       MKSTATE(ETAG),
       MKSTATE(EXP_GREATER),
@@ -465,6 +466,9 @@ static int hvml_parser_at_str(hvml_parser_t *parser, const char c, const char *s
       hvml_parser_pop_state(parser);
       if (ret) return ret;
     } break;
+    case '\\': {
+      hvml_parser_push_state(parser, MKSTATE(ESCAPE));
+    } break;
     default: {
       string_append(&parser->cache, c);
     } break;
@@ -483,8 +487,53 @@ static int hvml_parser_at_str1(hvml_parser_t *parser, const char c, const char *
       hvml_parser_pop_state(parser);
       if (ret) return ret;
     } break;
+    case '\\': {
+      hvml_parser_push_state(parser, MKSTATE(ESCAPE));
+    } break;
     default: {
       string_append(&parser->cache, c);
+    } break;
+  }
+  return 0;
+}
+
+static int hvml_parser_at_escape(hvml_parser_t *parser, const char c, const char *str_state) {
+  switch (c) {
+    case 'b': {
+      string_append(&parser->cache, '\b');
+      hvml_parser_pop_state(parser);
+    } break;
+    case 't': {
+      string_append(&parser->cache, '\t');
+      hvml_parser_pop_state(parser);
+    } break;
+    case 'f': {
+      string_append(&parser->cache, '\f');
+      hvml_parser_pop_state(parser);
+    } break;
+    case 'r': {
+      string_append(&parser->cache, '\r');
+      hvml_parser_pop_state(parser);
+    } break;
+    case 'n': {
+      string_append(&parser->cache, '\n');
+      hvml_parser_pop_state(parser);
+    } break;
+    case '\\': {
+      string_append(&parser->cache, '\\');
+      hvml_parser_pop_state(parser);
+    } break;
+    case '\'': {
+      string_append(&parser->cache, '\'');
+      hvml_parser_pop_state(parser);
+    } break;
+    case '"': { // '"'
+      string_append(&parser->cache, '"');
+      hvml_parser_pop_state(parser);
+    } break;
+    default: {
+      E("==%s%c==: unexpected [0x%02x/%c]@[%ldr/%ldc] in state: [%s]", string_get(&parser->curr), c, c, c, parser->line+1, parser->col+1, str_state);
+      return -1;
     } break;
   }
   return 0;
@@ -658,6 +707,9 @@ static int do_hvml_parser_parse_char(hvml_parser_t *parser, const char c) {
     } break;
     case MKSTATE(STR1): {
       return hvml_parser_at_str1(parser, c, MKSTR(STR1));
+    } break;
+    case MKSTATE(ESCAPE): {
+      return hvml_parser_at_escape(parser, c, MKSTR(ESCAPE));
     } break;
     case MKSTATE(ELEMENT): {
       if (parser->conf.on_text) {
