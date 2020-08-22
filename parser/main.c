@@ -4,30 +4,97 @@
 
 #include <stdio.h>
 
-static int on_open_tag(hvml_parser_t *parser, const char *tag) {
+static int on_open_tag(void *arg, const char *tag) {
   printf("open tag: %s\n", tag);
   return 0;
 }
 
-static int on_attr_key(hvml_parser_t *parser, const char *key) {
+static int on_attr_key(void *arg, const char *key) {
   printf("attr key: %s\n", key);
   return 0;
 }
 
-static int on_attr_val(hvml_parser_t *parser, const char *val) {
+static int on_attr_val(void *arg, const char *val) {
   printf("attr val: %s\n", val);
   return 0;
 }
 
-static int on_close_tag(hvml_parser_t *parser) {
+static int on_close_tag(void *arg) {
   printf("close tag\n");
   return 0;
 }
 
-static int on_text(hvml_parser_t *parser, const char *txt) {
+static int on_text(void *arg, const char *txt) {
   printf("text: %s\n", txt);
   return 0;
 }
+
+// json callbacks
+static int on_begin(void *arg) {
+  printf("json begin:\n");
+  return 0;
+}
+
+static int on_open_array(void *arg) {
+  printf("json open array:\n");
+  return 0;
+}
+
+static int on_close_array(void *arg) {
+  printf("json close array:\n");
+  return 0;
+}
+
+static int on_open_obj(void *arg) {
+  printf("json open obj:\n");
+  return 0;
+}
+
+static int on_close_obj(void *arg) {
+  printf("json close obj:\n");
+  return 0;
+}
+
+static int on_key(void *arg, const char *key) {
+  printf("json key: %s\n", key);
+  return 0;
+}
+
+static int on_true(void *arg) {
+  printf("json true:\n");
+  return 0;
+}
+
+static int on_false(void *arg) {
+  printf("json false:\n");
+  return 0;
+}
+
+static int on_null(void *arg) {
+  printf("json null:\n");
+  return 0;
+}
+
+static int on_string(void *arg, const char *val) {
+  printf("json string: %s\n", val);
+  return 0;
+}
+
+static int on_integer(void *arg, const char *origin, int64_t val) {
+  printf("json integer: %s/%ld\n", origin, val);
+  return 0;
+}
+
+static int on_double(void *arg, const char *origin, double val) {
+  printf("json double: %s/%e\n", origin, val);
+  return 0;
+}
+
+static int on_end(void *arg) {
+  printf("json end:\n");
+  return 0;
+}
+
 
 static int process(FILE *in) {
   char buf[4096] = {0};
@@ -40,6 +107,20 @@ static int process(FILE *in) {
   conf.on_attr_val      = on_attr_val;
   conf.on_close_tag     = on_close_tag;
   conf.on_text          = on_text;
+
+  conf.on_begin         = on_begin;
+  conf.on_open_array    = on_open_array;
+  conf.on_close_array   = on_close_array;
+  conf.on_open_obj      = on_open_obj;
+  conf.on_close_obj     = on_close_obj;
+  conf.on_key           = on_key;
+  conf.on_true          = on_true;
+  conf.on_false         = on_false;
+  conf.on_null          = on_null;
+  conf.on_string        = on_string;
+  conf.on_integer       = on_integer;
+  conf.on_double        = on_double;
+  conf.on_end           = on_end;
 
   if (!in) in = stdin;
 

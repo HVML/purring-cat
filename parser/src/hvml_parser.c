@@ -1,6 +1,7 @@
 #include "hvml_parser.h"
 
 #include "hvml_log.h"
+#include "hvml_json_parser.h"
 
 #include <ctype.h>
 #include <string.h>
@@ -59,6 +60,8 @@ struct hvml_parser_s {
 
   size_t                         line;
   size_t                         col;
+
+  hvml_json_parser_t            *jp;
 };
 
 static int               hvml_parser_push_state(hvml_parser_t *parser, HVML_PARSER_STATE state);
@@ -67,14 +70,50 @@ static HVML_PARSER_STATE hvml_parser_peek_state(hvml_parser_t *parser);
 static HVML_PARSER_STATE hvml_parser_chg_state(hvml_parser_t *parser, HVML_PARSER_STATE state);
 static void              dump_states(hvml_parser_t *parser);
 
-
 static int         hvml_parser_push_tag(hvml_parser_t *parser, const char *tag);
 static void        hvml_parser_pop_tag(hvml_parser_t *parser);
 static const char* hvml_parser_peek_tag(hvml_parser_t *parser);
 
+static int on_begin(void *arg);
+static int on_open_array(void *arg);
+static int on_close_array(void *arg);
+static int on_open_obj(void *arg);
+static int on_close_obj(void *arg);
+static int on_key(void *arg, const char *key);
+static int on_true(void *arg);
+static int on_false(void *arg);
+static int on_null(void *arg);
+static int on_string(void *arg, const char *val);
+static int on_integer(void *arg, const char *origin, int64_t val);
+static int on_double(void *arg, const char *origin, double val);
+static int on_end(void *arg);
+
 hvml_parser_t* hvml_parser_create(hvml_parser_conf_t conf) {
   hvml_parser_t *parser = (hvml_parser_t*)calloc(1, sizeof(*parser));
   if (!parser) return NULL;
+
+  hvml_json_parser_conf_t jp_conf = {0};
+  jp_conf.embedded            = 1;
+  jp_conf.arg                 = parser;
+  jp_conf.on_begin            = on_begin;
+  jp_conf.on_open_array       = on_open_array;
+  jp_conf.on_close_array      = on_close_array;
+  jp_conf.on_open_obj         = on_open_obj;
+  jp_conf.on_close_obj        = on_close_obj;
+  jp_conf.on_key              = on_key;
+  jp_conf.on_true             = on_true;
+  jp_conf.on_false            = on_false;
+  jp_conf.on_null             = on_null;
+  jp_conf.on_string           = on_string;
+  jp_conf.on_integer          = on_integer;
+  jp_conf.on_double           = on_double;
+  jp_conf.on_end              = on_end;
+
+  parser->jp   = hvml_json_parser_create(jp_conf);
+  if (!parser->jp) {
+    free(parser);
+    return NULL;
+  }
 
   parser->conf = conf;
   hvml_parser_push_state(parser, HVML_PARSER_STATE_BEGIN);
@@ -90,6 +129,7 @@ void hvml_parser_destroy(hvml_parser_t *parser) {
   }
   free(parser->ar_tags);   parser->ar_tags   = NULL;
   free(parser->ar_states); parser->ar_states = NULL;
+  hvml_json_parser_destroy(parser->jp); parser->jp = NULL;
   free(parser);
 }
 
@@ -246,7 +286,7 @@ static int hvml_parser_at_stag(hvml_parser_t *parser, const char c, const char *
   if (isspace(c) || c=='/' || c=='>') {
     int ret = 0;
     if (parser->conf.on_open_tag) {
-      ret = parser->conf.on_open_tag(parser, string_get(&parser->cache));
+      ret = parser->conf.on_open_tag(parser->conf.arg, string_get(&parser->cache));
     }
     hvml_parser_push_tag(parser, string_get(&parser->cache));
     string_reset(&parser->cache);
@@ -280,7 +320,7 @@ static int hvml_parser_at_emptytag(hvml_parser_t *parser, const char c, const ch
     case '>': {
       int ret = 0;
       if (parser->conf.on_close_tag) {
-        ret = parser->conf.on_close_tag(parser);
+        ret = parser->conf.on_close_tag(parser->conf.arg);
       }
       hvml_parser_pop_state(parser);
       hvml_parser_pop_tag(parser);
@@ -327,7 +367,7 @@ static int hvml_parser_at_attr(hvml_parser_t *parser, const char c, const char *
   if (isspace(c) || c=='=' || c=='/' || c=='>') {
     int ret = 0;
     if (parser->conf.on_attr_key) {
-      ret = parser->conf.on_attr_key(parser, string_get(&parser->cache));
+      ret = parser->conf.on_attr_key(parser->conf.arg, string_get(&parser->cache));
     }
     string_reset(&parser->cache);
     if (ret) return ret;
@@ -415,7 +455,7 @@ static int hvml_parser_at_str(hvml_parser_t *parser, const char c, const char *s
     case '"': { // '"'
       int ret = 0;
       if (parser->conf.on_attr_val) {
-        ret = parser->conf.on_attr_val(parser, string_get(&parser->cache));
+        ret = parser->conf.on_attr_val(parser->conf.arg, string_get(&parser->cache));
       }
       string_reset(&parser->cache);
       hvml_parser_pop_state(parser);
@@ -433,7 +473,7 @@ static int hvml_parser_at_str1(hvml_parser_t *parser, const char c, const char *
     case '\'': {
       int ret = 0;
       if (parser->conf.on_attr_val) {
-        ret = parser->conf.on_attr_val(parser, string_get(&parser->cache));
+        ret = parser->conf.on_attr_val(parser->conf.arg, string_get(&parser->cache));
       }
       string_reset(&parser->cache);
       hvml_parser_pop_state(parser);
@@ -449,18 +489,46 @@ static int hvml_parser_at_str1(hvml_parser_t *parser, const char c, const char *
 static int hvml_parser_at_element(hvml_parser_t *parser, const char c, const char *str_state) {
   switch (c) {
     case '<': {
+      int ret = 0;
       if (parser->cache.len>0) {
-        int ret = 0;
         if (parser->conf.on_text) {
-          ret = parser->conf.on_text(parser, string_get(&parser->cache));
+          ret = parser->conf.on_text(parser->conf.arg, string_get(&parser->cache));
         }
         string_reset(&parser->cache);
-        if (ret) return ret;
       }
+      if (ret) return ret;
       hvml_parser_push_state(parser, MKSTATE(MARKUP));
     } break;
     default: {
-      string_append(&parser->cache, c);
+      if (parser->conf.on_text) {
+        string_append(&parser->cache, c);
+      } else {
+        int ret = hvml_json_parser_parse_char(parser->jp, c);
+        if (ret) return -1;
+      }
+    } break;
+  }
+  return 0;
+}
+
+static int hvml_parser_at_element_as_json(hvml_parser_t *parser, const char c, const char *str_state) {
+  int ret = hvml_json_parser_parse_char(parser->jp, c);
+  if (ret==0) return 0;
+  if (!hvml_json_parser_is_begin(parser->jp) &&
+      !hvml_json_parser_is_ending(parser->jp) )
+  {
+    // error message has already been printf'd in hvml_json_parser module
+    return -1;
+  }
+
+  switch (c) {
+    case '<': {
+      hvml_json_parser_reset(parser->jp);
+      hvml_parser_push_state(parser, MKSTATE(MARKUP));
+    } break;
+    default: {
+      E("==%s%c==: unexpected [0x%02x/%c]@[%ldr/%ldc] in state: [%s]", string_get(&parser->curr), c, c, c, parser->line+1, parser->col+1, str_state);
+      return -1;
     } break;
   }
   return 0;
@@ -479,7 +547,7 @@ static int hvml_parser_at_etag(hvml_parser_t *parser, const char c, const char *
     }
     int ret = 0;
     if (parser->conf.on_close_tag) {
-      ret = parser->conf.on_close_tag(parser);
+      ret = parser->conf.on_close_tag(parser->conf.arg);
     }
     string_reset(&parser->cache);
     hvml_parser_pop_tag(parser);
@@ -570,7 +638,11 @@ static int do_hvml_parser_parse_char(hvml_parser_t *parser, const char c) {
       return hvml_parser_at_str1(parser, c, MKSTR(STR1));
     } break;
     case MKSTATE(ELEMENT): {
-      return hvml_parser_at_element(parser, c, MKSTR(ELEMENT));
+      if (parser->conf.on_text) {
+        return hvml_parser_at_element(parser, c, MKSTR(ELEMENT));
+      } else {
+        return hvml_parser_at_element_as_json(parser, c, MKSTR(ELEMENT));
+      }
     } break;
     case MKSTATE(ETAG): {
       return hvml_parser_at_etag(parser, c, MKSTR(ETAG));
@@ -621,14 +693,15 @@ int hvml_parser_parse_string(hvml_parser_t *parser, const char *str) {
 
 int hvml_parser_parse_end(hvml_parser_t *parser) {
   if (parser->tags != 0) {
-    A(0, ".");
+    E("open tag [%s] not closed", parser->ar_tags[parser->tags - 1]);
     return -1;
   }
-  if (hvml_parser_peek_state(parser)!=MKSTATE(END)) {
-    A(0, "states: %ld/%d", parser->states, hvml_parser_peek_state(parser));
+  if (parser->states != 1) {
+    D("states [%ld/%d] too high", parser->states, parser->ar_states[parser->states - 1]);
+    return -1;
   }
-  if (parser->states != 1 || hvml_parser_peek_state(parser)!=MKSTATE(END)) {
-    A(0, "states: %ld/%d", parser->states, hvml_parser_peek_state(parser));
+  if (hvml_parser_peek_state(parser)!=MKSTATE(END) && hvml_parser_peek_state(parser)!=MKSTATE(BEGIN)) {
+    A(0, "internal logic error");
     return -1;
   }
   return 0;
@@ -680,7 +753,7 @@ static int hvml_parser_push_state(hvml_parser_t *parser, HVML_PARSER_STATE state
 }
 
 static HVML_PARSER_STATE hvml_parser_pop_state(hvml_parser_t *parser) {
-  A(parser->states>0, "parser's internal ar_states stack not initialized or underflowed");
+  A(parser->states>1, "parser's internal ar_states stack not initialized or underflowed or would be underflowed");
 
   HVML_PARSER_STATE st  = parser->ar_states[parser->states - 1];
   parser->states       -= 1;
@@ -744,5 +817,123 @@ static const char* hvml_parser_peek_tag(hvml_parser_t *parser) {
   char *tag      = parser->ar_tags[parser->tags - 1];
 
   return tag;
+}
+
+// json callbacks
+static int on_begin(void *arg) {
+  hvml_parser_t *parser = (hvml_parser_t*)arg;
+  int ret = 0;
+  if (parser->conf.on_begin) {
+    ret = parser->conf.on_begin(parser->conf.arg);
+  }
+  return ret;
+}
+
+static int on_open_array(void *arg) {
+  hvml_parser_t *parser = (hvml_parser_t*)arg;
+  int ret = 0;
+  if (parser->conf.on_open_array) {
+    ret = parser->conf.on_open_array(parser->conf.arg);
+  }
+  return ret;
+}
+
+static int on_close_array(void *arg) {
+  hvml_parser_t *parser = (hvml_parser_t*)arg;
+  int ret = 0;
+  if (parser->conf.on_close_array) {
+    ret = parser->conf.on_close_array(parser->conf.arg);
+  }
+  return ret;
+}
+
+static int on_open_obj(void *arg) {
+  hvml_parser_t *parser = (hvml_parser_t*)arg;
+  int ret = 0;
+  if (parser->conf.on_open_obj) {
+    ret = parser->conf.on_open_obj(parser->conf.arg);
+  }
+  return ret;
+}
+
+static int on_close_obj(void *arg) {
+  hvml_parser_t *parser = (hvml_parser_t*)arg;
+  int ret = 0;
+  if (parser->conf.on_close_obj) {
+    ret = parser->conf.on_close_obj(parser->conf.arg);
+  }
+  return ret;
+}
+
+static int on_key(void *arg, const char *key) {
+  hvml_parser_t *parser = (hvml_parser_t*)arg;
+  int ret = 0;
+  if (parser->conf.on_key) {
+    ret = parser->conf.on_key(parser->conf.arg, key);
+  }
+  return ret;
+}
+
+static int on_true(void *arg) {
+  hvml_parser_t *parser = (hvml_parser_t*)arg;
+  int ret = 0;
+  if (parser->conf.on_true) {
+    ret = parser->conf.on_true(parser->conf.arg);
+  }
+  return ret;
+}
+
+static int on_false(void *arg) {
+  hvml_parser_t *parser = (hvml_parser_t*)arg;
+  int ret = 0;
+  if (parser->conf.on_false) {
+    ret = parser->conf.on_false(parser->conf.arg);
+  }
+  return ret;
+}
+
+static int on_null(void *arg) {
+  hvml_parser_t *parser = (hvml_parser_t*)arg;
+  int ret = 0;
+  if (parser->conf.on_null) {
+    ret = parser->conf.on_null(parser->conf.arg);
+  }
+  return ret;
+}
+
+static int on_string(void *arg, const char *val) {
+  hvml_parser_t *parser = (hvml_parser_t*)arg;
+  int ret = 0;
+  if (parser->conf.on_string) {
+    ret = parser->conf.on_string(parser->conf.arg, val);
+  }
+  return ret;
+}
+
+static int on_integer(void *arg, const char *origin, int64_t val) {
+  hvml_parser_t *parser = (hvml_parser_t*)arg;
+  int ret = 0;
+  if (parser->conf.on_integer) {
+    ret = parser->conf.on_integer(parser->conf.arg, origin, val);
+  }
+  return ret;
+}
+
+static int on_double(void *arg, const char *origin, double val) {
+  hvml_parser_t *parser = (hvml_parser_t*)arg;
+  int ret = 0;
+  if (parser->conf.on_double) {
+    ret = parser->conf.on_double(parser->conf.arg, origin, val);
+  }
+  return ret;
+}
+
+static int on_end(void *arg) {
+  hvml_parser_t *parser = (hvml_parser_t*)arg;
+  int ret = 0;
+  if (parser->conf.on_end) {
+    ret = parser->conf.on_end(parser->conf.arg);
+  }
+  return ret;
 }
 
