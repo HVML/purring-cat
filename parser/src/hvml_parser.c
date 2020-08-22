@@ -28,6 +28,7 @@ typedef enum {
       MKSTATE(ETAG),
       MKSTATE(EXP_GREATER),
       MKSTATE(COMMENT),
+    MKSTATE(STATEMENT),
   MKSTATE(END),
 } HVML_PARSER_STATE;
 
@@ -540,48 +541,42 @@ static int hvml_parser_at_escape(hvml_parser_t *parser, const char c, const char
 }
 
 static int hvml_parser_at_element(hvml_parser_t *parser, const char c, const char *str_state) {
+  const char* tag = hvml_parser_peek_tag(parser);
+  const int parse_json = (strcmp(tag,"init")==0) || (strcmp(tag, "archedata")==0);
+  if (parse_json) {
+    int ret = hvml_json_parser_parse_char(parser->jp, c);
+    if (ret==0) return 0;
+    if (!hvml_json_parser_is_begin(parser->jp) &&
+        !hvml_json_parser_is_ending(parser->jp) )
+    {
+      // error message has already been printf'd in hvml_json_parser module
+      return -1;
+    }
+  }
   switch (c) {
     case '<': {
-      int ret = 0;
-      if (parser->cache.len>0) {
-        if (parser->conf.on_text) {
-          ret = parser->conf.on_text(parser->conf.arg, string_get(&parser->cache));
+      if (!parse_json) {
+        int ret = 0;
+        if (parser->cache.len>0) {
+          if (parser->conf.on_text) {
+            ret = parser->conf.on_text(parser->conf.arg, string_get(&parser->cache));
+          }
+          string_reset(&parser->cache);
         }
-        string_reset(&parser->cache);
+        if (ret) return ret;
+        hvml_parser_push_state(parser, MKSTATE(MARKUP));
+      } else {
+        hvml_json_parser_reset(parser->jp);
+        hvml_parser_push_state(parser, MKSTATE(MARKUP));
       }
-      if (ret) return ret;
-      hvml_parser_push_state(parser, MKSTATE(MARKUP));
     } break;
     default: {
-      if (parser->conf.on_text) {
+      if (!parse_json) {
         string_append(&parser->cache, c);
       } else {
-        int ret = hvml_json_parser_parse_char(parser->jp, c);
-        if (ret) return -1;
+        E("==%s%c==: unexpected [0x%02x/%c]@[%ldr/%ldc] in state: [%s]", string_get(&parser->curr), c, c, c, parser->line+1, parser->col+1, str_state);
+        return -1;
       }
-    } break;
-  }
-  return 0;
-}
-
-static int hvml_parser_at_element_as_json(hvml_parser_t *parser, const char c, const char *str_state) {
-  int ret = hvml_json_parser_parse_char(parser->jp, c);
-  if (ret==0) return 0;
-  if (!hvml_json_parser_is_begin(parser->jp) &&
-      !hvml_json_parser_is_ending(parser->jp) )
-  {
-    // error message has already been printf'd in hvml_json_parser module
-    return -1;
-  }
-
-  switch (c) {
-    case '<': {
-      hvml_json_parser_reset(parser->jp);
-      hvml_parser_push_state(parser, MKSTATE(MARKUP));
-    } break;
-    default: {
-      E("==%s%c==: unexpected [0x%02x/%c]@[%ldr/%ldc] in state: [%s]", string_get(&parser->curr), c, c, c, parser->line+1, parser->col+1, str_state);
-      return -1;
     } break;
   }
   return 0;
@@ -638,7 +633,6 @@ static int hvml_parser_at_exp_greater(hvml_parser_t *parser, const char c, const
 }
 
 static int hvml_parser_at_comment(hvml_parser_t *parser, const char c, const char *str_state) {
-  static const char comment_end[] = "-->";
   switch (c) {
     case '>': {
       if (parser->cache.len >= 2 && parser->cache.str[parser->cache.len-1]=='-' && parser->cache.str[parser->cache.len-2]=='-') {
@@ -650,6 +644,26 @@ static int hvml_parser_at_comment(hvml_parser_t *parser, const char c, const cha
     }
     default: {
       string_append(&parser->cache, c);
+    } break;
+  }
+  return 0;
+}
+
+static int hvml_parser_at_statement(hvml_parser_t *parser, const char c, const char *str_state) {
+  D("c: %c", c);
+  if (c=='?' || c=='.' || c=='_' || isalnum(c)) {
+    string_append(&parser->cache, c);
+    return 0;
+  }
+  switch (c) {
+    case '<': {
+      string_reset(&parser->cache);
+      hvml_parser_pop_state(parser);
+      hvml_parser_push_state(parser, MKSTATE(MARKUP));
+    } break;
+    default: {
+      E("==%s%c==: unexpected [0x%02x/%c]@[%ldr/%ldc] in state: [%s]", string_get(&parser->curr), c, c, c, parser->line+1, parser->col+1, str_state);
+      return -1;
     } break;
   }
   return 0;
@@ -712,11 +726,7 @@ static int do_hvml_parser_parse_char(hvml_parser_t *parser, const char c) {
       return hvml_parser_at_escape(parser, c, MKSTR(ESCAPE));
     } break;
     case MKSTATE(ELEMENT): {
-      if (parser->conf.on_text) {
-        return hvml_parser_at_element(parser, c, MKSTR(ELEMENT));
-      } else {
-        return hvml_parser_at_element_as_json(parser, c, MKSTR(ELEMENT));
-      }
+      return hvml_parser_at_element(parser, c, MKSTR(ELEMENT));
     } break;
     case MKSTATE(ETAG): {
       return hvml_parser_at_etag(parser, c, MKSTR(ETAG));
@@ -726,6 +736,9 @@ static int do_hvml_parser_parse_char(hvml_parser_t *parser, const char c) {
     } break;
     case MKSTATE(COMMENT): {
       return hvml_parser_at_comment(parser, c, MKSTR(COMMENT));
+    } break;
+    case MKSTATE(STATEMENT): {
+      return hvml_parser_at_statement(parser, c, MKSTR(STATEMENT));
     } break;
     case MKSTATE(END): {
       return hvml_parser_at_end(parser, c, MKSTR(END));
