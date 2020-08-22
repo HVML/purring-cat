@@ -304,6 +304,8 @@ static int hvml_parser_at_stag(hvml_parser_t *parser, const char c, const char *
     hvml_parser_pop_state(parser);
     hvml_parser_push_state(parser, MKSTATE(ELEMENT));
     string_reset(&parser->cache);
+    hvml_json_parser_reset(parser->jp);
+    hvml_json_parser_set_offset(parser->jp, parser->line, parser->col + 1);
     return 0;
   }
   switch (c) {
@@ -348,6 +350,8 @@ static int hvml_parser_at_attr_or_end(hvml_parser_t *parser, const char c, const
     hvml_parser_pop_state(parser);
     hvml_parser_push_state(parser, MKSTATE(ELEMENT));
     string_reset(&parser->cache);
+    hvml_json_parser_reset(parser->jp);
+    hvml_json_parser_set_offset(parser->jp, parser->line, parser->col + 1);
     return 0;
   }
   switch (c) {
@@ -388,6 +392,8 @@ static int hvml_parser_at_attr(hvml_parser_t *parser, const char c, const char *
     dump_states(parser);
     hvml_parser_pop_state(parser);
     hvml_parser_push_state(parser, MKSTATE(ELEMENT));
+    hvml_json_parser_reset(parser->jp);
+    hvml_json_parser_set_offset(parser->jp, parser->line, parser->col + 1);
     return 0;
   }
   switch (c) {
@@ -412,6 +418,8 @@ static int hvml_parser_at_attr_done(hvml_parser_t *parser, const char c, const c
   if (c=='>') {
     hvml_parser_pop_state(parser);
     hvml_parser_push_state(parser, MKSTATE(ELEMENT));
+    hvml_json_parser_reset(parser->jp);
+    hvml_json_parser_set_offset(parser->jp, parser->line, parser->col + 1);
     return 0;
   }
   if (IS_NAMESTART(c)) {

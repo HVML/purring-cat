@@ -45,6 +45,9 @@ static HVML_JSON_PARSER_STATE hvml_json_parser_peek_state(hvml_json_parser_t *pa
 static HVML_JSON_PARSER_STATE hvml_json_parser_chg_state(hvml_json_parser_t *parser, HVML_JSON_PARSER_STATE state);
 static void                   dump_states(hvml_json_parser_t *parser);
 
+#define get_line(parser) (parser->conf.offset_line + parser->line + 1)
+#define get_col(parser)  (parser->conf.offset_col  + parser->col  + 1)
+
 
 hvml_json_parser_t* hvml_json_parser_create(hvml_json_parser_conf_t conf) {
   hvml_json_parser_t *parser = (hvml_json_parser_t*)calloc(1, sizeof(*parser));
@@ -77,7 +80,7 @@ static int hvml_json_parser_at_begin(hvml_json_parser_t *parser, const char c, c
   switch (c) {
     default: {
       if (parser->conf.embedded) return -1;
-      E("==%s%c==: unexpected [0x%02x/%c]@[%ldr/%ldc] in state: [%s]", string_get(&parser->curr), c, c, c, parser->line+1, parser->col+1, str_state);
+      E("==%s%c==: unexpected [0x%02x/%c]@[%ldr/%ldc] in state: [%s]", string_get(&parser->curr), c, c, c, get_line(parser), get_col(parser), str_state);
       return -1;
     } break;
   }
@@ -89,7 +92,7 @@ static int hvml_json_parser_at_end(hvml_json_parser_t *parser, const char c, con
   switch (c) {
     default: {
       if (parser->conf.embedded) return -1;
-      E("==%s%c==: unexpected [0x%02x/%c]@[%ldr/%ldc] in state: [%s]", string_get(&parser->curr), c, c, c, parser->line+1, parser->col+1, str_state);
+      E("==%s%c==: unexpected [0x%02x/%c]@[%ldr/%ldc] in state: [%s]", string_get(&parser->curr), c, c, c, get_line(parser), get_col(parser), str_state);
       return -1;
     } break;
   }
@@ -122,6 +125,7 @@ int hvml_json_parser_parse_char(hvml_json_parser_t *parser, const char c) {
     if (c=='\n') {
       string_reset(&parser->curr);
       ++parser->line;
+      parser->conf.offset_col = 0;
       parser->col = 0;
     } else {
       string_append(&parser->curr, c);
@@ -161,6 +165,10 @@ int hvml_json_parser_is_ending(hvml_json_parser_t *parser) {
   return 0;
 }
 
+void hvml_json_parser_set_offset(hvml_json_parser_t *parser, size_t line, size_t col) {
+  parser->conf.offset_line = line;
+  parser->conf.offset_col  = col;
+}
 
 
 
