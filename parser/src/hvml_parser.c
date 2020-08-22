@@ -1,3 +1,20 @@
+// This file is a part of Purring Cat, a reference implementation of HVML.
+//
+// Copyright (C) 2020, <freemine@yeah.net>.
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 #include "hvml_parser.h"
 
 #include "hvml_log.h"
@@ -255,7 +272,7 @@ static int hvml_parser_at_in_decl(hvml_parser_t *parser, const char c, const cha
 static int hvml_parser_at_hvml(hvml_parser_t *parser, const char c, const char *str_state) {
   static const char hvml[] = "hvml";
   switch (c) {
-    case 'h': 
+    case 'h':
     case 'v':
     case 'm':
     case 'l': {
@@ -809,7 +826,7 @@ static const char* string_get(string_t *str) {
 
 static int hvml_parser_push_state(hvml_parser_t *parser, HVML_PARSER_STATE state) {
   HVML_PARSER_STATE *st = (HVML_PARSER_STATE*)realloc(parser->ar_states, (parser->states + 1) * sizeof(*st));
-  if (!st) return -1; 
+  if (!st) return -1;
 
   st[parser->states] = state;
   parser->states    += 1;
@@ -859,7 +876,7 @@ static int hvml_parser_push_tag(hvml_parser_t *parser, const char *tag) {
   char **ar = (char**)realloc(parser->ar_tags, (parser->tags + 1) * sizeof(*ar));
   if (!ar) {
     free(s);
-    return -1; 
+    return -1;
   }
 
   ar[parser->tags] = s;

@@ -1,3 +1,20 @@
+// This file is a part of Purring Cat, a reference implementation of HVML.
+//
+// Copyright (C) 2020, <freemine@yeah.net>.
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 #include "hvml_json_parser.h"
 
 #include "hvml_log.h"
@@ -687,7 +704,7 @@ static const char* string_get(string_t *str) {
 
 static int hvml_json_parser_push_state(hvml_json_parser_t *parser, HVML_JSON_PARSER_STATE state) {
   HVML_JSON_PARSER_STATE *st = (HVML_JSON_PARSER_STATE*)realloc(parser->ar_states, (parser->states + 1) * sizeof(*st));
-  if (!st) return -1; 
+  if (!st) return -1;
 
   st[parser->states] = state;
   parser->states    += 1;
