@@ -99,12 +99,12 @@ static int on_string(void *arg, const char *val) {
 }
 
 static int on_integer(void *arg, const char *origin, int64_t val) {
-  printf("json integer: %s/%"PRId64"\n", origin, val);
+  printf("json integer: %s\t%"PRId64"\n", origin, val);
   return 0;
 }
 
 static int on_double(void *arg, const char *origin, double val) {
-  printf("json double: %s/%e\n", origin, val);
+  printf("json double: %s\t[f]%f\t[e]%e\t[g]%g\n", origin, val, val, val);
   return 0;
 }
 
