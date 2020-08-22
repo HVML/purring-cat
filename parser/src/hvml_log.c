@@ -17,6 +17,7 @@
 
 #include "hvml_log.h"
 
+#include <inttypes.h>
 #include <libgen.h>
 #include <pthread.h>
 #include <stdarg.h>
@@ -35,7 +36,7 @@ void hvml_log_set_thread_type(const char *type) {
 #ifdef __linux__
   tid = syscall(__NR_gettid);
 #endif
-  snprintf(thread_name, sizeof(thread_name), "[%lld/%s]", tid, type);
+  snprintf(thread_name, sizeof(thread_name), "[%"PRId64"/%s]", tid, type);
 }
 
 __attribute__ ((format (printf, 6, 7)))
