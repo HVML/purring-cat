@@ -28,7 +28,6 @@ typedef enum {
       MKSTATE(ETAG),
       MKSTATE(EXP_GREATER),
       MKSTATE(COMMENT),
-    MKSTATE(STATEMENT),
   MKSTATE(END),
 } HVML_PARSER_STATE;
 
@@ -649,26 +648,6 @@ static int hvml_parser_at_comment(hvml_parser_t *parser, const char c, const cha
   return 0;
 }
 
-static int hvml_parser_at_statement(hvml_parser_t *parser, const char c, const char *str_state) {
-  D("c: %c", c);
-  if (c=='?' || c=='.' || c=='_' || isalnum(c)) {
-    string_append(&parser->cache, c);
-    return 0;
-  }
-  switch (c) {
-    case '<': {
-      string_reset(&parser->cache);
-      hvml_parser_pop_state(parser);
-      hvml_parser_push_state(parser, MKSTATE(MARKUP));
-    } break;
-    default: {
-      E("==%s%c==: unexpected [0x%02x/%c]@[%ldr/%ldc] in state: [%s]", string_get(&parser->curr), c, c, c, parser->line+1, parser->col+1, str_state);
-      return -1;
-    } break;
-  }
-  return 0;
-}
-
 static int hvml_parser_at_end(hvml_parser_t *parser, const char c, const char *str_state) {
   if (isspace(c)) return 0;
   switch (c) {
@@ -736,9 +715,6 @@ static int do_hvml_parser_parse_char(hvml_parser_t *parser, const char c) {
     } break;
     case MKSTATE(COMMENT): {
       return hvml_parser_at_comment(parser, c, MKSTR(COMMENT));
-    } break;
-    case MKSTATE(STATEMENT): {
-      return hvml_parser_at_statement(parser, c, MKSTR(STATEMENT));
     } break;
     case MKSTATE(END): {
       return hvml_parser_at_end(parser, c, MKSTR(END));
