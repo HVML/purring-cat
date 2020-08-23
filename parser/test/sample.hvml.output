@@ -1,0 +1,413 @@
+open tag: hvml
+attr key: target
+attr val: html
+attr key: script
+attr val: python
+attr key: lang
+attr val: en
+text: 
+    
+open tag: head
+text: 
+        
+open tag: init
+attr key: as
+attr val: global
+json begin:
+json open obj:
+json key: locale
+json string: zh_CN
+json close obj:
+json end:
+close tag
+text: 
+
+        
+open tag: init
+attr key: as
+attr val: users
+json begin:
+json open array:
+json open obj:
+json key: id
+json string: 1
+json key: avatar
+json string: /img/avatars/1.png
+json key: name
+json string: Tom
+json key: region
+json string: en_US
+json close obj:
+json open obj:
+json key: id
+json string: 2
+json key: avatar
+json string: /img/avatars/2.png
+json key: name
+json string: Jerry
+json key: region
+json string: zh_CN
+json close obj:
+json double: 0	[f]0.000000	[e]0.000000e+00	[g]0
+json double: +0	[f]0.000000	[e]0.000000e+00	[g]0
+json double: -0	[f]-0.000000	[e]-0.000000e+00	[g]-0
+json double: -0.	[f]-0.000000	[e]-0.000000e+00	[g]-0
+json double: -0.1	[f]-0.100000	[e]-1.000000e-01	[g]-0.1
+json double: -0.12	[f]-0.120000	[e]-1.200000e-01	[g]-0.12
+json double: -0.123e+0	[f]-0.123000	[e]-1.230000e-01	[g]-0.123
+json double: -0.123e+1	[f]-1.230000	[e]-1.230000e+00	[g]-1.23
+json double: -0.123e+12	[f]-123000000000.000000	[e]-1.230000e+11	[g]-1.23e+11
+json double: 1	[f]1.000000	[e]1.000000e+00	[g]1
+json double: 12	[f]12.000000	[e]1.200000e+01	[g]12
+json double: 12.	[f]12.000000	[e]1.200000e+01	[g]12
+json double: 12.0	[f]12.000000	[e]1.200000e+01	[g]12
+json double: 12.01	[f]12.010000	[e]1.201000e+01	[g]12.01
+json double: 12.012e-0	[f]12.012000	[e]1.201200e+01	[g]12.012
+json double: 12.012e-2	[f]0.120120	[e]1.201200e-01	[g]0.12012
+json close array:
+json end:
+close tag
+text: 
+
+        
+open tag: listen
+attr key: on
+attr val: hibus://system/status
+attr key: as
+attr val: systemStatus
+close tag
+text: 
+    
+close tag
+text: 
+
+    
+open tag: body
+text: 
+        
+open tag: archetype
+attr key: id
+attr val: user-item
+text: 
+            
+open tag: li
+attr key: class
+attr val: user-item
+attr key: id
+attr val: user-$?.id
+attr key: data-value
+attr val: $?.id
+attr key: data-region
+attr val: $?.region
+text: 
+                
+open tag: img
+attr key: class
+attr val: avatar
+attr key: src
+attr val: $?.avatar
+close tag
+text: 
+                
+open tag: span
+text: $?.name
+close tag
+text: 
+            
+close tag
+text: 
+        
+close tag
+text: 
+
+        
+open tag: archedata
+attr key: id
+attr val: item-user
+json begin:
+json open obj:
+json key: id
+json string: $?.attr.data-value
+json key: avatar
+json string: $?.content[0].attr.src
+json key: name
+json string: $?.children[1].textContent
+json key: region
+json string: $?.attr.data-region
+json close obj:
+json end:
+close tag
+text: 
+
+        
+open tag: header
+attr key: id
+attr val: theStatusBar
+text: 
+            
+open tag: img
+attr key: class
+attr val: mobile-status
+attr key: src
+attr val: 
+close tag
+text: 
+            
+open tag: span
+attr key: class
+attr val: mobile-operator
+close tag
+text: 
+            
+open tag: img
+attr key: class
+attr val: wifi-status
+attr key: src
+attr val: 
+close tag
+text: 
+            
+open tag: span
+attr key: class
+attr val: local-time
+text: 12:00
+close tag
+text: 
+            
+open tag: img
+attr key: class
+attr val: battery-status
+close tag
+text: >
+        
+close tag
+text: 
+
+        
+open tag: ul
+attr key: class
+attr val: user-list
+text: 
+            
+open tag: iterate
+attr key: on
+attr val: $users
+attr key: with
+attr val: #user-item
+attr key: to
+attr val: append
+attr key: by
+attr val: CLASS: IUser
+text: 
+                
+open tag: nodata
+text: 
+                    
+open tag: img
+attr key: src
+attr val: wait.png
+close tag
+text: 
+                
+close tag
+text: 
+                
+open tag: except
+attr key: on
+attr val: StopIteration
+text: 
+                    
+open tag: p
+text: Bad user data!
+close tag
+text: 
+                
+close tag
+text: 
+            
+close tag
+text: 
+        
+close tag
+text: 
+
+        
+open tag: archetype
+attr key: id
+attr val: footer-cn
+text: 
+            
+open tag: p
+open tag: a
+attr key: href
+attr val: http://www.baidu.com
+text: Baidu
+close tag
+close tag
+text: 
+        
+close tag
+text: 
+
+        
+open tag: archetype
+attr key: id
+attr val: footer-tw
+text: 
+            
+open tag: p
+open tag: a
+attr key: href
+attr val: http://www.bing.com
+text: Bing
+close tag
+close tag
+text: 
+        
+close tag
+text: 
+
+        
+open tag: archetype
+attr key: id
+attr val: footer-def
+text: 
+            
+open tag: p
+open tag: a
+attr key: href
+attr val: http://www.google.com
+text: Google
+close tag
+close tag
+text: 
+        
+close tag
+text: 
+
+        
+open tag: footer
+attr key: id
+attr val: the-footer
+text: 
+            
+open tag: test
+attr key: on
+attr val: $global.locale
+attr key: in
+attr val: the-footer
+text: 
+                
+open tag: match
+attr key: for
+attr val: ~zh_CN
+attr key: to
+attr val: displace
+attr key: with
+attr val: #footer-cn
+attr key: exclusively
+text: 
+                
+close tag
+text: 
+                
+open tag: match
+attr key: for
+attr val: ~zh_TW
+attr key: to
+attr val: displace
+attr key: with
+attr val: #footer-tw
+attr key: exclusively
+text: 
+                
+close tag
+text: 
+                
+open tag: match
+attr key: for
+attr val: *
+attr key: to
+attr val: displace
+attr key: with
+attr val: #footer-def
+text: 
+                
+close tag
+text: 
+                
+open tag: error
+attr key: on
+attr val: nodata
+text: 
+                    
+open tag: p
+text: You forget to define the $global variable!
+close tag
+text: 
+                
+close tag
+text: 
+                
+open tag: except
+attr key: on
+attr val: KeyError
+text: 
+                    
+open tag: p
+text: Bad global data!
+close tag
+text: 
+                
+close tag
+text: 
+                
+open tag: except
+attr key: on
+attr val: IdentifierError
+text: 
+                    
+open tag: p
+text: Bad archetype data!
+close tag
+text: 
+                
+close tag
+text: 
+            
+close tag
+text: 
+        
+close tag
+text: 
+
+        
+open tag: observe
+attr key: on
+attr val: $systemStatus
+attr key: for
+attr val: battery
+attr key: by
+attr val: FUNC: on_battery_changed
+text: 
+        
+close tag
+text: 
+
+        
+open tag: observe
+attr key: on
+attr val: .avatar
+attr key: for
+attr val: clicked
+attr key: by
+attr val: FUNC: on_avatar_clicked
+text: 
+        
+close tag
+text: 
+    
+close tag
+text: 
+
+close tag
