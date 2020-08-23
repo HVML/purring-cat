@@ -36,7 +36,7 @@ valgrind --leak-check=full ./debug/hp ./test/sample.hvml && echo yes
 1. put any test sample files (.hvml) in ./test
 2. put its related output file (.hvml.output) in ./test
 3. rm -rf debug && cmake -DCMAKE_BUILD_TYPE=Debug -B debug && cmake --build debug
-4. pushd debug && ctest -vv; popd
+4. pushd debug && ctest -VV; popd
 
 ```
 
