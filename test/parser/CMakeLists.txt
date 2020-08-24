@@ -1,5 +1,5 @@
 add_executable(hp main.c)
-target_link_libraries(hp hvml_parser)
+target_link_libraries(hp hvml_parser_static)
 
 string(REPLACE "${PROJECT_SOURCE_DIR}" "" relative "${CMAKE_CURRENT_SOURCE_DIR}")
 
