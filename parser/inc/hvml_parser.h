@@ -15,8 +15,8 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-#ifndef _hvml_parser_h_e6dbd1ba_194a_47bb_8d8f_043857fcdd19_
-#define _hvml_parser_h_e6dbd1ba_194a_47bb_8d8f_043857fcdd19_
+#ifndef _hvml_parser_h_
+#define _hvml_parser_h_
 
 #include <stddef.h>
 #include <stdint.h>
@@ -58,5 +58,5 @@ int            hvml_parser_parse_string(hvml_parser_t *parser, const char *str);
 int            hvml_parser_parse_end(hvml_parser_t *parser);
 
 
-#endif // _hvml_parser_h_e6dbd1ba_194a_47bb_8d8f_043857fcdd19_
+#endif // _hvml_parser_h_
 

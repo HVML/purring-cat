@@ -15,8 +15,8 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-#ifndef _hvml_json_parser_h_e6dbd1ba_194a_47bb_8d8f_043857fcdd19_
-#define _hvml_json_parser_h_e6dbd1ba_194a_47bb_8d8f_043857fcdd19_
+#ifndef _hvml_json_parser_h_
+#define _hvml_json_parser_h_
 
 #include <stddef.h>
 #include <stdint.h>
@@ -59,5 +59,5 @@ int                 hvml_json_parser_is_ending(hvml_json_parser_t *parser);
 
 void                hvml_json_parser_set_offset(hvml_json_parser_t *parser, size_t line, size_t col);
 
-#endif // _hvml_json_parser_h_e6dbd1ba_194a_47bb_8d8f_043857fcdd19_
+#endif // _hvml_json_parser_h_
 

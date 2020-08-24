@@ -15,8 +15,8 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-#ifndef _hvml_log_66655750_9759_49c0_bd59_07dc55eb09ce_
-#define _hvml_log_66655750_9759_49c0_bd59_07dc55eb09ce_
+#ifndef _hvml_log_h_
+#define _hvml_log_h_
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -40,5 +40,5 @@ do {                                                                          \
   abort();                                                                    \
 } while (0)
 
-#endif //_hvml_log_66655750_9759_49c0_bd59_07dc55eb09ce_
+#endif //_hvml_log_h_
 
