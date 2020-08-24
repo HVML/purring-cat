@@ -29,28 +29,28 @@ typedef struct hvml_parser_s                hvml_parser_t;
 typedef struct hvml_parser_conf_s           hvml_parser_conf_t;
 
 struct hvml_parser_conf_s {
-  int (*on_open_tag)(void *arg, const char *tag);
-  int (*on_attr_key)(void *arg, const char *key);
-  int (*on_attr_val)(void *arg, const char *val);
-  int (*on_close_tag)(void *arg);
-  int (*on_text)(void *arg, const char *txt);
+    int (*on_open_tag)(void *arg, const char *tag);
+    int (*on_attr_key)(void *arg, const char *key);
+    int (*on_attr_val)(void *arg, const char *val);
+    int (*on_close_tag)(void *arg);
+    int (*on_text)(void *arg, const char *txt);
 
-  // json callbacks
-  int (*on_begin)(void *arg);
-  int (*on_open_array)(void *arg);
-  int (*on_close_array)(void *arg);
-  int (*on_open_obj)(void *arg);
-  int (*on_close_obj)(void *arg);
-  int (*on_key)(void *arg, const char *key);
-  int (*on_true)(void *arg);
-  int (*on_false)(void *arg);
-  int (*on_null)(void *arg);
-  int (*on_string)(void *arg, const char *val);
-  int (*on_integer)(void *arg, const char *origin, int64_t val);
-  int (*on_double)(void *arg, const char *origin, double val);
-  int (*on_end)(void *arg);
+    // json callbacks
+    int (*on_begin)(void *arg);
+    int (*on_open_array)(void *arg);
+    int (*on_close_array)(void *arg);
+    int (*on_open_obj)(void *arg);
+    int (*on_close_obj)(void *arg);
+    int (*on_key)(void *arg, const char *key);
+    int (*on_true)(void *arg);
+    int (*on_false)(void *arg);
+    int (*on_null)(void *arg);
+    int (*on_string)(void *arg, const char *val);
+    int (*on_integer)(void *arg, const char *origin, int64_t val);
+    int (*on_double)(void *arg, const char *origin, double val);
+    int (*on_end)(void *arg);
 
-  void *arg;
+    void *arg;
 };
 
 hvml_parser_t* hvml_parser_create(hvml_parser_conf_t conf);

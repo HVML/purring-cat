@@ -36,12 +36,12 @@ __attribute__ ((format (printf, 6, 7)));
 #define W(fmt, ...) hvml_log_printf(__FILE__, __LINE__, __FUNCTION__, stderr, 'W', fmt, ##__VA_ARGS__)
 #define E(fmt, ...) hvml_log_printf(__FILE__, __LINE__, __FUNCTION__, stderr, 'E', fmt, ##__VA_ARGS__)
 #define V(fmt, ...) hvml_log_printf(__FILE__, __LINE__, __FUNCTION__, stderr, 'V', fmt, ##__VA_ARGS__)
-#define A(statement, fmt, ...)                                                \
-do {                                                                          \
-  if (statement) break;                                                       \
-  hvml_log_printf(__FILE__, __LINE__, __FUNCTION__, stderr, 'A',              \
-                  "Assert failure:[%s];"fmt, #statement, ##__VA_ARGS__);      \
-  abort();                                                                    \
+#define A(statement, fmt, ...)                                                  \
+do {                                                                            \
+    if (statement) break;                                                       \
+    hvml_log_printf(__FILE__, __LINE__, __FUNCTION__, stderr, 'A',              \
+                    "Assert failure:[%s];"fmt, #statement, ##__VA_ARGS__);      \
+    abort();                                                                    \
 } while (0)
 
 #ifdef __cplusplus
