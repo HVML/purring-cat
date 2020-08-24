@@ -21,6 +21,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void hvml_log_set_thread_type(const char *type);
 
 void hvml_log_printf(const char *cfile, int cline, const char *cfunc, FILE *out, const char level, const char *fmt, ...)
@@ -39,6 +43,10 @@ do {                                                                          \
                   "Assert failure:[%s];"fmt, #statement, ##__VA_ARGS__);      \
   abort();                                                                    \
 } while (0)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif //_hvml_log_h_
 

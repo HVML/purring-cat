@@ -21,6 +21,10 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct hvml_json_parser_s                hvml_json_parser_t;
 typedef struct hvml_json_parser_conf_s           hvml_json_parser_conf_t;
 
@@ -58,6 +62,10 @@ int                 hvml_json_parser_is_begin(hvml_json_parser_t *parser);
 int                 hvml_json_parser_is_ending(hvml_json_parser_t *parser);
 
 void                hvml_json_parser_set_offset(hvml_json_parser_t *parser, size_t line, size_t col);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // _hvml_json_parser_h_
 

@@ -21,6 +21,10 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct hvml_parser_s                hvml_parser_t;
 typedef struct hvml_parser_conf_s           hvml_parser_conf_t;
 
@@ -57,6 +61,9 @@ int            hvml_parser_parse(hvml_parser_t *parser, const char *buf, size_t 
 int            hvml_parser_parse_string(hvml_parser_t *parser, const char *str);
 int            hvml_parser_parse_end(hvml_parser_t *parser);
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif // _hvml_parser_h_
 
