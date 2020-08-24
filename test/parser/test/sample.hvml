@@ -8,12 +8,12 @@
         <init as="users">
             [
                 { "id": "1", "avatar": "/img/avatars/1.png", "name": "Tom", "region": "en_US" },
-                { "id": "2", "avatar": "/img/avatars/2.png", "name": "Jerry", "region": "zh_CN" },
+                { "id": "2", "avatar": "/img/avatars/2.png",,,,,   ,,,, "name": "Jerry", "region": "zh_CN",,, , },
                 0,
                 +0,
                 -0,
                 -0.,
-                -0.1,
+                -0.1,,,,          ,,,,,,,,      ,,,   
                 -0.12,
                 -0.123e+0,
                 -0.123e+1,
@@ -24,7 +24,7 @@
                 12.0,
                 12.01,
                 12.012e-0,
-                12.012e-2
+                12.012e-2,
             ]
         </init>
 

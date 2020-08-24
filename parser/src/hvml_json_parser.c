@@ -357,7 +357,9 @@ static int hvml_json_parser_at_obj_comma(hvml_json_parser_t *parser, const char 
     // '{'
     case '}': {
       // followed by , is valid
-      hvml_json_parser_pop_state(parser);
+      hvml_json_parser_chg_state(parser, MKSTATE(VAL_DONE));
+      // retry
+      return 1;
     } break;
     default: {
       EPARSE();
@@ -453,7 +455,9 @@ static int hvml_json_parser_at_array_comma(hvml_json_parser_t *parser, const cha
     // '['
     case ']': {
       // followed by , is valid
-      hvml_json_parser_pop_state(parser);
+      hvml_json_parser_chg_state(parser, MKSTATE(ITEM_DONE));
+      // retry
+      return 1;
     } break;
     default: {
       EPARSE();
