@@ -26,6 +26,11 @@
 #define MKSTATE(state) HVML_PARSER_STATE_##state
 #define MKSTR(state) "HVML_PARSER_STATE_"#state
 
+#define EPARSE()                                                       \
+  E("==%s%c==: unexpected [0x%02x/%c]@[%ldr/%ldc] in state: [%s]",     \
+    string_get(&parser->curr), c, c, c,                                \
+    parser->line+1, parser->col+1, str_state)
+
 typedef enum {
   MKSTATE(BEGIN),
     MKSTATE(MARKUP),
@@ -159,7 +164,7 @@ static int hvml_parser_at_begin(hvml_parser_t *parser, const char c, const char 
       hvml_parser_push_state(parser, MKSTATE(MARKUP));
     } break;
     default: {
-      E("==%s%c==: unexpected [0x%02x/%c]@[%ldr/%ldc] in state: [%s]", string_get(&parser->curr), c, c, c, parser->line+1, parser->col+1, str_state);
+      EPARSE();
       return -1;
     } break;
   }
@@ -182,7 +187,7 @@ static int hvml_parser_at_markup(hvml_parser_t *parser, const char c, const char
     } break;
     case '/': {
       if (parser->tags == 0) {
-        E("==%s%c==: unexpected [0x%02x/%c]@[%ldr/%ldc] in state: [%s]", string_get(&parser->curr), c, c, c, parser->line+1, parser->col+1, str_state);
+        EPARSE();
         return -1;
       }
       hvml_parser_pop_state(parser);
@@ -192,7 +197,7 @@ static int hvml_parser_at_markup(hvml_parser_t *parser, const char c, const char
       hvml_parser_push_state(parser, MKSTATE(ETAG));
     } break;
     default: {
-      E("==%s%c==: unexpected [0x%02x/%c]@[%ldr/%ldc] in state: [%s]", string_get(&parser->curr), c, c, c, parser->line+1, parser->col+1, str_state);
+      EPARSE();
       return -1;
     } break;
   }
@@ -210,19 +215,19 @@ static int hvml_parser_at_exclamation(hvml_parser_t *parser, const char c, const
     case 'P':
     case 'E': {
       if (parser->commenting) {
-        E("==%s%c==: unexpected [0x%02x/%c]@[%ldr/%ldc] in state: [%s]", string_get(&parser->curr), c, c, c, parser->line+1, parser->col+1, str_state);
+        EPARSE();
         return -1;
       }
       switch (parser->declared) {
         case 0: parser->declared = 1; break;
         case 1: break;
         default: {
-          E("==%s%c==: unexpected [0x%02x/%c]@[%ldr/%ldc] in state: [%s]", string_get(&parser->curr), c, c, c, parser->line+1, parser->col+1, str_state);
+          EPARSE();
           return -1;
         } break;
       }
       if (parser->cache.len>=sizeof(doctype)-1 || doctype[parser->cache.len]!=c) {
-        E("==%s%c==: unexpected [0x%02x/%c]@[%ldr/%ldc] in state: [%s]", string_get(&parser->curr), c, c, c, parser->line+1, parser->col+1, str_state);
+        EPARSE();
         return -1;
       }
       string_append(&parser->cache, c);
@@ -232,7 +237,7 @@ static int hvml_parser_at_exclamation(hvml_parser_t *parser, const char c, const
     } break;
     case '-': {
       if (parser->declared==1) {
-        E("==%s%c==: unexpected [0x%02x/%c]@[%ldr/%ldc] in state: [%s]", string_get(&parser->curr), c, c, c, parser->line+1, parser->col+1, str_state);
+        EPARSE();
         return -1;
       }
       parser->commenting = 1;
@@ -243,7 +248,7 @@ static int hvml_parser_at_exclamation(hvml_parser_t *parser, const char c, const
       string_reset(&parser->cache);
     } break;
     default: {
-      E("==%s%c==: unexpected [0x%02x/%c]@[%ldr/%ldc] in state: [%s]", string_get(&parser->curr), c, c, c, parser->line+1, parser->col+1, str_state);
+      EPARSE();
       return -1;
     } break;
   }
@@ -262,7 +267,7 @@ static int hvml_parser_at_in_decl(hvml_parser_t *parser, const char c, const cha
       hvml_parser_pop_state(parser);
     } break;
     default: {
-      E("==%s%c==: unexpected [0x%02x/%c]@[%ldr/%ldc] in state: [%s]", string_get(&parser->curr), c, c, c, parser->line+1, parser->col+1, str_state);
+      EPARSE();
       return -1;
     } break;
   }
@@ -278,7 +283,7 @@ static int hvml_parser_at_hvml(hvml_parser_t *parser, const char c, const char *
     case 'l': {
       string_append(&parser->cache, c);
       if (strstr(hvml, string_get(&parser->cache))!=hvml) {
-        E("==%s%c==: unexpected [0x%02x/%c]@[%ldr/%ldc] in state: [%s]", string_get(&parser->curr), c, c, c, parser->line+1, parser->col+1, str_state);
+        EPARSE();
         return -1;
       }
       if (parser->cache.len<sizeof(hvml)-1) break;
@@ -286,7 +291,7 @@ static int hvml_parser_at_hvml(hvml_parser_t *parser, const char c, const char *
       string_reset(&parser->cache);
     } break;
     default: {
-      E("==%s%c==: unexpected [0x%02x/%c]@[%ldr/%ldc] in state: [%s]", string_get(&parser->curr), c, c, c, parser->line+1, parser->col+1, str_state);
+      EPARSE();
       return -1;
     } break;
   }
@@ -325,7 +330,7 @@ static int hvml_parser_at_stag(hvml_parser_t *parser, const char c, const char *
   }
   switch (c) {
     default: {
-      E("==%s%c==: unexpected [0x%02x/%c]@[%ldr/%ldc] in state: [%s]", string_get(&parser->curr), c, c, c, parser->line+1, parser->col+1, str_state);
+      EPARSE();
       return -1;
     } break;
   }
@@ -344,7 +349,7 @@ static int hvml_parser_at_emptytag(hvml_parser_t *parser, const char c, const ch
       if (ret) return ret;
     } break;
     default: {
-      E("==%s%c==: unexpected [0x%02x/%c]@[%ldr/%ldc] in state: [%s]", string_get(&parser->curr), c, c, c, parser->line+1, parser->col+1, str_state);
+      EPARSE();
       return -1;
     } break;
   }
@@ -371,7 +376,7 @@ static int hvml_parser_at_attr_or_end(hvml_parser_t *parser, const char c, const
   }
   switch (c) {
     default: {
-      E("==%s%c==: unexpected [0x%02x/%c]@[%ldr/%ldc] in state: [%s]", string_get(&parser->curr), c, c, c, parser->line+1, parser->col+1, str_state);
+      EPARSE();
       return -1;
     } break;
   }
@@ -412,7 +417,7 @@ static int hvml_parser_at_attr(hvml_parser_t *parser, const char c, const char *
   }
   switch (c) {
     default: {
-      E("==%s%c==: unexpected [0x%02x/%c]@[%ldr/%ldc] in state: [%s]", string_get(&parser->curr), c, c, c, parser->line+1, parser->col+1, str_state);
+      EPARSE();
       return -1;
     } break;
   }
@@ -444,7 +449,7 @@ static int hvml_parser_at_attr_done(hvml_parser_t *parser, const char c, const c
   }
   switch (c) {
     default: {
-      E("==%s%c==: unexpected [0x%02x/%c]@[%ldr/%ldc] in state: [%s]", string_get(&parser->curr), c, c, c, parser->line+1, parser->col+1, str_state);
+      EPARSE();
       return -1;
     } break;
   }
@@ -465,7 +470,7 @@ static int hvml_parser_at_attr_val(hvml_parser_t *parser, const char c, const ch
       string_reset(&parser->cache);
     } break;
     default: {
-      E("==%s%c==: unexpected [0x%02x/%c]@[%ldr/%ldc] in state: [%s]", string_get(&parser->curr), c, c, c, parser->line+1, parser->col+1, str_state);
+      EPARSE();
       return -1;
     } break;
   }
@@ -549,7 +554,7 @@ static int hvml_parser_at_escape(hvml_parser_t *parser, const char c, const char
       hvml_parser_pop_state(parser);
     } break;
     default: {
-      E("==%s%c==: unexpected [0x%02x/%c]@[%ldr/%ldc] in state: [%s]", string_get(&parser->curr), c, c, c, parser->line+1, parser->col+1, str_state);
+      EPARSE();
       return -1;
     } break;
   }
@@ -590,7 +595,7 @@ static int hvml_parser_at_element(hvml_parser_t *parser, const char c, const cha
       if (!parse_json) {
         string_append(&parser->cache, c);
       } else {
-        E("==%s%c==: unexpected [0x%02x/%c]@[%ldr/%ldc] in state: [%s]", string_get(&parser->curr), c, c, c, parser->line+1, parser->col+1, str_state);
+        EPARSE();
         return -1;
       }
     } break;
@@ -606,7 +611,7 @@ static int hvml_parser_at_etag(hvml_parser_t *parser, const char c, const char *
   if (isspace(c) || c=='>') {
     const char *stag = hvml_parser_peek_tag(parser);
     if (strcmp(stag, string_get(&parser->cache))) {
-      E("==%s%c==: unexpected [0x%02x/%c]@[%ldr/%ldc] in state: [%s]", string_get(&parser->curr), c, c, c, parser->line+1, parser->col+1, str_state);
+      EPARSE();
       return -1;
     }
     int ret = 0;
@@ -627,7 +632,7 @@ static int hvml_parser_at_etag(hvml_parser_t *parser, const char c, const char *
   }
   switch (c) {
     default: {
-      E("==%s%c==: unexpected [0x%02x/%c]@[%ldr/%ldc] in state: [%s]", string_get(&parser->curr), c, c, c, parser->line+1, parser->col+1, str_state);
+      EPARSE();
       return -1;
     } break;
   }
@@ -641,7 +646,7 @@ static int hvml_parser_at_exp_greater(hvml_parser_t *parser, const char c, const
       hvml_parser_pop_state(parser);
     } break;
     default: {
-      E("==%s%c==: unexpected [0x%02x/%c]@[%ldr/%ldc] in state: [%s]", string_get(&parser->curr), c, c, c, parser->line+1, parser->col+1, str_state);
+      EPARSE();
       return -1;
     } break;
   }
@@ -669,7 +674,7 @@ static int hvml_parser_at_end(hvml_parser_t *parser, const char c, const char *s
   if (isspace(c)) return 0;
   switch (c) {
     default: {
-      E("==%s%c==: unexpected [0x%02x/%c]@[%ldr/%ldc] in state: [%s]", string_get(&parser->curr), c, c, c, parser->line+1, parser->col+1, str_state);
+      EPARSE();
       return -1;
     } break;
   }

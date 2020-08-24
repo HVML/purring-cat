@@ -78,16 +78,19 @@ static void                   dump_states(hvml_json_parser_t *parser);
 #define get_line(parser) (parser->conf.offset_line + parser->line + 1)
 #define get_col(parser)  (parser->conf.offset_col  + parser->col  + 1)
 
+#define EPARSE()                                                                         \
+  E("==%s%c==: unexpected [0x%02x/%c]@[%ldr/%ldc] in state: [%s]",                       \
+    string_get(&parser->curr), c, c, c,                                                  \
+    get_line(parser), get_col(parser),                                                   \
+    str_state)
+
 #define number_found()                                                                     \
 do {                                                                                       \
   if ((parser->cache.len==0) ||                                                            \
       (parser->cache.str[parser->cache.len-1]=='+') ||                                     \
       (parser->cache.str[parser->cache.len-1]=='-'))                                       \
   {                                                                                        \
-    E("==%s%c==: unexpected [0x%02x/%c]@[%ldr/%ldc] in state: [%s]",                       \
-      string_get(&parser->curr), c, c, c,                                                  \
-      get_line(parser), get_col(parser),                                                   \
-      str_state);                                                                          \
+    EPARSE();                                                                              \
     ret = -1;                                                                              \
     break;                                                                                 \
   }                                                                                        \
@@ -202,7 +205,7 @@ static int hvml_json_parser_at_begin(hvml_json_parser_t *parser, const char c, c
     } break;
     default: {
       if (parser->conf.embedded) return -1;
-      E("==%s%c==: unexpected [0x%02x/%c]@[%ldr/%ldc] in state: [%s]", string_get(&parser->curr), c, c, c, get_line(parser), get_col(parser), str_state);
+      EPARSE();
       return -1;
     } break;
   }
@@ -217,7 +220,7 @@ static int hvml_json_parser_at_open_obj(hvml_json_parser_t *parser, const char c
       hvml_json_parser_push_state(parser, MKSTATE(STR));
     } break;
     default: {
-      E("==%s%c==: unexpected [0x%02x/%c]@[%ldr/%ldc] in state: [%s]", string_get(&parser->curr), c, c, c, get_line(parser), get_col(parser), str_state);
+      EPARSE();
       return -1;
     } break;
   }
@@ -231,7 +234,7 @@ static int hvml_json_parser_at_key_done(hvml_json_parser_t *parser, const char c
       hvml_json_parser_chg_state(parser, MKSTATE(COLON));
     } break;
     default: {
-      E("==%s%c==: unexpected [0x%02x/%c]@[%ldr/%ldc] in state: [%s]", string_get(&parser->curr), c, c, c, get_line(parser), get_col(parser), str_state);
+      EPARSE();
       return -1;
     } break;
   }
@@ -311,7 +314,7 @@ static int hvml_json_parser_at_colon(hvml_json_parser_t *parser, const char c, c
       return 1; // retry
     } break;
     default: {
-      E("==%s%c==: unexpected [0x%02x/%c]@[%ldr/%ldc] in state: [%s]", string_get(&parser->curr), c, c, c, get_line(parser), get_col(parser), str_state);
+      EPARSE();
       return -1;
     } break;
   }
@@ -334,7 +337,7 @@ static int hvml_json_parser_at_val_done(hvml_json_parser_t *parser, const char c
       hvml_json_parser_chg_state(parser, MKSTATE(OBJ_COMMA));
     } break;
     default: {
-      E("==%s%c==: unexpected [0x%02x/%c]@[%ldr/%ldc] in state: [%s]", string_get(&parser->curr), c, c, c, get_line(parser), get_col(parser), str_state);
+      EPARSE();
       return -1;
     } break;
   }
@@ -357,7 +360,7 @@ static int hvml_json_parser_at_obj_comma(hvml_json_parser_t *parser, const char 
       hvml_json_parser_pop_state(parser);
     } break;
     default: {
-      E("==%s%c==: unexpected [0x%02x/%c]@[%ldr/%ldc] in state: [%s]", string_get(&parser->curr), c, c, c, get_line(parser), get_col(parser), str_state);
+      EPARSE();
       return -1;
     } break;
   }
@@ -378,7 +381,7 @@ static int hvml_json_parser_at_open_array(hvml_json_parser_t *parser, const char
       if (ret) return ret;
     } break;
     default: {
-      E("==%s%c==: unexpected [0x%02x/%c]@[%ldr/%ldc] in state: [%s]", string_get(&parser->curr), c, c, c, get_line(parser), get_col(parser), str_state);
+      EPARSE();
       return -1;
     } break;
   }
@@ -401,7 +404,7 @@ static int hvml_json_parser_at_item_done(hvml_json_parser_t *parser, const char 
       if (ret) return ret;
     } break;
     default: {
-      E("==%s%c==: unexpected [0x%02x/%c]@[%ldr/%ldc] in state: [%s]", string_get(&parser->curr), c, c, c, get_line(parser), get_col(parser), str_state);
+      EPARSE();
       return -1;
     } break;
   }
@@ -453,7 +456,7 @@ static int hvml_json_parser_at_array_comma(hvml_json_parser_t *parser, const cha
       hvml_json_parser_pop_state(parser);
     } break;
     default: {
-      E("==%s%c==: unexpected [0x%02x/%c]@[%ldr/%ldc] in state: [%s]", string_get(&parser->curr), c, c, c, get_line(parser), get_col(parser), str_state);
+      EPARSE();
       return -1;
     } break;
   }
@@ -472,7 +475,7 @@ static int hvml_json_parser_at_tfn(hvml_json_parser_t *parser, const char c, con
         string_append(&parser->cache, c);
       } break;
       default: {
-        E("==%s%c==: unexpected [0x%02x/%c]@[%ldr/%ldc] in state: [%s]", string_get(&parser->curr), c, c, c, get_line(parser), get_col(parser), str_state);
+        EPARSE();
         return -1;
       } break;
     }
@@ -518,7 +521,7 @@ static int hvml_json_parser_at_tfn(hvml_json_parser_t *parser, const char c, con
       return 0;
     }
   }
-  E("==%s%c==: unexpected [0x%02x/%c]@[%ldr/%ldc] in state: [%s]", string_get(&parser->curr), c, c, c, get_line(parser), get_col(parser), str_state);
+  EPARSE();
   return -1;
 }
 
@@ -551,7 +554,7 @@ static int hvml_json_parser_at_number(hvml_json_parser_t *parser, const char c, 
     default: {
     } break;
   }
-  E("==%s%c==: unexpected [0x%02x/%c]@[%ldr/%ldc] in state: [%s]", string_get(&parser->curr), c, c, c, get_line(parser), get_col(parser), str_state);
+  EPARSE();
   return -1;
 }
 
@@ -576,7 +579,7 @@ static int hvml_json_parser_at_minus(hvml_json_parser_t *parser, const char c, c
       return 0;
     } break;
     default: {
-      E("==%s%c==: unexpected [0x%02x/%c]@[%ldr/%ldc] in state: [%s]", string_get(&parser->curr), c, c, c, get_line(parser), get_col(parser), str_state);
+      EPARSE();
       return -1;
     } break;
   }
@@ -664,7 +667,7 @@ static int hvml_json_parser_at_decimal(hvml_json_parser_t *parser, const char c,
       number_found();
       if (ret) return ret;
       return 1; // retry
-      E("==%s%c==: unexpected [0x%02x/%c]@[%ldr/%ldc] in state: [%s]", string_get(&parser->curr), c, c, c, get_line(parser), get_col(parser), str_state);
+      EPARSE();
       return -1;
     } break;
   }
@@ -689,7 +692,7 @@ static int hvml_json_parser_at_esym(hvml_json_parser_t *parser, const char c, co
       hvml_json_parser_chg_state(parser, MKSTATE(EXPONENT));
     } break;
     default: {
-      E("==%s%c==: unexpected [0x%02x/%c]@[%ldr/%ldc] in state: [%s]", string_get(&parser->curr), c, c, c, get_line(parser), get_col(parser), str_state);
+      EPARSE();
       return -1;
     } break;
   }
@@ -716,8 +719,6 @@ static int hvml_json_parser_at_exponent(hvml_json_parser_t *parser, const char c
       number_found();
       if (ret) return ret;
       return 1; // retry
-      E("==%s%c==: unexpected [0x%02x/%c]@[%ldr/%ldc] in state: [%s]", string_get(&parser->curr), c, c, c, get_line(parser), get_col(parser), str_state);
-      return -1;
     } break;
   }
   return 0;
@@ -733,7 +734,7 @@ static int hvml_json_parser_at_end(hvml_json_parser_t *parser, const char c, con
       }
       if (ret) return ret;
       if (parser->conf.embedded) return -1;
-      E("==%s%c==: unexpected [0x%02x/%c]@[%ldr/%ldc] in state: [%s]", string_get(&parser->curr), c, c, c, get_line(parser), get_col(parser), str_state);
+      EPARSE();
       return -1;
     } break;
   }
