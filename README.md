@@ -37,8 +37,8 @@ valgrind --leak-check=full ./debug/test/parser/hp ./test/parser/test/sample.hvml
 ### how to use test samples ###
 ```
 
-1. put any test sample files (.hvml) in ./test
-2. put its related output file (.hvml.output) in ./test
+1. put any test sample files (.hvml) in ./test/parser/test
+2. put its related output file (.hvml.output) in ./test/parser/test
 3. rm -rf debug && cmake -DCMAKE_BUILD_TYPE=Debug -B debug && cmake --build debug
 4. pushd debug/test/parser && ctest -VV; popd
 
