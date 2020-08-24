@@ -15,9 +15,9 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-#include "hvml_parser.h"
+#include "hvml/hvml_parser.h"
 
-#include "hvml_log.h"
+#include "hvml/hvml_log.h"
 
 #include <inttypes.h>
 #include <stdio.h>
