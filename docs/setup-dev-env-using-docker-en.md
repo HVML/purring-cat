@@ -1,4 +1,4 @@
-# Setup dev and test environmnt for HVML using docker
+# Setup dev and test environment for HVML using docker
 
 Linux（Ubuntu）is the recommended developmentt and testing environment for HVML. However, some people are using macOS or Windows systems. The following are the steps  to setup dev and test environmnt for HVML using docker on macOS. 
 
