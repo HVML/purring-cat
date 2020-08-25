@@ -98,6 +98,7 @@ The source tree of Purring Cat contains the following modules:
 - `web-render/`: A HTML/CSS renderer without JavaScript; It is derived from hiWebKit.
 - `bindings/`: The bindings for Python, Lua, and other programming languages.
 - `test/`: The unit test programs.
+- `docs/`: Some notes for developer.
 
 ## Current Status
 
@@ -109,6 +110,10 @@ Now, we have the initial code for the following module(s):
 - HVML Parser.
 
 We welcome anybody to take part in the development and contribute your effort!
+
+For the community conduct, please refer to [Code of Conduct](CODE_OF_CONDUCT.md).
+
+For the coding style, please refer to [HybridOS-Code-and-Development-Convention](https://github.com/FMSoftCN/hybridos/blob/master/docs/specs/HybridOS-Code-and-Development-Convention.md).
 
 ## Building
 
@@ -157,6 +162,10 @@ valgrind --leak-check=full ./debug/test/parser/hp ./test/parser/test/sample.hvml
 1. Put its related output file (`.hvml.output`) in `./test/parser/test`.
 1. Run `rm -rf debug && cmake -DCMAKE_BUILD_TYPE=Debug -B debug && cmake --build debug`.
 1. Run `pushd debug/test/parser && ctest -VV; popd`
+
+### Other documents
+
+- [使用 docker 搭建 HVML 的开发和测试环境](docs/setup-dev-env-using-docker.md)
 
 ## Contributors
 
