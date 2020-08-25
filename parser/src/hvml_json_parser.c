@@ -919,8 +919,8 @@ int hvml_json_parser_parse_string(hvml_json_parser_t *parser, const char *str) {
 
 int hvml_json_parser_parse_end(hvml_json_parser_t *parser) {
     if ((parser->states != 1) ||
-        (hvml_json_parser_peek_state(parser)==MKSTATE(END)) ||
-        (hvml_json_parser_peek_state(parser)==MKSTATE(BEGIN)))
+        (hvml_json_parser_peek_state(parser)!=MKSTATE(END)) &&
+        (hvml_json_parser_peek_state(parser)!=MKSTATE(BEGIN)))
     {
         D("states: %ld/%d", parser->states, hvml_json_parser_peek_state(parser));
         return -1;
