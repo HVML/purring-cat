@@ -54,9 +54,8 @@ great success, but have the following deficiencies and shortcomings:
    the benefits of this technology.
 2. These technologies implement data-based conditions and loop flow control
    by introducing virtual attributes such as `v-if`, `v-else`, and `v-for`. However,
-   this method brings a sharp drop in code readability, and a drop in code
-   readability brings drop of code maintainability. Below is an example of
-   Vue.js:
+   this method brings a sharp drop in code readability, which in turn brings drop of 
+   code maintainability. Below is an example in Vue.js:
 
 ```html
 <div v-if="Math.random() > 0.5">
