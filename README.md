@@ -80,8 +80,8 @@ Python, Lua, and JavaScript. This can support more complex functions.
 
 For more information about HVML, please refer to the following articles:
 
-- [A brief introduction to HVML](https://github.com/HVML/hvml-docs/blob/master/zh/brief-introduction-to-hvml-zh.md)
-- [Overview of HVML](https://github.com/HVML/hvml-docs/blob/master/zh/hvml-overview-zh.md)
+- [A brief introduction to HVML](https://github.com/HVML/hvml-docs/blob/master/zh/brief-introduction-to-hvml-zh.md) - Chinese Version
+- [Overview of HVML](https://github.com/HVML/hvml-docs/blob/master/zh/hvml-overview-zh.md) - Chinese Version
 
 ## Source Tree of Purring Cat
 
@@ -101,13 +101,14 @@ The source tree of Purring Cat contains the following modules:
 
 ## Current Status
 
-Currently, a loosely collaborative group is actively developing Purring Cat.
+This project was launched in Aug. 2020.
 
+Currently, a loosely collaborative team is actively developing Purring Cat.
 Now, we have the initial code for the following module(s):
 
 - HVML Parser.
 
-We welcome anybody can take part in the development and contribute your effort!
+We welcome anybody to take part in the development and contribute your effort!
 
 ## Building
 
