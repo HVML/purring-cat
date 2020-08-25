@@ -1,6 +1,6 @@
 # 使用 docker 搭建 HVML 的开发和测试环境
 
-Linux（Ubuntu）是推荐的开发和测试环境，但是有些小伙伴平时使用的是 macOS 或者 Windows 系统。这里介绍 在macOS 上使用 docker 搭建 HVML 开发和测试环境的步骤。Windows 上的过程类似。
+Linux（Ubuntu）是推荐的开发和测试环境，但是有些小伙伴平时使用的是 macOS 或者 Windows 系统。这里介绍在 macOS 上使用 docker 搭建 HVML 开发和测试环境的步骤。Windows 上的过程类似。
 
 ### 第一步，安装并启动 docker
 
