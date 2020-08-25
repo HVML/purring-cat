@@ -146,7 +146,7 @@ To build the test program:
 To test it with `ctest`:
 
 ```
-pushd debug/test/parser && ctest -vv; popd
+pushd debug/test/parser && ctest -VV; popd
 
 ```
 
