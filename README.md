@@ -163,7 +163,7 @@ valgrind --leak-check=full ./debug/test/parser/hp ./test/parser/test/sample.hvml
 
 ### Other documents
 
-- [使用 docker 搭建 HVML 的开发和测试环境](docs/setup-dev-env-using-docker.md)
+- [Setup dev and test environment for HVML using docker](docs/setup-dev-env-using-docker-en.md)
 
 ## Contributors
 
