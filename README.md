@@ -14,30 +14,28 @@ Purring Cat is a reference implementation of HVML.
 ## Introduction to HVML
 
 With the development of Internet technology and applications, the Web front-end
-development technology around HTML/CSS/JavaScript has developed
+development technology around HTML/CSS/JavaScript has evolved
 rapidly, and it can even be described as "thousand miles in a day". Five years ago,
 front-end frameworks based on jQuery and Bootstrap became popular. Since 2019,
-frameworks based on virtual DOM technology have been favored by front-end
-developers, such as the famous React.js (https://reactjs.org/), 
+frameworks based on virtual DOM (Document Object Model) technology have been favored by front-end developers, such as the famous React.js (https://reactjs.org/), 
 Vue.js (https://cn.vuejs.org) etc. It is worth noting that WeChat
 mini-programs and quick-apps etc, also use the virtual DOM technology
 to build application frameworks at the same time.
 
 The so-called "virtual DOM" refers to a front-end application that uses
-JavaScript to create and maintain a virtual document object tree.
+JavaScript to create and maintain a virtual DOM tree.
 Application scripts do not directly manipulate the real DOM tree.
 In the virtual DOM tree, some process control based on data is realized
 through some special attributes, such as conditions and loops.
-Virtual DOM technology provides the following benefits:
+virtual DOM technology provides the following benefits:
 
-1. Because the script does not use the script program to directly
-   manipulate the real DOM tree, on the one hand, the existing framework
-   simplifies the complexity of front-end development, and on the other hand,
-   it reduces the frequent operations on the DOM tree through dynamic modification 
-   of page content by optimizing the operation of the real DOM tree, thus
-   improving page rendering efficiency and user experience.
+1. Because the script does not directly manipulate the real DOM tree. On the one hand, 
+   the existing framework    simplifies the complexity of front-end development, 
+   on the other hand,  it reduces the frequent operations on the DOM tree through 
+   dynamic modification of page content by optimizing the operation of the real DOM tree, 
+   thus improving page rendering efficiency and user experience.
    
-2. Through the virtual DOM technology, the modification of a certain data
+2. With the virtual DOM technology, the modification of a certain data
    by the program can directly be reflected on the content of the data-bound page,
    and the developer does not need to actively or directly call the relevant
    interface to operate the DOM tree. This technology provides so-called
@@ -50,9 +48,10 @@ great success, but have the following deficiencies and shortcomings:
    that fully support the relevant front-end specifications to run, so they
    cannot be applied to other occasions. For example, if you want to use
    this kind of technology in Python scripts, there is currently no solution;
-   another example is in traditional GUI application programming, you cannot use
-   the benefits of this technology.
-2. These technologies implement data-based conditions and loop flow control
+   another example is in traditional GUI application programming, you cannot benefit
+   from this technology.
+   
+2. These technologies implement data-based conditions and loop flow controls
    by introducing virtual attributes such as `v-if`, `v-else`, and `v-for`. However,
    this method brings a sharp drop in code readability, which in turn brings drop of 
    code maintainability. Below is an example in Vue.js:
@@ -70,7 +69,7 @@ During the development of [HybridOS](https://hybridos.fmsoft.cn),
 [Vincent Wei](https://github.com/VincentWei) proposed a complete,
 general purpose, elegant and easy-to-learn markup language, HVML (the
 Hybrid Virtual Markup Language) based on the idea of virtual DOM.
-HVML is a general dynamic markup language, mainly used to generate
+HVML is a general purpose dynamic markup language, mainly used to generate
 actual XML/HTML document content. HVML realizes the ability to
 dynamically generate and update XML/HTML documents through
 data-driven action tags and preposition attributes; HVML also provides
