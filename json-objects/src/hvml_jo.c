@@ -711,13 +711,10 @@ static int on_key(void *arg, const char *key) {
     if (!jo) return -1;
     A(jo->jot == MKJOT(J_OBJECT_KV), "internal logic error");
 
-    D(".");
     if (gen_on_value(gen, jo)) {
-        D(".");
         hvml_jo_value_free(jo);
         return -1;
     }
-    D(".");
 
     gen->jo = jo;
     A(jo->jot == MKJOT(J_OBJECT_KV), "internal logic error");
@@ -799,13 +796,10 @@ static int on_string(void *arg, const char *val) {
         return 0;
     }
 
-    D(".");
     if (gen_on_value(gen, jo)) {
-        D(".");
         hvml_jo_value_free(jo);
         return -1;
     }
-    D(".");
 
     A(hvml_jo_value_parent(jo) == gen->jo, "internal logic error");
 
@@ -861,7 +855,6 @@ static int on_end(void *arg) {
 static int gen_on_value(hvml_jo_gen_t *gen, hvml_jo_value_t *jo) {
     hvml_jo_value_t *parent = gen->jo;
     A(parent, "internal logic error");
-    D(".");
     switch (hvml_jo_value_type(parent)) {
         case MKJOT(J_ARRAY): {
             VAL_APPEND(parent, jo);
@@ -872,7 +865,6 @@ static int gen_on_value(hvml_jo_gen_t *gen, hvml_jo_value_t *jo) {
             OBJ_APPEND((&parent->jobject), (&jo->jkv));
         } break;
         case MKJOT(J_OBJECT_KV): {
-            D(".");
             VAL_APPEND(parent, jo);
             A(parent->jkv.val == NULL, "internal logic error");
             parent->jkv.val = jo;
