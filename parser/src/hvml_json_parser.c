@@ -194,6 +194,7 @@ static int hvml_json_parser_at_begin(hvml_json_parser_t *parser, const char c, c
         case '7':
         case '8':
         case '9':
+        case '+': // not in json standard
         case '-':
         {
             hvml_json_parser_chg_state(parser, MKSTATE(END));
@@ -222,6 +223,16 @@ static int hvml_json_parser_at_open_obj(hvml_json_parser_t *parser, const char c
         {
             hvml_json_parser_chg_state(parser, MKSTATE(KEY_DONE));
             hvml_json_parser_push_state(parser, MKSTATE(STR));
+        } break;
+        // '{'
+        case '}':
+        {
+            hvml_json_parser_pop_state(parser);
+            int ret = 0;
+            if (parser->conf.on_close_obj) {
+                ret = parser->conf.on_close_obj(parser->conf.arg);
+            }
+            if (ret) return ret;
         } break;
         default:
         {
@@ -323,6 +334,7 @@ static int hvml_json_parser_at_colon(hvml_json_parser_t *parser, const char c, c
         case '7':
         case '8':
         case '9':
+        case '+': // not in json standard
         case '-':
         {
             hvml_json_parser_chg_state(parser, MKSTATE(VAL_DONE));
@@ -396,6 +408,16 @@ static int hvml_json_parser_at_obj_comma(hvml_json_parser_t *parser, const char 
 static int hvml_json_parser_at_open_array(hvml_json_parser_t *parser, const char c, const char *str_state) {
     if (isspace(c)) return 0;
     switch (c) {
+        // '['
+        case ']':
+        {
+            hvml_json_parser_pop_state(parser);
+            int ret = 0;
+            if (parser->conf.on_close_array) {
+                ret = parser->conf.on_close_array(parser->conf.arg);
+            }
+            if (ret) return ret;
+        } break;
         case '{': // '}'
         {
             hvml_json_parser_chg_state(parser, MKSTATE(ITEM_DONE));
@@ -405,6 +427,51 @@ static int hvml_json_parser_at_open_array(hvml_json_parser_t *parser, const char
                 ret = parser->conf.on_open_obj(parser->conf.arg);
             }
             if (ret) return ret;
+        } break;
+        case '[': // ']'
+        {
+            hvml_json_parser_chg_state(parser, MKSTATE(ITEM_DONE));
+            hvml_json_parser_push_state(parser, MKSTATE(OPEN_ARRAY));
+            int ret = 0;
+            if (ret==0 && parser->conf.on_open_array) {
+                ret = parser->conf.on_open_array(parser->conf.arg);
+            }
+            if (ret) return ret;
+        } break;
+        case '"': // '"'
+        {
+            hvml_json_parser_chg_state(parser, MKSTATE(ITEM_DONE));
+            hvml_json_parser_push_state(parser, MKSTATE(STR));
+        } break;
+        case 't':
+        case 'f':
+        case 'n':
+        {
+            hvml_json_parser_chg_state(parser, MKSTATE(ITEM_DONE));
+            hvml_json_parser_push_state(parser, MKSTATE(TFN));
+            return 1; // retry
+        } break;
+        case '0':
+        case '1':
+        case '2':
+        case '3':
+        case '4':
+        case '5':
+        case '6':
+        case '7':
+        case '8':
+        case '9':
+        case '+': // not in json standard
+        case '-':
+        {
+            hvml_json_parser_chg_state(parser, MKSTATE(ITEM_DONE));
+            hvml_json_parser_push_state(parser, MKSTATE(NUMBER));
+            int ret = 0;
+            if (parser->conf.on_begin) {
+                ret = parser->conf.on_begin(parser->conf.arg);
+            }
+            if (ret) return ret;
+            return 1; // retry
         } break;
         default:
         {
@@ -449,10 +516,25 @@ static int hvml_json_parser_at_array_comma(hvml_json_parser_t *parser, const cha
             hvml_json_parser_chg_state(parser, MKSTATE(ITEM_DONE));
             hvml_json_parser_push_state(parser, MKSTATE(OPEN_OBJ));
             int ret = 0;
-            if (parser->conf.on_open_obj) {
+            if (ret==0 && parser->conf.on_open_obj) {
                 ret = parser->conf.on_open_obj(parser->conf.arg);
             }
             if (ret) return ret;
+        } break;
+        case '[': // ']'
+        {
+            hvml_json_parser_chg_state(parser, MKSTATE(ITEM_DONE));
+            hvml_json_parser_push_state(parser, MKSTATE(OPEN_ARRAY));
+            int ret = 0;
+            if (ret==0 && parser->conf.on_open_array) {
+                ret = parser->conf.on_open_array(parser->conf.arg);
+            }
+            if (ret) return ret;
+        } break;
+        case '"': // '"'
+        {
+            hvml_json_parser_chg_state(parser, MKSTATE(ITEM_DONE));
+            hvml_json_parser_push_state(parser, MKSTATE(STR));
         } break;
         case 't':
         case 'f':
@@ -472,7 +554,7 @@ static int hvml_json_parser_at_array_comma(hvml_json_parser_t *parser, const cha
         case '7':
         case '8':
         case '9':
-        case '+':
+        case '+': // not in json standard
         case '-':
         {
             hvml_json_parser_chg_state(parser, MKSTATE(ITEM_DONE));
@@ -728,7 +810,7 @@ static int hvml_json_parser_at_decimal(hvml_json_parser_t *parser, const char c,
 
 static int hvml_json_parser_at_esym(hvml_json_parser_t *parser, const char c, const char *str_state) {
     switch (c) {
-        case '+':
+        case '+': // not in json standard
         case '-':
         case '0':
         case '1':

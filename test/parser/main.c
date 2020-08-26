@@ -17,10 +17,51 @@
 
 #include "hvml/hvml_parser.h"
 
+#include "hvml/hvml_jo.h"
 #include "hvml/hvml_log.h"
 
 #include <inttypes.h>
 #include <stdio.h>
+#include <string.h>
+
+static const char* file_ext(const char *file);
+static int process(FILE *in, const char *ext);
+static int process_hvml(FILE *in);
+static int process_json(FILE *in);
+
+int main(int argc, char *argv[]) {
+    if (argc == 1) return 0;
+
+    hvml_log_set_thread_type("main");
+
+    const char *file = argv[1];
+    const char *ext  = file_ext(file);
+
+    FILE *in = fopen(argv[1], "rb");
+    if (!in) {
+        E("failed to open file: %s", argv[1]);
+        return 1;
+    }
+
+    int ret = process(in, ext);
+
+    if (in) fclose(in);
+
+    return ret;
+}
+
+static const char* file_ext(const char *file) {
+    const char *p = strrchr(file, '.');
+    return p ? p : "";
+}
+
+static int process(FILE *in, const char *ext) {
+    if (strcmp(ext, ".json")==0) {
+        return process_json(in);
+    } else {
+        return process_hvml(in);
+    }
+}
 
 static int on_open_tag(void *arg, const char *tag) {
     printf("open tag: %s\n", tag);
@@ -113,8 +154,7 @@ static int on_end(void *arg) {
     return 0;
 }
 
-
-static int process(FILE *in) {
+static int process_hvml(FILE *in) {
     char buf[4096] = {0};
     int n = 0;
     int ret = 0;
@@ -142,8 +182,6 @@ static int process(FILE *in) {
 
     if (!in) in = stdin;
 
-    hvml_log_set_thread_type("main");
-
     hvml_parser_t *parser = hvml_parser_create(conf);
     if (!parser) return 1;
     while ( (n=fread(buf, 1, sizeof(buf), in))>0) {
@@ -156,17 +194,14 @@ static int process(FILE *in) {
     return 0;
 }
 
-int main(int argc, char *argv[]) {
-    FILE *in = NULL;
-    if (argc >= 2) {
-        in = fopen(argv[1], "rb");
-        if (!in) {
-            E("failed to open file: %s", argv[1]);
-            return 1;
-        }
+static int process_json(FILE *in) {
+    hvml_jo_value_t *jo = hvml_jo_value_load_from_stream(in);
+    if (jo) {
+        hvml_jo_value_printf(jo, 0, stdout);
+        hvml_jo_value_free(jo);
+        printf("\n");
+        return 0;
     }
-    int ret = process(in ? in : stdin);
-    if (in) fclose(in);
-    return ret;
+    return 1;
 }
 
