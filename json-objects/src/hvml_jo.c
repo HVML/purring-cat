@@ -267,8 +267,10 @@ int hvml_jo_array_append(hvml_jo_value_t *jo, hvml_jo_value_t *val) {
         E("val[%p/%s] is NOT orphan", val, hvml_jo_value_type_str(val));
         return -1;
     }
-
-    A(jo!=val, "internal logic error");
+    if (jo==val) {
+        E("can NOT append to itself");
+        return -1;
+    }
 
     size_t count = VAL_COUNT(jo);
 
