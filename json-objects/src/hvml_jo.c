@@ -404,8 +404,6 @@ size_t hvml_jo_value_children(hvml_jo_value_t *jo) {
     return VAL_COUNT(jo);
 }
 
-const char* hvml_jo_object_key(hvml_jo_value_t *jo, size_t idx);
-
 #define fprintf_string(out, escaping, str)      \
 do {                                            \
     if (!escaping) {                            \
