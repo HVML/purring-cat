@@ -17,7 +17,8 @@ With the development of Internet technology and applications, the Web front-end
 development technology around HTML/CSS/JavaScript has evolved
 rapidly, and it can even be described as "thousand miles in a day". Five years ago,
 front-end frameworks based on jQuery and Bootstrap became popular. Since 2019,
-frameworks based on virtual DOM (Document Object Model) technology have been favored by front-end developers, such as the famous React.js (https://reactjs.org/), 
+frameworks based on virtual DOM (Document Object Model) technology have been favored 
+by front-end developers, such as the famous React.js (https://reactjs.org/), 
 Vue.js (https://cn.vuejs.org) etc. It is worth noting that WeChat
 mini-programs and quick-apps etc, also use the virtual DOM technology
 to build application frameworks at the same time.
