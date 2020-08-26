@@ -197,7 +197,7 @@ static int process_hvml(FILE *in) {
 static int process_json(FILE *in) {
     hvml_jo_value_t *jo = hvml_jo_value_load_from_stream(in);
     if (jo) {
-        hvml_jo_value_printf(jo, 0, stdout);
+        hvml_jo_value_printf(jo, 1, stdout);
         hvml_jo_value_free(jo);
         printf("\n");
         return 0;

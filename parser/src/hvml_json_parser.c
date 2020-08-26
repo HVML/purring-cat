@@ -30,6 +30,7 @@ typedef enum {
         MKSTATE(OPEN_OBJ),
         MKSTATE(KEY_DONE),
             MKSTATE(STR),
+                MKSTATE(ESCAPE),
         MKSTATE(COLON),
         MKSTATE(VAL_DONE),
         MKSTATE(OBJ_COMMA),
@@ -309,9 +310,60 @@ static int hvml_json_parser_at_str(hvml_json_parser_t *parser, const char c, con
             } break;
         }
     } break;
+    case '\\':
+    {
+        hvml_json_parser_push_state(parser, MKSTATE(ESCAPE));
+        string_append(&parser->cache, c);
+    } break;
     default:
     {
         string_append(&parser->cache, c);
+    } break;
+  }
+  return 0;
+}
+
+static int hvml_json_parser_at_escape(hvml_json_parser_t *parser, const char c, const char *str_state) {
+  switch (c) {
+    case '"':
+    {
+        parser->cache.str[parser->cache.len-1] = c;
+        hvml_json_parser_pop_state(parser);
+    } break;
+    case '\\':
+    {
+        parser->cache.str[parser->cache.len-1] = c;
+        hvml_json_parser_pop_state(parser);
+    } break;
+    case 'b':
+    {
+        parser->cache.str[parser->cache.len-1] = '\b';
+        hvml_json_parser_pop_state(parser);
+    } break;
+    case 't':
+    {
+        parser->cache.str[parser->cache.len-1] = '\t';
+        hvml_json_parser_pop_state(parser);
+    } break;
+    case 'f':
+    {
+        parser->cache.str[parser->cache.len-1] = '\f';
+        hvml_json_parser_pop_state(parser);
+    } break;
+    case 'r':
+    {
+        parser->cache.str[parser->cache.len-1] = '\r';
+        hvml_json_parser_pop_state(parser);
+    } break;
+    case 'n':
+    {
+        parser->cache.str[parser->cache.len-1] = '\n';
+        hvml_json_parser_pop_state(parser);
+    } break;
+    default:
+    {
+        EPARSE();
+        return -1;
     } break;
   }
   return 0;
@@ -907,6 +959,10 @@ static int do_hvml_json_parser_parse_char(hvml_json_parser_t *parser, const char
         case MKSTATE(STR):
         {
             return hvml_json_parser_at_str(parser, c, MKSTR(STR));
+        } break;
+        case MKSTATE(ESCAPE):
+        {
+            return hvml_json_parser_at_escape(parser, c, MKSTR(ESCAPE));
         } break;
         case MKSTATE(COLON):
         {

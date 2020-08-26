@@ -595,8 +595,7 @@ hvml_jo_value_t* hvml_jo_value_load_from_stream(FILE *in) {
     if (ret==0) {
         return jo;
     }
-    A(0, "internal logic error");
-    hvml_jo_value_free(jo);
+    if (jo) hvml_jo_value_free(jo);
     return NULL;
 }
 
