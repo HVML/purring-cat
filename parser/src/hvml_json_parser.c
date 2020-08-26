@@ -261,117 +261,117 @@ static int hvml_json_parser_at_key_done(hvml_json_parser_t *parser, const char c
 }
 
 static int hvml_json_parser_at_str(hvml_json_parser_t *parser, const char c, const char *str_state) {
-  switch (c) {
-    case '"':
-    {
-        hvml_json_parser_pop_state(parser);
-        int state = hvml_json_parser_peek_state(parser);
-        switch (state) {
-            case MKSTATE(KEY_DONE):
-            {
-                int ret = 0;
-                if (parser->conf.on_key) {
-                    ret = parser->conf.on_key(parser->conf.arg, string_get(&parser->cache));
-                }
-                string_reset(&parser->cache);
-                if (ret) return ret;
-            } break;
-            case MKSTATE(VAL_DONE):
-            {
-                int ret = 0;
-                if (parser->conf.on_string) {
-                    ret = parser->conf.on_string(parser->conf.arg, string_get(&parser->cache));
-                }
-                string_reset(&parser->cache);
-                if (ret) return ret;
-            } break;
-            case MKSTATE(ITEM_DONE):
-            {
-                int ret = 0;
-                if (parser->conf.on_string) {
-                    ret = parser->conf.on_string(parser->conf.arg, string_get(&parser->cache));
-                }
-                string_reset(&parser->cache);
-                if (ret) return ret;
-            } break;
-            case MKSTATE(END):
-            {
-                int ret = 0;
-                if (parser->conf.on_string) {
-                    ret = parser->conf.on_string(parser->conf.arg, string_get(&parser->cache));
-                }
-                string_reset(&parser->cache);
-                if (ret) return ret;
-            } break;
-            default:
-            {
-                E("not implemented for state: [%d]; curr: %s", state, parser->curr.str);
-                return -1;
-            } break;
-        }
-    } break;
-    case '\\':
-    {
-        hvml_json_parser_push_state(parser, MKSTATE(ESCAPE));
-        string_append(&parser->cache, c);
-    } break;
-    default:
-    {
-        string_append(&parser->cache, c);
-    } break;
-  }
-  return 0;
+    switch (c) {
+        case '"':
+        {
+            hvml_json_parser_pop_state(parser);
+            int state = hvml_json_parser_peek_state(parser);
+            switch (state) {
+                case MKSTATE(KEY_DONE):
+                {
+                    int ret = 0;
+                    if (parser->conf.on_key) {
+                        ret = parser->conf.on_key(parser->conf.arg, string_get(&parser->cache));
+                    }
+                    string_reset(&parser->cache);
+                    if (ret) return ret;
+                } break;
+                case MKSTATE(VAL_DONE):
+                {
+                    int ret = 0;
+                    if (parser->conf.on_string) {
+                        ret = parser->conf.on_string(parser->conf.arg, string_get(&parser->cache));
+                    }
+                    string_reset(&parser->cache);
+                    if (ret) return ret;
+                } break;
+                case MKSTATE(ITEM_DONE):
+                {
+                    int ret = 0;
+                    if (parser->conf.on_string) {
+                        ret = parser->conf.on_string(parser->conf.arg, string_get(&parser->cache));
+                    }
+                    string_reset(&parser->cache);
+                    if (ret) return ret;
+                } break;
+                case MKSTATE(END):
+                {
+                    int ret = 0;
+                    if (parser->conf.on_string) {
+                        ret = parser->conf.on_string(parser->conf.arg, string_get(&parser->cache));
+                    }
+                    string_reset(&parser->cache);
+                    if (ret) return ret;
+                } break;
+                default:
+                {
+                    E("not implemented for state: [%d]; curr: %s", state, parser->curr.str);
+                    return -1;
+                } break;
+            }
+        } break;
+        case '\\':
+        {
+            hvml_json_parser_push_state(parser, MKSTATE(ESCAPE));
+            string_append(&parser->cache, c);
+        } break;
+        default:
+        {
+            string_append(&parser->cache, c);
+        } break;
+    }
+    return 0;
 }
 
 static int hvml_json_parser_at_escape(hvml_json_parser_t *parser, const char c, const char *str_state) {
-  switch (c) {
-    case '"':
-    {
-        parser->cache.str[parser->cache.len-1] = c;
-        hvml_json_parser_pop_state(parser);
-    } break;
-    case '/':
-    {
-        parser->cache.str[parser->cache.len-1] = c;
-        hvml_json_parser_pop_state(parser);
-    } break;
-    case '\\':
-    {
-        parser->cache.str[parser->cache.len-1] = c;
-        hvml_json_parser_pop_state(parser);
-    } break;
-    case 'b':
-    {
-        parser->cache.str[parser->cache.len-1] = '\b';
-        hvml_json_parser_pop_state(parser);
-    } break;
-    case 't':
-    {
-        parser->cache.str[parser->cache.len-1] = '\t';
-        hvml_json_parser_pop_state(parser);
-    } break;
-    case 'f':
-    {
-        parser->cache.str[parser->cache.len-1] = '\f';
-        hvml_json_parser_pop_state(parser);
-    } break;
-    case 'r':
-    {
-        parser->cache.str[parser->cache.len-1] = '\r';
-        hvml_json_parser_pop_state(parser);
-    } break;
-    case 'n':
-    {
-        parser->cache.str[parser->cache.len-1] = '\n';
-        hvml_json_parser_pop_state(parser);
-    } break;
-    default:
-    {
-        EPARSE();
-        return -1;
-    } break;
-  }
-  return 0;
+    switch (c) {
+        case '"':
+        {
+            parser->cache.str[parser->cache.len-1] = c;
+            hvml_json_parser_pop_state(parser);
+        } break;
+        case '/':
+        {
+            parser->cache.str[parser->cache.len-1] = c;
+            hvml_json_parser_pop_state(parser);
+        } break;
+        case '\\':
+        {
+            parser->cache.str[parser->cache.len-1] = c;
+            hvml_json_parser_pop_state(parser);
+        } break;
+        case 'b':
+        {
+            parser->cache.str[parser->cache.len-1] = '\b';
+            hvml_json_parser_pop_state(parser);
+        } break;
+        case 't':
+        {
+            parser->cache.str[parser->cache.len-1] = '\t';
+            hvml_json_parser_pop_state(parser);
+        } break;
+        case 'f':
+        {
+            parser->cache.str[parser->cache.len-1] = '\f';
+            hvml_json_parser_pop_state(parser);
+        } break;
+        case 'r':
+        {
+            parser->cache.str[parser->cache.len-1] = '\r';
+            hvml_json_parser_pop_state(parser);
+        } break;
+        case 'n':
+        {
+            parser->cache.str[parser->cache.len-1] = '\n';
+            hvml_json_parser_pop_state(parser);
+        } break;
+        default:
+        {
+            EPARSE();
+            return -1;
+        } break;
+    }
+    return 0;
 }
 
 static int hvml_json_parser_at_colon(hvml_json_parser_t *parser, const char c, const char *str_state) {
