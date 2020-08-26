@@ -284,6 +284,15 @@ static int hvml_json_parser_at_str(hvml_json_parser_t *parser, const char c, con
                 string_reset(&parser->cache);
                 if (ret) return ret;
             } break;
+            case MKSTATE(ITEM_DONE):
+            {
+                int ret = 0;
+                if (parser->conf.on_string) {
+                    ret = parser->conf.on_string(parser->conf.arg, string_get(&parser->cache));
+                }
+                string_reset(&parser->cache);
+                if (ret) return ret;
+            } break;
             case MKSTATE(END):
             {
                 int ret = 0;
