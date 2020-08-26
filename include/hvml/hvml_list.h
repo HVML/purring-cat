@@ -25,6 +25,58 @@
 // p:  prefix
 // o:  owner
 // n:  node
+// t:  generally, count/head/tail for owner class,
+//                owner/next/prev for node class
+
+// example:
+// int main() {
+//     typedef struct list_s       list_t;
+//     typedef struct node_s       node_t;
+//     struct list_s {
+//         HLIST_MEMBERS(node_t, list_t, _all);
+//         HLIST_MEMBERS(node_t, list_t, _even);
+//     };
+//     struct node_s {
+//         int           idx;
+//         HNODE_MEMBERS(node_t, list_t, _all);
+//         HNODE_MEMBERS(node_t, list_t, _even);
+//     };
+//     list_t l = {0};
+//     // generate
+//     for (int i=0; i<100; ++i) {
+//         node_t *n = (node_t*)calloc(1, sizeof(*n));
+//         if (!n) break;
+//         n->idx = i;
+//         HLIST_APPEND(node_t, list_t, _all, &l, n);
+//         if (n->idx % 2) continue;
+//         HLIST_APPEND(node_t, list_t, _even, &l, n);
+//     }
+//     node_t *n;
+//     // print all
+//     n = l.MKM(node_t, list_t, _all, head);
+//     while (n) {
+//         printf("n in all:[%d]\n", n->idx);
+//         n = n->MKM(node_t, list_t, _all, next);
+//     }
+//     // print even
+//     n = l.MKM(node_t, list_t, _even, head);
+//     while (n) {
+//         printf("n in even:[%d]\n", n->idx);
+//         n = n->MKM(node_t, list_t, _even, next);
+//     }
+//     // free all
+//     n = l.MKM(node_t, list_t, _all, head);
+//     while (n) {
+//         if (HNODE_OWNER(node_t, list_t, _even, n)) {
+//             HLIST_REMOVE(node_t, list_t, _even, n);
+//         }
+//         HLIST_REMOVE(node_t, list_t, _all, n);
+//         free(n);
+//         n = l.MKM(node_t, list_t, _all, head);
+//     }
+//
+//     return 0;
+// }
 
 #define MKM(nc, oc, p, t)  nc##_##oc##_##p##_##t
 
