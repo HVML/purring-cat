@@ -112,8 +112,7 @@ We welcome anybody to take part in the development and contribute your effort!
 
 For the community conduct, please refer to [Code of Conduct](CODE_OF_CONDUCT.md).
 
-For the coding style, please refer to [HybridOS-Code-and-Development-Convention]
-(https://github.com/FMSoftCN/hybridos/blob/master/docs/specs/HybridOS-Code-and-Development-Convention.md).
+For the coding style, please refer to [HybridOS-Code-and-Development-Convention](https://github.com/FMSoftCN/hybridos/blob/master/docs/specs/HybridOS-Code-and-Development-Convention.md).
 
 ## Building
 
