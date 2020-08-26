@@ -330,6 +330,11 @@ static int hvml_json_parser_at_escape(hvml_json_parser_t *parser, const char c, 
         parser->cache.str[parser->cache.len-1] = c;
         hvml_json_parser_pop_state(parser);
     } break;
+    case '/':
+    {
+        parser->cache.str[parser->cache.len-1] = c;
+        hvml_json_parser_pop_state(parser);
+    } break;
     case '\\':
     {
         parser->cache.str[parser->cache.len-1] = c;

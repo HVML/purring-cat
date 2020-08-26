@@ -34,20 +34,25 @@ int main(int argc, char *argv[]) {
 
     hvml_log_set_thread_type("main");
 
-    const char *file = argv[1];
-    const char *ext  = file_ext(file);
+    for (int i=1; i<argc; ++i) {
+        const char *file = argv[i];
+        const char *ext  = file_ext(file);
 
-    FILE *in = fopen(argv[1], "rb");
-    if (!in) {
-        E("failed to open file: %s", argv[1]);
-        return 1;
+        FILE *in = fopen(file, "rb");
+        if (!in) {
+            E("failed to open file: %s", file);
+            return 1;
+        }
+
+        I("processing file: %s", file);
+        int ret = process(in, ext);
+
+        if (in) fclose(in);
+
+        if (ret) return ret;
     }
 
-    int ret = process(in, ext);
-
-    if (in) fclose(in);
-
-    return ret;
+    return 0;
 }
 
 static const char* file_ext(const char *file) {
