@@ -372,6 +372,26 @@ static int hvml_json_parser_at_escape(hvml_json_parser_t *parser, const char c, 
 static int hvml_json_parser_at_colon(hvml_json_parser_t *parser, const char c, const char *str_state) {
     if (isspace(c)) return 0;
     switch (c) {
+        case '{': // '}'
+        {
+            hvml_json_parser_chg_state(parser, MKSTATE(VAL_DONE));
+            hvml_json_parser_push_state(parser, MKSTATE(OPEN_OBJ));
+            int ret = 0;
+            if (ret==0 && parser->conf.on_open_obj) {
+                ret = parser->conf.on_open_obj(parser->conf.arg);
+            }
+            if (ret) return ret;
+        } break;
+        case '[': // ']'
+        {
+            hvml_json_parser_chg_state(parser, MKSTATE(VAL_DONE));
+            hvml_json_parser_push_state(parser, MKSTATE(OPEN_ARRAY));
+            int ret = 0;
+            if (ret==0 && parser->conf.on_open_array) {
+                ret = parser->conf.on_open_array(parser->conf.arg);
+            }
+            if (ret) return ret;
+        } break;
         case '"':
         {
             hvml_json_parser_chg_state(parser, MKSTATE(VAL_DONE));
