@@ -12,11 +12,11 @@ enable_testing()
 
 file(GLOB hvmls "test/*.hvml")
 foreach(hvml ${hvmls})
-  add_test(NAME ${hvml}, COMMAND sh -c "${PROJECT_BINARY_DIR}${relative}/hp ${hvml} | diff - ${hvml}.output")
+    add_test(NAME ${hvml}, COMMAND sh -c "${PROJECT_BINARY_DIR}${relative}/hp ${hvml} | diff - ${hvml}.output")
 endforeach()
 
 file(GLOB jsons "test/*.json")
 foreach(json ${jsons})
-  add_test(NAME ${json}, COMMAND sh -c "${PROJECT_BINARY_DIR}${relative}/hp ${json} | python3 -m json.tool | diff - ${json}.output")
+    add_test(NAME ${json}, COMMAND sh -c "${PROJECT_BINARY_DIR}${relative}/hp ${json} | python3 -m json.tool | diff - ${json}.output")
 endforeach()
 
