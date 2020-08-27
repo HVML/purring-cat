@@ -20,6 +20,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <stdio.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -62,6 +63,8 @@ int                 hvml_json_parser_is_begin(hvml_json_parser_t *parser);
 int                 hvml_json_parser_is_ending(hvml_json_parser_t *parser);
 
 void                hvml_json_parser_set_offset(hvml_json_parser_t *parser, size_t line, size_t col);
+
+void                hvml_json_str_printf(FILE *out, const char *s, size_t len);
 
 #ifdef __cplusplus
 }

@@ -414,16 +414,7 @@ size_t hvml_jo_value_children(hvml_jo_value_t *jo) {
     return VAL_COUNT(jo);
 }
 
-#define fprintf_string(out, escaping, str, len)      \
-do {                                                 \
-    fprintf(out, "\"");                              \
-    printf_escape(out, str, len);                    \
-    fprintf(out, "\"");                              \
-} while (0)
-
-static void printf_escape(FILE *out, const char *s, size_t len);
-
-void hvml_jo_value_printf(hvml_jo_value_t *jo, int escaping, FILE *out) {
+void hvml_jo_value_printf(hvml_jo_value_t *jo, FILE *out) {
     switch (jo->jot) {
         case MKJOT(J_UNDEFINED): {
             fprintf(out, "undefined");
@@ -445,7 +436,7 @@ void hvml_jo_value_printf(hvml_jo_value_t *jo, int escaping, FILE *out) {
             }
         } break;
         case MKJOT(J_STRING): {
-            fprintf_string(out, escaping, jo->jstr.str, jo->jstr.len);
+            hvml_json_str_printf(out, jo->jstr.str, jo->jstr.len);
         } break;
         case MKJOT(J_OBJECT): {
             fprintf(out, "{"); // "}"
@@ -453,7 +444,7 @@ void hvml_jo_value_printf(hvml_jo_value_t *jo, int escaping, FILE *out) {
             while (kv) {
                 hvml_jo_value_t *v = hvml_jo_value_from_union(kv);
                 // attention: recursive call
-                hvml_jo_value_printf(v, escaping, out);
+                hvml_jo_value_printf(v, out);
                 kv = OBJ_NEXT(kv);
                 if (!kv) break;
                 fprintf(out, ",");
@@ -463,11 +454,11 @@ void hvml_jo_value_printf(hvml_jo_value_t *jo, int escaping, FILE *out) {
         } break;
         case MKJOT(J_OBJECT_KV): {
             A(jo->jkv.key, "internal logic error");
-            fprintf_string(out, escaping, jo->jkv.key, jo->jkv.len);
+            hvml_json_str_printf(out, jo->jkv.key, jo->jkv.len);
             if (jo->jkv.val) {
                 fprintf(out, ":");
                 // attention: recursive call
-                hvml_jo_value_printf(jo->jkv.val, escaping, out);
+                hvml_jo_value_printf(jo->jkv.val, out);
             }
         } break;
         case MKJOT(J_ARRAY): {
@@ -475,7 +466,7 @@ void hvml_jo_value_printf(hvml_jo_value_t *jo, int escaping, FILE *out) {
             hvml_jo_value_t *v = VAL_HEAD(jo);
             while (v) {
                 // attention: recursive call
-                hvml_jo_value_printf(v, escaping, out);
+                hvml_jo_value_printf(v, out);
                 v = VAL_NEXT(v);
                 if (!v) break;
                 fprintf(out, ",");
@@ -614,24 +605,6 @@ hvml_jo_value_t* hvml_jo_value_load_from_stream(FILE *in) {
 
 
 
-
-static void printf_escape(FILE *out, const char *s, size_t len) {
-    const char *p = s;
-    for (size_t i=0; i<len; ++i, ++p) {
-        const char c = *p;
-        switch (c) {
-            case '"':  { fprintf(out, "\\\"");    break; }
-            case '\\': { fprintf(out, "\\\\");    break; }
-            case '\b': { fprintf(out, "\\b");     break; }
-            case '\t': { fprintf(out, "\\t");     break; }
-            case '\f': { fprintf(out, "\\f");     break; }
-            case '\r': { fprintf(out, "\\r");     break; }
-            case '\n': { fprintf(out, "\\n");     break; }
-            case '\0': { fprintf(out, "\\u0000"); break; }
-            default:   { fprintf(out, "%c", c);   break; }
-        }
-    }
-}
 
 static int on_begin(void *arg) {
 	return 0;

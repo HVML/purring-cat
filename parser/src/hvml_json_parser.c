@@ -1289,6 +1289,26 @@ void hvml_json_parser_set_offset(hvml_json_parser_t *parser, size_t line, size_t
     parser->conf.offset_col  = col;
 }
 
+void hvml_json_str_printf(FILE *out, const char *s, size_t len) {
+    fprintf(out, "\"");
+    const char *p = s;
+    for (size_t i=0; i<len; ++i, ++p) {
+        const char c = *p;
+        switch (c) {
+            case '"':  { fprintf(out, "\\\"");    break; }
+            case '\\': { fprintf(out, "\\\\");    break; }
+            case '\b': { fprintf(out, "\\b");     break; }
+            case '\t': { fprintf(out, "\\t");     break; }
+            case '\f': { fprintf(out, "\\f");     break; }
+            case '\r': { fprintf(out, "\\r");     break; }
+            case '\n': { fprintf(out, "\\n");     break; }
+            case '\0': { fprintf(out, "\\u0000"); break; }
+            default:   { fprintf(out, "%c", c);   break; }
+        }
+    }
+    fprintf(out, "\"");
+}
+
 
 
 

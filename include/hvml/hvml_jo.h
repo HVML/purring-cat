@@ -67,7 +67,7 @@ hvml_jo_value_t* hvml_jo_value_root(hvml_jo_value_t *jo);
 
 size_t           hvml_jo_value_children(hvml_jo_value_t *jo);
 
-void             hvml_jo_value_printf(hvml_jo_value_t *jo, int escaping, FILE *out);
+void             hvml_jo_value_printf(hvml_jo_value_t *jo, FILE *out);
 
 
 hvml_jo_gen_t*   hvml_jo_gen_create();
