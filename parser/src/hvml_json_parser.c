@@ -479,12 +479,33 @@ static int hvml_json_parser_at_escape_u3(hvml_json_parser_t *parser, const char 
             hvml_json_parser_chg_state(parser, MKSTATE(STR));
             return 0;
         }
-        parser->cache.len -= 6;
-        parser->cache.str[parser->cache.len] = '\0';
         uint32_t ucs = parser->shi;
-        string_append(&parser->cache, 0xe0 | (ucs >> 12));
-        string_append(&parser->cache, 0x80 | ((ucs >> 6) & 0x3f));
-        string_append(&parser->cache, 0x80 | (ucs & 0x3f));
+        switch (ucs) {
+            case '"':
+            case '/':
+            case '\\':
+            case '\b':
+            case '\f':
+            case '\t':
+            case '\r':
+            case '\n': {
+                parser->cache.len -= 6;
+                parser->cache.str[parser->cache.len] = '\0';
+                string_append(&parser->cache, ucs);
+            } break;
+            case 0: {
+                E("\\u0000 not supported yet");
+                EPARSE();
+                return -1;
+            } break;
+            default: {
+                parser->cache.len -= 6;
+                parser->cache.str[parser->cache.len] = '\0';
+                string_append(&parser->cache, 0xe0 | (ucs >> 12));
+                string_append(&parser->cache, 0x80 | ((ucs >> 6) & 0x3f));
+                string_append(&parser->cache, 0x80 | (ucs & 0x3f));
+            } break;
+        }
         parser->shi = 0;
         hvml_json_parser_pop_state(parser);
         return 0;
