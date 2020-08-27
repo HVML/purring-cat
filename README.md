@@ -169,46 +169,46 @@ For the coding style, please refer to [HybridOS-Code-and-Development-Convention]
 To build:
 
 ```
-rm -rf debug && cmake -B debug && cmake --build debug
+rm -rf build && cmake -B build && cmake --build build
 ```
 
-To build with debug:
+To build with Debug:
 
 ```
-rm -rf debug && cmake -DCMAKE_BUILD_TYPE=Debug -B debug && cmake --build debug
+rm -rf build && cmake -DCMAKE_BUILD_TYPE=Debug -B build && cmake --build build
 ```
 
 To build with verbose information:
 
 ```
-rm -rf debug && cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -B debug && cmake --build debug
+rm -rf build && cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -B build && cmake --build build
 ```
 
 To build the test program:
 
 ```
-./debug/test/parser/hp ./test/parser/test/sample.hvml && echo yes
+./build/test/parser/hp ./test/parser/test/sample.hvml && echo yes
 ```
 
 To test it with `ctest`:
 
 ```
-pushd debug/test/parser && ctest -VV; popd
+pushd build/test/parser && ctest -VV; popd
 
 ```
 
-To run the test program with Valgrind (build the library with debug first):
+To run the test program with Valgrind (build the library with Debug first):
 
 ```
-valgrind --leak-check=full ./debug/test/parser/hp ./test/parser/test/sample.hvml && echo yes
+valgrind --leak-check=full ./build/test/parser/hp ./test/parser/test/sample.hvml && echo yes
 ```
 
 ### Using the test samples
 
 1. Write any HVML file (`.hvml`) for test in `./test/parser/test`.
 1. Put its related output file (`.hvml.output`) in `./test/parser/test`.
-1. Run `rm -rf debug && cmake -DCMAKE_BUILD_TYPE=Debug -B debug && cmake --build debug`.
-1. Run `pushd debug/test/parser && ctest -VV; popd`
+1. Run `rm -rf build && cmake -DCMAKE_BUILD_TYPE=Debug -B build && cmake --build build`.
+1. Run `pushd build/test/parser && ctest -VV; popd`
 
 ### Other documents
 
