@@ -26,6 +26,7 @@ extern "C" {
 #endif
 
 void hvml_log_set_thread_type(const char *type);
+void hvml_log_set_output_only(int set); // if set, no prefix/postfix info
 
 void hvml_log_printf(const char *cfile, int cline, const char *cfunc, FILE *out, const char level, const char *fmt, ...)
 __attribute__ ((format (printf, 6, 7)));

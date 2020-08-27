@@ -33,6 +33,10 @@ static int process_json(FILE *in);
 int main(int argc, char *argv[]) {
     if (argc == 1) return 0;
 
+    if (getenv("NEG")) {
+        hvml_log_set_output_only(1);
+    }
+
     hvml_log_set_thread_type("main");
 
     for (int i=1; i<argc; ++i) {
