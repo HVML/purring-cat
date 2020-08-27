@@ -77,6 +77,55 @@ data-driven action tags and preposition attributes; HVML also provides
 methods to integrate with existing programming languages, such as C/C++,
 Python, Lua, and JavaScript, thus supporting more complex functions.
 
+The classical `helloworld` program in HVML looks like:
+
+```html
+<!DOCTYPE hvml>
+<hvml target="html" script="python">
+    <head>
+        <init as="_" with="https://foo.bar/messages/$_SYSTEM.locale">
+        </init>
+
+        <title>Hello, world!</title>
+    </head>
+
+    <body>
+        <p>$_("Hello, world!)</p>
+    </body>
+
+</hvml>
+```
+
+Or,
+
+```html
+<!DOCTYPE hvml>
+<hvml target="html" script="python">
+    <head>
+        <title>Hello, world!</title>
+
+        <init as="messages">
+            {
+              "zh_CN" : "世界，您好！"
+              "en_US" : "Hello, world!"
+            }
+        </init>
+    </head>
+
+    <body>
+        <p>
+            <choose on="$messages" to="update" by="KEY: $_SYSTEM.locale">
+                <update on="$@" textContent="$?" />
+
+                <except on="KeyError">
+                    No valid locale defined.
+                </except>
+            </choose>
+        </p>
+    </body>
+</hvml>
+```
+
 For more information about HVML, please refer to the following articles:
 
 - [A brief introduction to HVML](https://github.com/HVML/hvml-docs/blob/master/zh/brief-introduction-to-hvml-zh.md) - Chinese Version
