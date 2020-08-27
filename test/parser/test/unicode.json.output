@@ -1,0 +1,41 @@
+[
+    {
+        "id": "1",
+        "avatar": "/img/avatars/1.png",
+        "name": "Tom",
+        "region": "en_US"
+    },
+    {
+        "id": "2",
+        "avatar": "/img/avatars/2.png",
+        "name": "Jerry",
+        "region": "zh_CN"
+    },
+    0,
+    0,
+    0,
+    0,
+    -0.1,
+    -0.12,
+    -0.123,
+    -1.23,
+    -123000000000.0,
+    1,
+    12,
+    12,
+    12,
+    12.01,
+    12.012,
+    0.12012,
+    "hello\nworld",
+    "\u4e16\u754c",
+    "\ud801\udc37",
+    {
+        "hello": "\u4e16\u754c",
+        "world": "\u4f60\u597d",
+        "damn": "\u4e16\u754c",
+        "what": "\ud834\udd1e",
+        "haha": "\ud83d\udc36",
+        "hoho": "\ud83d\udc36"
+    }
+]
