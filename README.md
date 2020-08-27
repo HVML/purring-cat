@@ -90,7 +90,7 @@ The classical `helloworld` program in HVML looks like:
     </head>
 
     <body>
-        <p>$_("Hello, world!)</p>
+        <p>$_("Hello, world!")</p>
     </body>
 
 </hvml>
@@ -116,7 +116,6 @@ Or,
         <p>
             <choose on="$messages" to="update" by="KEY: $_SYSTEM.locale">
                 <update on="$@" textContent="$?" />
-
                 <except on="KeyError">
                     No valid locale defined.
                 </except>
