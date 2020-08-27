@@ -258,7 +258,7 @@ int hvml_jo_object_set_kv(hvml_jo_value_t *jo, const char *key, size_t len, hvml
     }
     A(njo->jot == MKJOT(J_OBJECT_KV), "internal logic error");
     if (njo->jkv.val!=val) {
-        if (njo->jkv.val) hvml_jo_value_free(njo->jkv.val); 
+        if (njo->jkv.val) hvml_jo_value_free(njo->jkv.val);
         njo->jkv.val = val;
     }
     return 0;
