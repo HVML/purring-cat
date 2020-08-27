@@ -697,15 +697,61 @@ static int hvml_parser_at_comment(hvml_parser_t *parser, const char c, const cha
     switch (c) {
         case '>':
         {
-            if (parser->cache.len >= 2 && parser->cache.str[parser->cache.len-1]=='-' && parser->cache.str[parser->cache.len-2]=='-') {
+            if (parser->cache.len == 0) {
+                E("comment text starting with >");
+                EPARSE();
+                return -1;
+            }
+            if (parser->cache.len == 1 && parser->cache.str[0] == '-') {
+                E("comment text starting with ->");
+                EPARSE();
+                return -1;
+            }
+            if ((parser->cache.len >= 2) &&
+                (parser->cache.str[parser->cache.len-1]=='-') &&
+                (parser->cache.str[parser->cache.len-2]=='-'))
+            {
                 hvml_parser_pop_state(parser);
                 string_reset(&parser->cache);
                 break;
             }
-            // fall throught
-        }
+            if ((parser->cache.len >= 3) &&
+                (parser->cache.str[parser->cache.len-1]=='!') &&
+                (parser->cache.str[parser->cache.len-2]=='-') &&
+                (parser->cache.str[parser->cache.len-3]=='-'))
+            {
+                E("comment text containing --!>");
+                EPARSE();
+                return -1;
+            }
+            string_append(&parser->cache, c);
+        } break;
+        case '-':
+        {
+            if ((parser->cache.len >= 4) &&
+                (parser->cache.str[parser->cache.len-1]=='-') &&
+                (parser->cache.str[parser->cache.len-2]=='-') &&
+                (parser->cache.str[parser->cache.len-3]=='!') &&
+                (parser->cache.str[parser->cache.len-4]=='<'))
+            {
+                E("comment text ending with <!-");
+                EPARSE();
+                return -1;
+            }
+            string_append(&parser->cache, c);
+        } break;
         default:
         {
+            if ((parser->cache.len >= 4) &&
+                (parser->cache.str[parser->cache.len-1]=='-') &&
+                (parser->cache.str[parser->cache.len-2]=='-') &&
+                (parser->cache.str[parser->cache.len-3]=='!') &&
+                (parser->cache.str[parser->cache.len-4]=='<'))
+            {
+                E("comment text containing <!--");
+                EPARSE();
+                return -1;
+            }
             string_append(&parser->cache, c);
         } break;
     }
