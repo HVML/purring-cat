@@ -68,6 +68,7 @@ static int         string_append(string_t *str, const char c);
 static void        string_reset(string_t *str);
 static void        string_clear(string_t *str);
 static const char* string_get(string_t *str); // if not initialized, return null string rather than null pointer
+static size_t      string_len(string_t *str);
 
 struct hvml_json_parser_s {
       hvml_json_parser_conf_t        conf;
@@ -295,7 +296,7 @@ static int hvml_json_parser_at_str(hvml_json_parser_t *parser, const char c, con
                 {
                     int ret = 0;
                     if (parser->conf.on_key) {
-                        ret = parser->conf.on_key(parser->conf.arg, string_get(&parser->cache));
+                        ret = parser->conf.on_key(parser->conf.arg, string_get(&parser->cache), string_len(&parser->cache));
                     }
                     string_reset(&parser->cache);
                     if (ret) return ret;
@@ -304,7 +305,7 @@ static int hvml_json_parser_at_str(hvml_json_parser_t *parser, const char c, con
                 {
                     int ret = 0;
                     if (parser->conf.on_string) {
-                        ret = parser->conf.on_string(parser->conf.arg, string_get(&parser->cache));
+                        ret = parser->conf.on_string(parser->conf.arg, string_get(&parser->cache), string_len(&parser->cache));
                     }
                     string_reset(&parser->cache);
                     if (ret) return ret;
@@ -313,7 +314,7 @@ static int hvml_json_parser_at_str(hvml_json_parser_t *parser, const char c, con
                 {
                     int ret = 0;
                     if (parser->conf.on_string) {
-                        ret = parser->conf.on_string(parser->conf.arg, string_get(&parser->cache));
+                        ret = parser->conf.on_string(parser->conf.arg, string_get(&parser->cache), string_len(&parser->cache));
                     }
                     string_reset(&parser->cache);
                     if (ret) return ret;
@@ -322,7 +323,7 @@ static int hvml_json_parser_at_str(hvml_json_parser_t *parser, const char c, con
                 {
                     int ret = 0;
                     if (parser->conf.on_string) {
-                        ret = parser->conf.on_string(parser->conf.arg, string_get(&parser->cache));
+                        ret = parser->conf.on_string(parser->conf.arg, string_get(&parser->cache), string_len(&parser->cache));
                     }
                     string_reset(&parser->cache);
                     if (ret) return ret;
@@ -488,15 +489,11 @@ static int hvml_json_parser_at_escape_u3(hvml_json_parser_t *parser, const char 
             case '\f':
             case '\t':
             case '\r':
-            case '\n': {
+            case '\n':
+            case '\0': {
                 parser->cache.len -= 6;
                 parser->cache.str[parser->cache.len] = '\0';
                 string_append(&parser->cache, ucs);
-            } break;
-            case 0: {
-                E("\\u0000 not supported yet");
-                EPARSE();
-                return -1;
             } break;
             default: {
                 parser->cache.len -= 6;
@@ -1322,6 +1319,10 @@ static void string_clear(string_t *str) {
 static const char* string_get(string_t *str) {
     if (str->len==0) return "";
     return str->str;
+}
+
+static size_t string_len(string_t *str) {
+    return str->len;
 }
 
 static int hvml_json_parser_push_state(hvml_json_parser_t *parser, HVML_JSON_PARSER_STATE state) {

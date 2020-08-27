@@ -119,7 +119,7 @@ static int on_close_obj(void *arg) {
     return 0;
 }
 
-static int on_key(void *arg, const char *key) {
+static int on_key(void *arg, const char *key, size_t len) {
     printf("json key: %s\n", key);
     return 0;
 }
@@ -139,7 +139,7 @@ static int on_null(void *arg) {
     return 0;
 }
 
-static int on_string(void *arg, const char *val) {
+static int on_string(void *arg, const char *val, size_t len) {
     printf("json string: %s\n", val);
     return 0;
 }

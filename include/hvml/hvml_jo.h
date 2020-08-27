@@ -49,11 +49,11 @@ hvml_jo_value_t* hvml_jo_false();
 hvml_jo_value_t* hvml_jo_null();
 hvml_jo_value_t* hvml_jo_integer(const int64_t v);
 hvml_jo_value_t* hvml_jo_double(const double v);
-hvml_jo_value_t* hvml_jo_string(const char *v);
+hvml_jo_value_t* hvml_jo_string(const char *v, size_t len);
 hvml_jo_value_t* hvml_jo_object();
 hvml_jo_value_t* hvml_jo_array();
 
-int              hvml_jo_object_set_kv(hvml_jo_value_t *jo, const char *key, hvml_jo_value_t *val);
+int              hvml_jo_object_set_kv(hvml_jo_value_t *jo, const char *key, size_t len, hvml_jo_value_t *val);
 int              hvml_jo_array_append(hvml_jo_value_t *jo, hvml_jo_value_t *val);
 
 void             hvml_jo_value_detach(hvml_jo_value_t *jo);

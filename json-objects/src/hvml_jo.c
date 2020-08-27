@@ -70,7 +70,7 @@ typedef struct hvml_jo_array_s        hvml_jo_array_t;
 
 // internal
 typedef struct hvml_jo_object_kv_s    hvml_jo_object_kv_t;
-static hvml_jo_value_t* hvml_jo_object_kv(const char *key);
+static hvml_jo_value_t* hvml_jo_object_kv(const char *key, size_t len);
 
 struct hvml_jo_true_s { };
 
@@ -87,7 +87,8 @@ struct hvml_jo_number_s {
 };
 
 struct hvml_jo_string_s {
-    char *str;
+    char   *str;
+    size_t  len;
 };
 
 struct hvml_jo_object_s {
@@ -99,6 +100,7 @@ struct hvml_jo_array_s {
 
 struct hvml_jo_object_kv_s {
     char                    *key;
+    size_t                   len;
     hvml_jo_value_t         *val;
 
     OBJ_KV_MEMBERS();
@@ -180,16 +182,18 @@ hvml_jo_value_t* hvml_jo_double(const double v) {
     return jo;
 }
 
-hvml_jo_value_t* hvml_jo_string(const char *v) {
+hvml_jo_value_t* hvml_jo_string(const char *v, size_t len) {
     hvml_jo_value_t *jo = (hvml_jo_value_t*)calloc(1, sizeof(*jo));
     if (!jo) return NULL;
 
     jo->jot = MKJOT(J_STRING);
-    jo->jstr.str = strdup(v);
+    jo->jstr.str = (char*)malloc(len+1);
     if (!jo->jstr.str) {
         free(jo);
         return NULL;
     }
+    memcpy(jo->jstr.str, v, len);
+    jo->jstr.len = len;
 
     return jo;
 }
@@ -212,26 +216,28 @@ hvml_jo_value_t* hvml_jo_array() {
     return jo;
 }
 
-static hvml_jo_value_t* hvml_jo_object_kv(const char *key) {
+static hvml_jo_value_t* hvml_jo_object_kv(const char *key, size_t len) {
     hvml_jo_value_t *jo = (hvml_jo_value_t*)calloc(1, sizeof(*jo));
     if (!jo) return NULL;
 
     jo->jot = MKJOT(J_OBJECT_KV);
-    jo->jkv.key = strdup(key);
+    jo->jkv.key = (char*)malloc(len+1);
     if (!jo->jkv.key) {
         free(jo);
         return NULL;
     }
+    memcpy(jo->jkv.key, key, len);
+    jo->jkv.len = len;
 
     return jo;
 }
 
-hvml_jo_value_t* hvml_jo_object_get_kv_by_key(hvml_jo_value_t *jo, const char *key) {
+hvml_jo_value_t* hvml_jo_object_get_kv_by_key(hvml_jo_value_t *jo, const char *key, size_t len) {
     A(jo->jot == MKJOT(J_OBJECT), "internal logic error");
 
     hvml_jo_object_kv_t *kv = OBJ_HEAD((&jo->jobject));
     while (kv) {
-        if (strcmp(kv->key, key)==0) break;
+        if (kv->len == len && memcmp(kv->key, key, len)==0) break;
         kv = OBJ_NEXT(kv);
     }
 
@@ -242,12 +248,12 @@ hvml_jo_value_t* hvml_jo_object_get_kv_by_key(hvml_jo_value_t *jo, const char *k
     return v;
 }
 
-int hvml_jo_object_set_kv(hvml_jo_value_t *jo, const char *key, hvml_jo_value_t *val) {
+int hvml_jo_object_set_kv(hvml_jo_value_t *jo, const char *key, size_t len, hvml_jo_value_t *val) {
     A(jo->jot == MKJOT(J_OBJECT), "internal logic error");
 
-    hvml_jo_value_t *njo = hvml_jo_object_get_kv_by_key(jo, key);
+    hvml_jo_value_t *njo = hvml_jo_object_get_kv_by_key(jo, key, len);
     if (!njo) {
-        njo = hvml_jo_object_kv(key);
+        njo = hvml_jo_object_kv(key, len);
         if (!njo) return -1;
     }
     A(njo->jot == MKJOT(J_OBJECT_KV), "internal logic error");
@@ -317,6 +323,7 @@ void hvml_jo_value_free(hvml_jo_value_t *jo) {
         case MKJOT(J_STRING): {
             free(jo->jstr.str);
             jo->jstr.str = NULL;
+            jo->jstr.len = 0;
         } break;
         case MKJOT(J_OBJECT): {
             while (OBJ_COUNT((&jo->jobject))>0) {
@@ -344,6 +351,7 @@ void hvml_jo_value_free(hvml_jo_value_t *jo) {
             if (jo->jkv.key) {
                 free(jo->jkv.key);
                 jo->jkv.key = NULL;
+                jo->jkv.len = 0;
             }
             if (jo->jkv.val) {
                 hvml_jo_value_free(jo->jkv.val);
@@ -406,18 +414,14 @@ size_t hvml_jo_value_children(hvml_jo_value_t *jo) {
     return VAL_COUNT(jo);
 }
 
-#define fprintf_string(out, escaping, str)      \
-do {                                            \
-    if (!escaping) {                            \
-        fprintf(out, "\"%s\"", str);            \
-    } else {                                    \
-        fprintf(out, "\"");                     \
-        printf_escape(out, str);                \
-        fprintf(out, "\"");                     \
-    }                                           \
+#define fprintf_string(out, escaping, str, len)      \
+do {                                                 \
+    fprintf(out, "\"");                              \
+    printf_escape(out, str, len);                    \
+    fprintf(out, "\"");                              \
 } while (0)
 
-static void printf_escape(FILE *out, const char *s);
+static void printf_escape(FILE *out, const char *s, size_t len);
 
 void hvml_jo_value_printf(hvml_jo_value_t *jo, int escaping, FILE *out) {
     switch (jo->jot) {
@@ -441,7 +445,7 @@ void hvml_jo_value_printf(hvml_jo_value_t *jo, int escaping, FILE *out) {
             }
         } break;
         case MKJOT(J_STRING): {
-            fprintf_string(out, escaping, jo->jstr.str);
+            fprintf_string(out, escaping, jo->jstr.str, jo->jstr.len);
         } break;
         case MKJOT(J_OBJECT): {
             fprintf(out, "{"); // "}"
@@ -459,7 +463,7 @@ void hvml_jo_value_printf(hvml_jo_value_t *jo, int escaping, FILE *out) {
         } break;
         case MKJOT(J_OBJECT_KV): {
             A(jo->jkv.key, "internal logic error");
-            fprintf_string(out, escaping, jo->jkv.key);
+            fprintf_string(out, escaping, jo->jkv.key, jo->jkv.len);
             if (jo->jkv.val) {
                 fprintf(out, ":");
                 // attention: recursive call
@@ -490,11 +494,11 @@ static int on_open_array(void *arg);
 static int on_close_array(void *arg);
 static int on_open_obj(void *arg);
 static int on_close_obj(void *arg);
-static int on_key(void *arg, const char *key);
+static int on_key(void *arg, const char *key, size_t len);
 static int on_true(void *arg);
 static int on_false(void *arg);
 static int on_null(void *arg);
-static int on_string(void *arg, const char *val);
+static int on_string(void *arg, const char *val, size_t len);
 static int on_integer(void *arg, const char *origin, int64_t val);
 static int on_double(void *arg, const char *origin, double val);
 static int on_end(void *arg);
@@ -611,20 +615,21 @@ hvml_jo_value_t* hvml_jo_value_load_from_stream(FILE *in) {
 
 
 
-static void printf_escape(FILE *out, const char *s) {
-    while (*s) {
-        const char c = *s;
+static void printf_escape(FILE *out, const char *s, size_t len) {
+    const char *p = s;
+    for (size_t i=0; i<len; ++i, ++p) {
+        const char c = *p;
         switch (c) {
-            case '"':  { fprintf(out, "\\\"");  break; }
-            case '\\': { fprintf(out, "\\\\");  break; }
-            case '\b': { fprintf(out, "\\b");   break; }
-            case '\t': { fprintf(out, "\\t");   break; }
-            case '\f': { fprintf(out, "\\f");   break; }
-            case '\r': { fprintf(out, "\\r");   break; }
-            case '\n': { fprintf(out, "\\n");   break; }
-            default:   { fprintf(out, "%c", c); break; }
+            case '"':  { fprintf(out, "\\\"");    break; }
+            case '\\': { fprintf(out, "\\\\");    break; }
+            case '\b': { fprintf(out, "\\b");     break; }
+            case '\t': { fprintf(out, "\\t");     break; }
+            case '\f': { fprintf(out, "\\f");     break; }
+            case '\r': { fprintf(out, "\\r");     break; }
+            case '\n': { fprintf(out, "\\n");     break; }
+            case '\0': { fprintf(out, "\\u0000"); break; }
+            default:   { fprintf(out, "%c", c);   break; }
         }
-        ++s;
     }
 }
 
@@ -701,12 +706,12 @@ static int on_close_obj(void *arg) {
 	return 0;
 }
 
-static int on_key(void *arg, const char *key) {
+static int on_key(void *arg, const char *key, size_t len) {
     hvml_jo_gen_t   *gen    = (hvml_jo_gen_t*)arg;
     hvml_jo_value_t *parent = gen->jo;
     A(parent->jot == MKJOT(J_OBJECT), "internal logic error");
 
-    hvml_jo_value_t *jo = hvml_jo_object_kv(key);
+    hvml_jo_value_t *jo = hvml_jo_object_kv(key, len);
     if (!jo) return -1;
     A(jo->jot == MKJOT(J_OBJECT_KV), "internal logic error");
 
@@ -784,8 +789,8 @@ static int on_null(void *arg) {
 	return 0;
 }
 
-static int on_string(void *arg, const char *val) {
-    hvml_jo_value_t *jo = hvml_jo_string(val);
+static int on_string(void *arg, const char *val, size_t len) {
+    hvml_jo_value_t *jo = hvml_jo_string(val, len);
     if (!jo) return -1;
 
     hvml_jo_gen_t *gen = (hvml_jo_gen_t*)arg;

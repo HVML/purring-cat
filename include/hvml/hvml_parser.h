@@ -41,11 +41,11 @@ struct hvml_parser_conf_s {
     int (*on_close_array)(void *arg);
     int (*on_open_obj)(void *arg);
     int (*on_close_obj)(void *arg);
-    int (*on_key)(void *arg, const char *key);
+    int (*on_key)(void *arg, const char *key, size_t len);
     int (*on_true)(void *arg);
     int (*on_false)(void *arg);
     int (*on_null)(void *arg);
-    int (*on_string)(void *arg, const char *val);
+    int (*on_string)(void *arg, const char *val, size_t len);
     int (*on_integer)(void *arg, const char *origin, int64_t val);
     int (*on_double)(void *arg, const char *origin, double val);
     int (*on_end)(void *arg);
