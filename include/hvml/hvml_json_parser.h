@@ -30,6 +30,8 @@ typedef struct hvml_json_parser_s                hvml_json_parser_t;
 typedef struct hvml_json_parser_conf_s           hvml_json_parser_conf_t;
 
 struct hvml_json_parser_conf_s {
+    // all callback-funcs just mean as name implies
+
     int (*on_begin)(void *arg);
     int (*on_open_array)(void *arg);
     int (*on_close_array)(void *arg);
@@ -45,25 +47,34 @@ struct hvml_json_parser_conf_s {
     int (*on_end)(void *arg);
 
     void *arg;
+    // if this parser can handle embedded-json-fragment within another `token` stream
     int   embedded:1;
+    // valid only when `embedded` is set
     size_t     offset_line;
     size_t     offset_col;
 };
 
+// create a json parser
 hvml_json_parser_t* hvml_json_parser_create(hvml_json_parser_conf_t conf);
+// destroy the json parser
 void                hvml_json_parser_destroy(hvml_json_parser_t *parser);
+// reset the internal state of the json parser
 void                hvml_json_parser_reset(hvml_json_parser_t *parser);
 
+// pump string stream into the `parser` to trigger registered-callbacks on the fly
 int                 hvml_json_parser_parse_char(hvml_json_parser_t *parser, const char c);
 int                 hvml_json_parser_parse(hvml_json_parser_t *parser, const char *buf, size_t len);
 int                 hvml_json_parser_parse_string(hvml_json_parser_t *parser, const char *str);
 int                 hvml_json_parser_parse_end(hvml_json_parser_t *parser);
 
+// as name implies
 int                 hvml_json_parser_is_begin(hvml_json_parser_t *parser);
 int                 hvml_json_parser_is_ending(hvml_json_parser_t *parser);
 
+// useful only when initializing `embedded-json-fragment-parser`
 void                hvml_json_parser_set_offset(hvml_json_parser_t *parser, size_t line, size_t col);
 
+// serializing `str` as a json string
 void                hvml_json_str_printf(FILE *out, const char *s, size_t len);
 
 #ifdef __cplusplus
