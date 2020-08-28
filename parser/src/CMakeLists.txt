@@ -1,4 +1,5 @@
 set(hvml_parser_src
+    hvml_dom.c
     hvml_json_parser.c
     hvml_log.c
     hvml_parser.c
