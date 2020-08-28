@@ -142,7 +142,7 @@ The source tree of Purring Cat contains the following modules:
 - `interpreter/`: The interpreter of vDOM.
 - `json-eval/`: The parser of JSON evaluation expression.
 - `json-objects/`: The built-in dynamic JSON objects.
-- `web-render/`: A HTML/CSS render without JavaScript; It is derived from hiWebKit.
+- `web-renderer/`: A HTML/CSS renderer without JavaScript; It is derived from hiWebKit.
 - `bindings/`: The bindings for Python, Lua, and other programming languages.
 - `test/`: The unit test programs.
 - `docs/`: Some notes for developers.
