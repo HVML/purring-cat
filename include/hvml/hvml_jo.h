@@ -43,6 +43,7 @@ typedef enum {
 typedef struct hvml_jo_value_s         hvml_jo_value_t;
 typedef struct hvml_jo_gen_s           hvml_jo_gen_t;
 
+// generate a specific json value on the heap
 hvml_jo_value_t* hvml_jo_undefined();
 hvml_jo_value_t* hvml_jo_true();
 hvml_jo_value_t* hvml_jo_false();
@@ -53,31 +54,48 @@ hvml_jo_value_t* hvml_jo_string(const char *v, size_t len);
 hvml_jo_value_t* hvml_jo_object();
 hvml_jo_value_t* hvml_jo_array();
 
+// set key/val part of the json object
 int              hvml_jo_object_set_kv(hvml_jo_value_t *jo, const char *key, size_t len, hvml_jo_value_t *val);
+// append a json value to the tail of json array
 int              hvml_jo_array_append(hvml_jo_value_t *jo, hvml_jo_value_t *val);
 
+// detach a json value from it's parent
 void             hvml_jo_value_detach(hvml_jo_value_t *jo);
+// free a json value, detached internally
 void             hvml_jo_value_free(hvml_jo_value_t *jo);
 
+// return the type of the json value
 HVML_JO_TYPE     hvml_jo_value_type(hvml_jo_value_t *jo);
+// return the type name of the json value
 const char*      hvml_jo_value_type_str(hvml_jo_value_t *jo);
 
+// return the parent of the json value
 hvml_jo_value_t* hvml_jo_value_parent(hvml_jo_value_t *jo);
+// return the root of the json value
 hvml_jo_value_t* hvml_jo_value_root(hvml_jo_value_t *jo);
 
+// return # of json value's children
 size_t           hvml_jo_value_children(hvml_jo_value_t *jo);
 
+// serialize the json value to the file stream, with `escape` if necessary
 void             hvml_jo_value_printf(hvml_jo_value_t *jo, FILE *out);
 
 
+// create a `generator`, with which we can build a json value from string stream
 hvml_jo_gen_t*   hvml_jo_gen_create();
+// destroy the `generator`
 void             hvml_jo_gen_destroy(hvml_jo_gen_t *gen);
 
+// pump string stream into the `generator` to build a json value on the fly
 int              hvml_jo_gen_parse_char(hvml_jo_gen_t *gen, const char c);
 int              hvml_jo_gen_parse(hvml_jo_gen_t *gen, const char *buf, size_t len);
 int              hvml_jo_gen_parse_string(hvml_jo_gen_t *gen, const char *str);
+// when reaching the end of the string stream, tell the `generator` to end and return
+// the json value built till now
+// if the string stream fails to denote a `well-formed` json value, NULL would be returned
 hvml_jo_value_t* hvml_jo_gen_parse_end(hvml_jo_gen_t *gen);
 
+// load a json value from file stream
 hvml_jo_value_t* hvml_jo_value_load_from_stream(FILE *in);
 
 #ifdef __cplusplus
