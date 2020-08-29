@@ -69,7 +69,7 @@ great success, but have the following deficiencies and shortcomings:
 During the development of [HybridOS](https://hybridos.fmsoft.cn),
 [Vincent Wei](https://github.com/VincentWei) proposed a complete,
 general purpose, elegant and easy-to-learn markup language, HVML (the
-Hybrid Virtual Markup Language) based on the idea of virtual DOM.
+Hybrid Virtual Markup Language), based on the idea of virtual DOM.
 HVML is a general purpose dynamic markup language, mainly used to generate
 actual XML/HTML document content. HVML realizes the ability to
 dynamically generate and update XML/HTML documents through
