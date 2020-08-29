@@ -22,6 +22,13 @@
 #include <ctype.h>
 #include <string.h>
 
+// unicode support, specifically utf-16be
+// ref: https://en.wikipedia.org/wiki/UTF-16
+#define HEX_TO_BIN(c) ((c)>='0'&&(c)<='9')?((c)-'0'):(((c)>='a' && (c)<='f')?((c)-'a'+10):((c)-'A'+10))
+#define IS_HIGH_SURROGATE(hi) (((hi) & 0xFC00) == 0xD800)
+#define IS_LOW_SURROGATE(lo)  (((lo) & 0xFC00) == 0xDC00)
+#define DECODE_SURROGATE_PAIR(hi,lo) ((((hi) & 0x3FF) << 10) + ((lo) & 0x3FF) + 0x10000)
+
 #define MKSTATE(state) HVML_JSON_PARSER_STATE_##state
 #define MKSTR(state)  "HVML_JSON_PARSER_STATE_"#state
 
@@ -31,6 +38,10 @@ typedef enum {
         MKSTATE(KEY_DONE),
             MKSTATE(STR),
                 MKSTATE(ESCAPE),
+                MKSTATE(ESCAPE_U),
+                MKSTATE(ESCAPE_U1),
+                MKSTATE(ESCAPE_U2),
+                MKSTATE(ESCAPE_U3),
         MKSTATE(COLON),
         MKSTATE(VAL_DONE),
         MKSTATE(OBJ_COMMA),
@@ -57,17 +68,21 @@ static int         string_append(string_t *str, const char c);
 static void        string_reset(string_t *str);
 static void        string_clear(string_t *str);
 static const char* string_get(string_t *str); // if not initialized, return null string rather than null pointer
+static size_t      string_len(string_t *str);
 
 struct hvml_json_parser_s {
       hvml_json_parser_conf_t        conf;
       HVML_JSON_PARSER_STATE        *ar_states;
       size_t                         states;
       string_t                       cache;
-
       string_t                       curr;
 
       size_t                         line;
       size_t                         col;
+
+      uint16_t                       shi;
+      uint16_t                       slo;
+      unsigned int                   shi_:1; // indicate if shi_ done
 };
 
 static int                    hvml_json_parser_push_state(hvml_json_parser_t *parser, HVML_JSON_PARSER_STATE state);
@@ -261,6 +276,16 @@ static int hvml_json_parser_at_key_done(hvml_json_parser_t *parser, const char c
 }
 
 static int hvml_json_parser_at_str(hvml_json_parser_t *parser, const char c, const char *str_state) {
+    if (parser->shi_) {
+        if (c=='\\') {
+            string_append(&parser->cache, c);
+            hvml_json_parser_chg_state(parser, MKSTATE(ESCAPE));
+            return 0;
+        }
+        E("not followed by low surrogate");
+        EPARSE();
+        return -1;
+    }
     switch (c) {
         case '"':
         {
@@ -271,7 +296,7 @@ static int hvml_json_parser_at_str(hvml_json_parser_t *parser, const char c, con
                 {
                     int ret = 0;
                     if (parser->conf.on_key) {
-                        ret = parser->conf.on_key(parser->conf.arg, string_get(&parser->cache));
+                        ret = parser->conf.on_key(parser->conf.arg, string_get(&parser->cache), string_len(&parser->cache));
                     }
                     string_reset(&parser->cache);
                     if (ret) return ret;
@@ -280,7 +305,7 @@ static int hvml_json_parser_at_str(hvml_json_parser_t *parser, const char c, con
                 {
                     int ret = 0;
                     if (parser->conf.on_string) {
-                        ret = parser->conf.on_string(parser->conf.arg, string_get(&parser->cache));
+                        ret = parser->conf.on_string(parser->conf.arg, string_get(&parser->cache), string_len(&parser->cache));
                     }
                     string_reset(&parser->cache);
                     if (ret) return ret;
@@ -289,7 +314,7 @@ static int hvml_json_parser_at_str(hvml_json_parser_t *parser, const char c, con
                 {
                     int ret = 0;
                     if (parser->conf.on_string) {
-                        ret = parser->conf.on_string(parser->conf.arg, string_get(&parser->cache));
+                        ret = parser->conf.on_string(parser->conf.arg, string_get(&parser->cache), string_len(&parser->cache));
                     }
                     string_reset(&parser->cache);
                     if (ret) return ret;
@@ -298,7 +323,7 @@ static int hvml_json_parser_at_str(hvml_json_parser_t *parser, const char c, con
                 {
                     int ret = 0;
                     if (parser->conf.on_string) {
-                        ret = parser->conf.on_string(parser->conf.arg, string_get(&parser->cache));
+                        ret = parser->conf.on_string(parser->conf.arg, string_get(&parser->cache), string_len(&parser->cache));
                     }
                     string_reset(&parser->cache);
                     if (ret) return ret;
@@ -324,6 +349,16 @@ static int hvml_json_parser_at_str(hvml_json_parser_t *parser, const char c, con
 }
 
 static int hvml_json_parser_at_escape(hvml_json_parser_t *parser, const char c, const char *str_state) {
+    if (parser->shi_) {
+        if (c=='u') {
+            string_append(&parser->cache, c);
+            hvml_json_parser_chg_state(parser, MKSTATE(ESCAPE_U));
+            return 0;
+        }
+        E("not followed by low surrogate");
+        EPARSE();
+        return -1;
+    }
     switch (c) {
         case '"':
         {
@@ -365,12 +400,135 @@ static int hvml_json_parser_at_escape(hvml_json_parser_t *parser, const char c, 
             parser->cache.str[parser->cache.len-1] = '\n';
             hvml_json_parser_pop_state(parser);
         } break;
+        case 'u':
+        {
+            string_append(&parser->cache, c);
+            A(parser->shi  == 0, "internal logic error");
+            A(parser->slo  == 0, "internal logic error");
+            A(parser->shi_ == 0, "internal logic error");
+            hvml_json_parser_chg_state(parser, MKSTATE(ESCAPE_U));
+        } break;
         default:
         {
             EPARSE();
             return -1;
         } break;
     }
+    return 0;
+}
+
+static int hvml_json_parser_at_escape_u(hvml_json_parser_t *parser, const char c, const char *str_state) {
+    if (!isxdigit(c)) {
+        EPARSE();
+        return -1;
+    }
+    string_append(&parser->cache, c);
+    if (!parser->shi_) {
+        parser->shi |= (HEX_TO_BIN(c))<<12;
+    } else {
+        parser->slo |= (HEX_TO_BIN(c))<<12;
+    }
+    hvml_json_parser_chg_state(parser, MKSTATE(ESCAPE_U1));
+    return 0;
+}
+
+static int hvml_json_parser_at_escape_u1(hvml_json_parser_t *parser, const char c, const char *str_state) {
+    if (!isxdigit(c)) {
+        EPARSE();
+        return -1;
+    }
+    string_append(&parser->cache, c);
+    if (!parser->shi_) {
+        parser->shi |= (HEX_TO_BIN(c))<<8;
+    } else {
+        parser->slo |= (HEX_TO_BIN(c))<<8;
+    }
+    hvml_json_parser_chg_state(parser, MKSTATE(ESCAPE_U2));
+    return 0;
+}
+
+static int hvml_json_parser_at_escape_u2(hvml_json_parser_t *parser, const char c, const char *str_state) {
+    if (!isxdigit(c)) {
+        EPARSE();
+        return -1;
+    }
+    string_append(&parser->cache, c);
+    if (!parser->shi_) {
+        parser->shi |= (HEX_TO_BIN(c))<<4;
+    } else {
+        parser->slo |= (HEX_TO_BIN(c))<<4;
+    }
+    hvml_json_parser_chg_state(parser, MKSTATE(ESCAPE_U3));
+    return 0;
+}
+
+static int hvml_json_parser_at_escape_u3(hvml_json_parser_t *parser, const char c, const char *str_state) {
+    if (!isxdigit(c)) {
+        EPARSE();
+        return -1;
+    }
+    string_append(&parser->cache, c);
+    if (!parser->shi_) {
+        parser->shi |= (HEX_TO_BIN(c));
+    } else {
+        parser->slo |= (HEX_TO_BIN(c));
+    }
+
+    if (!parser->shi_) {
+        if (IS_HIGH_SURROGATE(parser->shi)) {
+            parser->shi_ = 1;
+            hvml_json_parser_chg_state(parser, MKSTATE(STR));
+            return 0;
+        }
+        uint32_t ucs = parser->shi;
+        switch (ucs) {
+            case '"':
+            case '/':
+            case '\\':
+            case '\b':
+            case '\f':
+            case '\t':
+            case '\r':
+            case '\n':
+            case '\0': {
+                parser->cache.len -= 6;
+                parser->cache.str[parser->cache.len] = '\0';
+                string_append(&parser->cache, ucs);
+            } break;
+            default: {
+                parser->cache.len -= 6;
+                parser->cache.str[parser->cache.len] = '\0';
+                string_append(&parser->cache, 0xe0 | (ucs >> 12));
+                string_append(&parser->cache, 0x80 | ((ucs >> 6) & 0x3f));
+                string_append(&parser->cache, 0x80 | (ucs & 0x3f));
+            } break;
+        }
+        parser->shi = 0;
+        hvml_json_parser_pop_state(parser);
+        return 0;
+    }
+
+    if (!IS_LOW_SURROGATE(parser->slo)) {
+        E("not followed by low surrogate");
+        EPARSE();
+        return -1;
+    }
+    uint32_t ucs = DECODE_SURROGATE_PAIR(parser->shi, parser->slo);
+    if(ucs<0x10000 || ucs>=0x110000) {
+        E("not followed by low surrogate");
+        EPARSE();
+        return -1;
+    }
+    parser->cache.len -= 12;
+    parser->cache.str[parser->cache.len] = '\0';
+    string_append(&parser->cache, 0xf0 | ((ucs >> 18) & 0x07));
+    string_append(&parser->cache, 0x80 | ((ucs >> 12) & 0x3f));
+    string_append(&parser->cache, 0x80 | ((ucs >> 6) & 0x3f));
+    string_append(&parser->cache, 0x80 | (ucs & 0x3f));
+    parser->shi  = 0;
+    parser->slo  = 0;
+    parser->shi_ = 0;
+    hvml_json_parser_pop_state(parser);
     return 0;
 }
 
@@ -989,6 +1147,22 @@ static int do_hvml_json_parser_parse_char(hvml_json_parser_t *parser, const char
         {
             return hvml_json_parser_at_escape(parser, c, MKSTR(ESCAPE));
         } break;
+        case MKSTATE(ESCAPE_U):
+        {
+            return hvml_json_parser_at_escape_u(parser, c, MKSTR(ESCAPE_U));
+        } break;
+        case MKSTATE(ESCAPE_U1):
+        {
+            return hvml_json_parser_at_escape_u1(parser, c, MKSTR(ESCAPE_U1));
+        } break;
+        case MKSTATE(ESCAPE_U2):
+        {
+            return hvml_json_parser_at_escape_u2(parser, c, MKSTR(ESCAPE_U2));
+        } break;
+        case MKSTATE(ESCAPE_U3):
+        {
+            return hvml_json_parser_at_escape_u3(parser, c, MKSTR(ESCAPE_U3));
+        } break;
         case MKSTATE(COLON):
         {
             return hvml_json_parser_at_colon(parser, c, MKSTR(COLON));
@@ -1091,8 +1265,8 @@ int hvml_json_parser_parse_string(hvml_json_parser_t *parser, const char *str) {
 
 int hvml_json_parser_parse_end(hvml_json_parser_t *parser) {
     if ((parser->states != 1) ||
-        (hvml_json_parser_peek_state(parser)!=MKSTATE(END)) &&
-        (hvml_json_parser_peek_state(parser)!=MKSTATE(BEGIN)))
+        ((hvml_json_parser_peek_state(parser)!=MKSTATE(END)) &&
+        (hvml_json_parser_peek_state(parser)!=MKSTATE(BEGIN))))
     {
         D("states: %ld/%d", parser->states, hvml_json_parser_peek_state(parser));
         return -1;
@@ -1113,6 +1287,26 @@ int hvml_json_parser_is_ending(hvml_json_parser_t *parser) {
 void hvml_json_parser_set_offset(hvml_json_parser_t *parser, size_t line, size_t col) {
     parser->conf.offset_line = line;
     parser->conf.offset_col  = col;
+}
+
+void hvml_json_str_printf(FILE *out, const char *s, size_t len) {
+    fprintf(out, "\"");
+    const char *p = s;
+    for (size_t i=0; i<len; ++i, ++p) {
+        const char c = *p;
+        switch (c) {
+            case '"':  { fprintf(out, "\\\"");    break; }
+            case '\\': { fprintf(out, "\\\\");    break; }
+            case '\b': { fprintf(out, "\\b");     break; }
+            case '\t': { fprintf(out, "\\t");     break; }
+            case '\f': { fprintf(out, "\\f");     break; }
+            case '\r': { fprintf(out, "\\r");     break; }
+            case '\n': { fprintf(out, "\\n");     break; }
+            case '\0': { fprintf(out, "\\u0000"); break; }
+            default:   { fprintf(out, "%c", c);   break; }
+        }
+    }
+    fprintf(out, "\"");
 }
 
 
@@ -1145,6 +1339,10 @@ static void string_clear(string_t *str) {
 static const char* string_get(string_t *str) {
     if (str->len==0) return "";
     return str->str;
+}
+
+static size_t string_len(string_t *str) {
+    return str->len;
 }
 
 static int hvml_json_parser_push_state(hvml_json_parser_t *parser, HVML_JSON_PARSER_STATE state) {

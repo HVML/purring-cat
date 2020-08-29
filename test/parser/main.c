@@ -18,6 +18,7 @@
 #include "hvml/hvml_parser.h"
 
 #include "hvml/hvml_jo.h"
+#include "hvml/hvml_json_parser.h"
 #include "hvml/hvml_log.h"
 
 #include <inttypes.h>
@@ -31,6 +32,10 @@ static int process_json(FILE *in);
 
 int main(int argc, char *argv[]) {
     if (argc == 1) return 0;
+
+    if (getenv("NEG")) {
+        hvml_log_set_output_only(1);
+    }
 
     hvml_log_set_thread_type("main");
 
@@ -119,8 +124,10 @@ static int on_close_obj(void *arg) {
     return 0;
 }
 
-static int on_key(void *arg, const char *key) {
-    printf("json key: %s\n", key);
+static int on_key(void *arg, const char *key, size_t len) {
+    printf("json key: ");
+    hvml_json_str_printf(stdout, key, len);
+    printf("\n");
     return 0;
 }
 
@@ -139,8 +146,10 @@ static int on_null(void *arg) {
     return 0;
 }
 
-static int on_string(void *arg, const char *val) {
-    printf("json string: %s\n", val);
+static int on_string(void *arg, const char *val, size_t len) {
+    printf("json string: ");
+    hvml_json_str_printf(stdout, val, len);
+    printf("\n");
     return 0;
 }
 
@@ -202,7 +211,7 @@ static int process_hvml(FILE *in) {
 static int process_json(FILE *in) {
     hvml_jo_value_t *jo = hvml_jo_value_load_from_stream(in);
     if (jo) {
-        hvml_jo_value_printf(jo, 1, stdout);
+        hvml_jo_value_printf(jo, stdout);
         hvml_jo_value_free(jo);
         printf("\n");
         return 0;

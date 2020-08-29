@@ -103,11 +103,11 @@ static int on_open_array(void *arg);
 static int on_close_array(void *arg);
 static int on_open_obj(void *arg);
 static int on_close_obj(void *arg);
-static int on_key(void *arg, const char *key);
+static int on_key(void *arg, const char *key, size_t len);
 static int on_true(void *arg);
 static int on_false(void *arg);
 static int on_null(void *arg);
-static int on_string(void *arg, const char *val);
+static int on_string(void *arg, const char *val, size_t len);
 static int on_integer(void *arg, const char *origin, int64_t val);
 static int on_double(void *arg, const char *origin, double val);
 static int on_end(void *arg);
@@ -697,15 +697,61 @@ static int hvml_parser_at_comment(hvml_parser_t *parser, const char c, const cha
     switch (c) {
         case '>':
         {
-            if (parser->cache.len >= 2 && parser->cache.str[parser->cache.len-1]=='-' && parser->cache.str[parser->cache.len-2]=='-') {
+            if (parser->cache.len == 0) {
+                E("comment text starting with >");
+                EPARSE();
+                return -1;
+            }
+            if (parser->cache.len == 1 && parser->cache.str[0] == '-') {
+                E("comment text starting with ->");
+                EPARSE();
+                return -1;
+            }
+            if ((parser->cache.len >= 2) &&
+                (parser->cache.str[parser->cache.len-1]=='-') &&
+                (parser->cache.str[parser->cache.len-2]=='-'))
+            {
                 hvml_parser_pop_state(parser);
                 string_reset(&parser->cache);
                 break;
             }
-            // fall throught
-        }
+            if ((parser->cache.len >= 3) &&
+                (parser->cache.str[parser->cache.len-1]=='!') &&
+                (parser->cache.str[parser->cache.len-2]=='-') &&
+                (parser->cache.str[parser->cache.len-3]=='-'))
+            {
+                E("comment text containing --!>");
+                EPARSE();
+                return -1;
+            }
+            string_append(&parser->cache, c);
+        } break;
+        case '-':
+        {
+            if ((parser->cache.len >= 4) &&
+                (parser->cache.str[parser->cache.len-1]=='-') &&
+                (parser->cache.str[parser->cache.len-2]=='-') &&
+                (parser->cache.str[parser->cache.len-3]=='!') &&
+                (parser->cache.str[parser->cache.len-4]=='<'))
+            {
+                E("comment text ending with <!-");
+                EPARSE();
+                return -1;
+            }
+            string_append(&parser->cache, c);
+        } break;
         default:
         {
+            if ((parser->cache.len >= 4) &&
+                (parser->cache.str[parser->cache.len-1]=='-') &&
+                (parser->cache.str[parser->cache.len-2]=='-') &&
+                (parser->cache.str[parser->cache.len-3]=='!') &&
+                (parser->cache.str[parser->cache.len-4]=='<'))
+            {
+                E("comment text containing <!--");
+                EPARSE();
+                return -1;
+            }
             string_append(&parser->cache, c);
         } break;
     }
@@ -1016,11 +1062,11 @@ static int on_close_obj(void *arg) {
     return ret;
 }
 
-static int on_key(void *arg, const char *key) {
+static int on_key(void *arg, const char *key, size_t len) {
     hvml_parser_t *parser = (hvml_parser_t*)arg;
     int ret = 0;
     if (parser->conf.on_key) {
-        ret = parser->conf.on_key(parser->conf.arg, key);
+        ret = parser->conf.on_key(parser->conf.arg, key, len);
     }
     return ret;
 }
@@ -1052,11 +1098,11 @@ static int on_null(void *arg) {
     return ret;
 }
 
-static int on_string(void *arg, const char *val) {
+static int on_string(void *arg, const char *val, size_t len) {
     hvml_parser_t *parser = (hvml_parser_t*)arg;
     int ret = 0;
     if (parser->conf.on_string) {
-        ret = parser->conf.on_string(parser->conf.arg, val);
+        ret = parser->conf.on_string(parser->conf.arg, val, len);
     }
     return ret;
 }

@@ -15,8 +15,8 @@ attr key: as
 attr val: global
 json begin:
 json open obj:
-json key: locale
-json string: zh_CN
+json key: "locale"
+json string: "zh_CN"
 json close obj:
 json end:
 close tag
@@ -29,24 +29,24 @@ attr val: users
 json begin:
 json open array:
 json open obj:
-json key: id
-json string: 1
-json key: avatar
-json string: /img/avatars/1.png
-json key: name
-json string: Tom
-json key: region
-json string: en_US
+json key: "id"
+json string: "1"
+json key: "avatar"
+json string: "/img/avatars/1.png"
+json key: "name"
+json string: "Tom"
+json key: "region"
+json string: "en_US"
 json close obj:
 json open obj:
-json key: id
-json string: 2
-json key: avatar
-json string: /img/avatars/2.png
-json key: name
-json string: Jerry
-json key: region
-json string: zh_CN
+json key: "id"
+json string: "2"
+json key: "avatar"
+json string: "/img/avatars/2.png"
+json key: "name"
+json string: "Jerry"
+json key: "region"
+json string: "zh_CN"
 json close obj:
 json double: 0	[f]0.000000	[e]0.000000e+00	[g]0
 json double: +0	[f]0.000000	[e]0.000000e+00	[g]0
@@ -126,14 +126,14 @@ attr key: id
 attr val: item-user
 json begin:
 json open obj:
-json key: id
-json string: $?.attr.data-value
-json key: avatar
-json string: $?.content[0].attr.src
-json key: name
-json string: $?.children[1].textContent
-json key: region
-json string: $?.attr.data-region
+json key: "id"
+json string: "$?.attr.data-value"
+json key: "avatar"
+json string: "$?.content[0].attr.src"
+json key: "name"
+json string: "$?.children[1].textContent"
+json key: "region"
+json string: "$?.attr.data-region"
 json close obj:
 json end:
 close tag

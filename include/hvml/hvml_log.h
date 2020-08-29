@@ -25,7 +25,10 @@
 extern "C" {
 #endif
 
+// set typename of the calling thread, which would be printed in log funcs
 void hvml_log_set_thread_type(const char *type);
+// if set, no prefix/surfix part would be printed in log funcs
+void hvml_log_set_output_only(int set);
 
 void hvml_log_printf(const char *cfile, int cline, const char *cfunc, FILE *out, const char level, const char *fmt, ...)
 __attribute__ ((format (printf, 6, 7)));
