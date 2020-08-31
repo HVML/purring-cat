@@ -69,7 +69,7 @@ great success, but have the following deficiencies and shortcomings:
 During the development of [HybridOS](https://hybridos.fmsoft.cn),
 [Vincent Wei](https://github.com/VincentWei) proposed a complete,
 general purpose, elegant and easy-to-learn markup language, HVML (the
-Hybrid Virtual Markup Language) based on the idea of virtual DOM.
+Hybrid Virtual Markup Language), based on the idea of virtual DOM.
 HVML is a general purpose dynamic markup language, mainly used to generate
 actual XML/HTML document content. HVML realizes the ability to
 dynamically generate and update XML/HTML documents through
@@ -142,7 +142,7 @@ The source tree of Purring Cat contains the following modules:
 - `interpreter/`: The interpreter of vDOM.
 - `json-eval/`: The parser of JSON evaluation expression.
 - `json-objects/`: The built-in dynamic JSON objects.
-- `web-render/`: A HTML/CSS render without JavaScript; It is derived from hiWebKit.
+- `web-renderer/`: A HTML/CSS renderer without JavaScript; It is derived from hiWebKit.
 - `bindings/`: The bindings for Python, Lua, and other programming languages.
 - `test/`: The unit test programs.
 - `docs/`: Some notes for developers.
