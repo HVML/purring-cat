@@ -27,19 +27,6 @@
 #include <string.h>
 
 // for easy coding
-#define OBJ_MEMBERS()                HLIST_MEMBERS(hvml_jo_object_kv_t, hvml_jo_object_t, kv)
-#define OBJ_KV_MEMBERS()             HNODE_MEMBERS(hvml_jo_object_kv_t, hvml_jo_object_t, kv)
-#define OBJ_NEXT(obj_kv)             (obj_kv)->MKM(hvml_jo_object_kv_t, hvml_jo_object_t, kv, next)
-#define OBJ_PREV(obj_kv)             (obj_kv)->MKM(hvml_jo_object_kv_t, hvml_jo_object_t, kv, prev)
-#define OBJ_OWNER(obj_kv)            (obj_kv)->MKM(hvml_jo_object_kv_t, hvml_jo_object_t, kv, owner)
-#define OBJ_HEAD(obj)                (obj)->MKM(hvml_jo_object_kv_t, hvml_jo_object_t, kv, head)
-#define OBJ_TAIL(obj)                (obj)->MKM(hvml_jo_object_kv_t, hvml_jo_object_t, kv, tail)
-#define OBJ_COUNT(obj)               (obj)->MKM(hvml_jo_object_kv_t, hvml_jo_object_t, kv, count)
-#define OBJ_IS_ORPHAN(obj_kv)        HNODE_IS_ORPHAN(hvml_jo_object_kv_t, hvml_jo_object_t, kv, obj_kv)
-#define OBJ_IS_EMPTY(obj)            HLIST_IS_EMPTY(hvml_jo_object_kv_t, hvml_jo_object_t, kv, obj)
-#define OBJ_APPEND(obj,obj_kv)       HLIST_APPEND(hvml_jo_object_kv_t, hvml_jo_object_t, kv, obj, obj_kv)
-#define OBJ_REMOVE(obj_kv)           HLIST_REMOVE(hvml_jo_object_kv_t, hvml_jo_object_t, kv, obj_kv)
-
 #define VAL_MEMBERS() \
     HLIST_MEMBERS(hvml_jo_value_t, hvml_jo_value_t, _val_); \
     HNODE_MEMBERS(hvml_jo_value_t, hvml_jo_value_t, _val_)
@@ -56,7 +43,6 @@
 
 struct hvml_jo_gen_s {
     hvml_jo_value_t          *jo;
-    size_t                    idx;
     hvml_json_parser_t       *parser;
 };
 
@@ -92,7 +78,6 @@ struct hvml_jo_string_s {
 };
 
 struct hvml_jo_object_s {
-    OBJ_MEMBERS();
 };
 
 struct hvml_jo_array_s {
@@ -102,8 +87,6 @@ struct hvml_jo_object_kv_s {
     char                    *key;
     size_t                   len;
     hvml_jo_value_t         *val;
-
-    OBJ_KV_MEMBERS();
 };
 
 struct hvml_jo_value_s {
@@ -127,11 +110,6 @@ struct hvml_jo_value_s {
 
 #define hvml_jo_value_from_union(ptr) \
     ptr ? (hvml_jo_value_t*)(((char*)ptr)-offsetof(hvml_jo_value_t, jstr)) : NULL
-
-hvml_jo_value_t* hvml_jo_undefined() {
-    static hvml_jo_value_t undefined = { MKJOT(J_UNDEFINED) };
-    return &undefined;
-}
 
 hvml_jo_value_t* hvml_jo_true() {
     hvml_jo_value_t *jo = (hvml_jo_value_t*)calloc(1, sizeof(*jo));
@@ -235,17 +213,16 @@ static hvml_jo_value_t* hvml_jo_object_kv(const char *key, size_t len) {
 hvml_jo_value_t* hvml_jo_object_get_kv_by_key(hvml_jo_value_t *jo, const char *key, size_t len) {
     A(jo->jot == MKJOT(J_OBJECT), "internal logic error");
 
-    hvml_jo_object_kv_t *kv = OBJ_HEAD((&jo->jobject));
+    hvml_jo_value_t *kv = VAL_HEAD(jo);
     while (kv) {
-        if (kv->len == len && memcmp(kv->key, key, len)==0) break;
-        kv = OBJ_NEXT(kv);
+        if (kv->jkv.len == len && memcmp(kv->jkv.key, key, len)==0) break;
+        kv = VAL_NEXT(kv);
     }
 
     if (!kv) return NULL;
 
-    hvml_jo_value_t *v = hvml_jo_value_from_union(kv);
-    A(v->jot == MKJOT(J_OBJECT_KV), "internal logic error");
-    return v;
+    A(kv->jot == MKJOT(J_OBJECT_KV), "internal logic error");
+    return kv;
 }
 
 int hvml_jo_object_set_kv(hvml_jo_value_t *jo, const char *key, size_t len, hvml_jo_value_t *val) {
@@ -300,21 +277,15 @@ void hvml_jo_value_detach(hvml_jo_value_t *jo) {
     A(VAL_IS_ORPHAN(jo), "internal logic error");
     A(VAL_OWNER(jo)==NULL, "internal logic error");
 
-    if (owner->jot == MKJOT(J_OBJECT)) {
-        A(jo->jot == MKJOT(J_OBJECT_KV), "internal logic error");
-
-        hvml_jo_object_kv_t *kv = &jo->jkv;
-        OBJ_REMOVE(kv);
+    if (owner->jot == MKJOT(J_OBJECT_KV)) {
+        owner->jkv.val = NULL;
     }
 }
 
 void hvml_jo_value_free(hvml_jo_value_t *jo) {
-    if (jo->jot == MKJOT(J_UNDEFINED)) return;
-
     hvml_jo_value_detach(jo);
 
     switch (jo->jot) {
-        case MKJOT(J_UNDEFINED):
         case MKJOT(J_TRUE):
         case MKJOT(J_FALSE):
         case MKJOT(J_NULL):
@@ -326,15 +297,13 @@ void hvml_jo_value_free(hvml_jo_value_t *jo) {
             jo->jstr.len = 0;
         } break;
         case MKJOT(J_OBJECT): {
-            while (OBJ_COUNT((&jo->jobject))>0) {
-                size_t count = OBJ_COUNT((&jo->jobject));
-                hvml_jo_object_kv_t *kv = OBJ_TAIL((&jo->jobject));
-                A(kv, "internal logic error");
-                hvml_jo_value_t *v = hvml_jo_value_from_union(kv);
+            while (VAL_COUNT(jo)>0) {
+                size_t count = VAL_COUNT(jo);
+                hvml_jo_value_t *v = VAL_TAIL(jo);
                 A(v, "internal logic error");
 
                 hvml_jo_value_free(v);
-                A(count - 1 == OBJ_COUNT((&jo->jobject)), "internal logic error");
+                A(count - 1 == VAL_COUNT(jo), "internal logic error");
             }
         } break;
         case MKJOT(J_ARRAY): {
@@ -373,7 +342,6 @@ HVML_JO_TYPE hvml_jo_value_type(hvml_jo_value_t *jo) {
 
 const char* hvml_jo_value_type_str(hvml_jo_value_t *jo) {
     switch (jo->jot) {
-        case MKJOT(J_UNDEFINED): { return MKJOS(J_UNDEFINED); break; }
         case MKJOT(J_TRUE):      { return MKJOS(J_TRUE);      break; }
         case MKJOT(J_FALSE):     { return MKJOS(J_FALSE);     break; }
         case MKJOT(J_NULL):      { return MKJOS(J_NULL);      break; }
@@ -392,12 +360,7 @@ const char* hvml_jo_value_type_str(hvml_jo_value_t *jo) {
 hvml_jo_value_t* hvml_jo_value_parent(hvml_jo_value_t *jo) {
     if (jo == NULL) return NULL;
 
-    hvml_jo_value_t *owner = VAL_OWNER(jo);
-    if (!owner) return NULL;
-
-    if (owner->jot != MKJOT(J_OBJECT_KV)) return owner;
-
-    return VAL_OWNER(owner);
+    return VAL_OWNER(jo);
 }
 
 hvml_jo_value_t* hvml_jo_value_root(hvml_jo_value_t *jo) {
@@ -416,9 +379,6 @@ size_t hvml_jo_value_children(hvml_jo_value_t *jo) {
 
 void hvml_jo_value_printf(hvml_jo_value_t *jo, FILE *out) {
     switch (jo->jot) {
-        case MKJOT(J_UNDEFINED): {
-            fprintf(out, "undefined");
-        } break;
         case MKJOT(J_TRUE): {
             fprintf(out, "true");
         } break;
@@ -440,13 +400,12 @@ void hvml_jo_value_printf(hvml_jo_value_t *jo, FILE *out) {
         } break;
         case MKJOT(J_OBJECT): {
             fprintf(out, "{"); // "}"
-            hvml_jo_object_kv_t *kv = OBJ_HEAD((&jo->jobject));
-            while (kv) {
-                hvml_jo_value_t *v = hvml_jo_value_from_union(kv);
+            hvml_jo_value_t *v = VAL_HEAD(jo);
+            while (v) {
                 // attention: recursive call
                 hvml_jo_value_printf(v, out);
-                kv = OBJ_NEXT(kv);
-                if (!kv) break;
+                v = VAL_NEXT(v);
+                if (!v) break;
                 fprintf(out, ",");
             }
             // "{"
@@ -494,13 +453,12 @@ static int on_integer(void *arg, const char *origin, int64_t val);
 static int on_double(void *arg, const char *origin, double val);
 static int on_end(void *arg);
 
-static int gen_on_value(hvml_jo_gen_t *gen, hvml_jo_value_t *jo);
+static int  gen_open_value(hvml_jo_gen_t *gen, hvml_jo_value_t *jo);
+static void gen_close_value(hvml_jo_gen_t *gen);
 
 hvml_jo_gen_t* hvml_jo_gen_create() {
     hvml_jo_gen_t *gen = (hvml_jo_gen_t*)calloc(1, sizeof(*gen));
     if (!gen) return NULL;
-
-    gen->jo = hvml_jo_undefined();
 
     hvml_json_parser_conf_t conf = {0};
     conf.on_begin               = on_begin;
@@ -533,10 +491,6 @@ void hvml_jo_gen_destroy(hvml_jo_gen_t *gen) {
         if (!gen->jo) break;
         hvml_jo_value_t *root = hvml_jo_value_root(gen->jo);
         gen->jo = root;
-        if (gen->jo->jot == MKJOT(J_UNDEFINED)) {
-            gen->jo = NULL;
-            break;
-        }
 
         hvml_jo_value_free(gen->jo);
         gen->jo = NULL;
@@ -590,6 +544,7 @@ hvml_jo_value_t* hvml_jo_value_load_from_stream(FILE *in) {
     if (ret==0) {
         return jo;
     }
+
     if (jo) hvml_jo_value_free(jo);
     return NULL;
 }
@@ -607,248 +562,211 @@ hvml_jo_value_t* hvml_jo_value_load_from_stream(FILE *in) {
 
 
 static int on_begin(void *arg) {
-	return 0;
+    D(".");
+    return 0;
 }
 
 static int on_open_array(void *arg) {
+    D(".");
     hvml_jo_value_t *jo = hvml_jo_array();
     if (!jo) return -1;
 
     hvml_jo_gen_t *gen = (hvml_jo_gen_t*)arg;
     A(gen, "internal logic error");
 
-    if (gen->jo->jot == MKJOT(J_UNDEFINED)) {
-        gen->jo = jo;
-        return 0;
-    }
-
-    if (gen_on_value(gen, jo)) {
+    if (gen_open_value(gen, jo)) {
         hvml_jo_value_free(jo);
         return -1;
     }
 
-    A(hvml_jo_value_parent(jo) == gen->jo, "internal logic error");
-    gen->jo = jo;
-
-	return 0;
+    return 0;
 }
 
 static int on_close_array(void *arg) {
+    D(".");
     hvml_jo_gen_t *gen = (hvml_jo_gen_t*)arg;
     A(gen->jo, "internal logic error");
     A(gen->jo->jot == MKJOT(J_ARRAY), "internal logic error");
-    hvml_jo_value_t *parent = hvml_jo_value_parent(gen->jo);
-    if (parent) {
-        gen->jo = parent;
-    }
+    gen_close_value(gen);
 
-	return 0;
+    return 0;
 }
 
 static int on_open_obj(void *arg) {
+    D(".");
     hvml_jo_value_t *jo = hvml_jo_object();
     if (!jo) return -1;
 
     hvml_jo_gen_t *gen = (hvml_jo_gen_t*)arg;
     A(gen, "internal logic error");
 
-    if (gen->jo->jot == MKJOT(J_UNDEFINED)) {
-        gen->jo = jo;
-        return 0;
-    }
-
-    if (gen_on_value(gen, jo)) {
+    if (gen_open_value(gen, jo)) {
         hvml_jo_value_free(jo);
         return -1;
     }
 
-    A(hvml_jo_value_parent(jo) == gen->jo, "internal logic error");
-    gen->jo = jo;
-
-	return 0;
+    return 0;
 }
 
 static int on_close_obj(void *arg) {
+    D(".");
     hvml_jo_gen_t *gen = (hvml_jo_gen_t*)arg;
     A(gen->jo, "internal logic error");
     A(gen->jo->jot == MKJOT(J_OBJECT), "internal logic error");
-    hvml_jo_value_t *parent = hvml_jo_value_parent(gen->jo);
-    if (parent) {
-        gen->jo = parent;
-    }
-	return 0;
+    gen_close_value(gen);
+
+    return 0;
 }
 
 static int on_key(void *arg, const char *key, size_t len) {
+    D(".");
     hvml_jo_gen_t   *gen    = (hvml_jo_gen_t*)arg;
-    hvml_jo_value_t *parent = gen->jo;
-    A(parent->jot == MKJOT(J_OBJECT), "internal logic error");
+    A(gen->jo->jot == MKJOT(J_OBJECT), "internal logic error");
 
     hvml_jo_value_t *jo = hvml_jo_object_kv(key, len);
     if (!jo) return -1;
     A(jo->jot == MKJOT(J_OBJECT_KV), "internal logic error");
 
-    if (gen_on_value(gen, jo)) {
+    if (gen_open_value(gen, jo)) {
         hvml_jo_value_free(jo);
         return -1;
     }
 
-    gen->jo = jo;
-    A(jo->jot == MKJOT(J_OBJECT_KV), "internal logic error");
+    A(gen->jo->jot == MKJOT(J_OBJECT_KV), "internal logic error");
 
-	return 0;
+    return 0;
 }
 
 static int on_true(void *arg) {
+    D(".");
     hvml_jo_value_t *jo = hvml_jo_true();
     if (!jo) return -1;
 
     hvml_jo_gen_t *gen = (hvml_jo_gen_t*)arg;
 
-    if (gen->jo->jot == MKJOT(J_UNDEFINED)) {
-        gen->jo = jo;
-        return 0;
-    }
-
-    if (gen_on_value(gen, jo)) {
+    if (gen_open_value(gen, jo)) {
         hvml_jo_value_free(jo);
         return -1;
     }
 
-    A(hvml_jo_value_parent(jo) == gen->jo, "internal logic error");
+    gen_close_value(gen);
 
-	return 0;
+    return 0;
 }
 
 static int on_false(void *arg) {
+    D(".");
     hvml_jo_value_t *jo = hvml_jo_false();
     if (!jo) return -1;
 
     hvml_jo_gen_t *gen = (hvml_jo_gen_t*)arg;
 
-    if (gen->jo->jot == MKJOT(J_UNDEFINED)) {
-        gen->jo = jo;
-        return 0;
-    }
-
-    if (gen_on_value(gen, jo)) {
+    if (gen_open_value(gen, jo)) {
         hvml_jo_value_free(jo);
         return -1;
     }
 
-    A(hvml_jo_value_parent(jo) == gen->jo, "internal logic error");
+    gen_close_value(gen);
 
-	return 0;
+    return 0;
 }
 
 static int on_null(void *arg) {
+    D(".");
     hvml_jo_value_t *jo = hvml_jo_null();
     if (!jo) return -1;
 
     hvml_jo_gen_t *gen = (hvml_jo_gen_t*)arg;
 
-    if (gen->jo->jot == MKJOT(J_UNDEFINED)) {
-        gen->jo = jo;
-        return 0;
-    }
-
-    if (gen_on_value(gen, jo)) {
+    if (gen_open_value(gen, jo)) {
         hvml_jo_value_free(jo);
         return -1;
     }
 
-    A(hvml_jo_value_parent(jo) == gen->jo, "internal logic error");
+    gen_close_value(gen);
 
-	return 0;
+    return 0;
 }
 
 static int on_string(void *arg, const char *val, size_t len) {
+    D(".");
     hvml_jo_value_t *jo = hvml_jo_string(val, len);
     if (!jo) return -1;
 
     hvml_jo_gen_t *gen = (hvml_jo_gen_t*)arg;
 
-    if (gen->jo->jot == MKJOT(J_UNDEFINED)) {
-        gen->jo = jo;
-        return 0;
-    }
-
-    if (gen_on_value(gen, jo)) {
+    if (gen_open_value(gen, jo)) {
         hvml_jo_value_free(jo);
         return -1;
     }
 
-    A(hvml_jo_value_parent(jo) == gen->jo, "internal logic error");
+    gen_close_value(gen);
 
-	return 0;
+    return 0;
 }
 
 static int on_integer(void *arg, const char *origin, int64_t val) {
+    D(".");
     hvml_jo_value_t *jo = hvml_jo_integer(val);
     if (!jo) return -1;
 
     hvml_jo_gen_t *gen = (hvml_jo_gen_t*)arg;
 
-    if (gen->jo->jot == MKJOT(J_UNDEFINED)) {
-        gen->jo = jo;
-        return 0;
-    }
-
-    if (gen_on_value(gen, jo)) {
+    if (gen_open_value(gen, jo)) {
         hvml_jo_value_free(jo);
         return -1;
     }
 
-    A(hvml_jo_value_parent(jo) == gen->jo, "internal logic error");
+    gen_close_value(gen);
 
-	return 0;
+    return 0;
 }
 
 static int on_double(void *arg, const char *origin, double val) {
+    D(".");
     hvml_jo_value_t *jo = hvml_jo_double(val);
     if (!jo) return -1;
 
     hvml_jo_gen_t *gen = (hvml_jo_gen_t*)arg;
 
-    if (gen->jo->jot == MKJOT(J_UNDEFINED)) {
-        gen->jo = jo;
-        return 0;
-    }
-
-    if (gen_on_value(gen, jo)) {
+    if (gen_open_value(gen, jo)) {
         hvml_jo_value_free(jo);
         return -1;
     }
 
-    A(hvml_jo_value_parent(jo) == gen->jo, "internal logic error");
+    gen_close_value(gen);
 
-	return 0;
+    return 0;
 }
 
 static int on_end(void *arg) {
-	return 0;
+    D(".");
+    return 0;
 }
 
-static int gen_on_value(hvml_jo_gen_t *gen, hvml_jo_value_t *jo) {
+static int gen_open_value(hvml_jo_gen_t *gen, hvml_jo_value_t *jo) {
     hvml_jo_value_t *parent = gen->jo;
-    A(parent, "internal logic error");
+    A(jo && VAL_IS_ORPHAN(jo), "internal logic error");
+    if (!parent) {
+        gen->jo = jo;
+        return 0;
+    }
+
     switch (hvml_jo_value_type(parent)) {
         case MKJOT(J_ARRAY): {
             VAL_APPEND(parent, jo);
+            gen->jo = jo;
         } break;
         case MKJOT(J_OBJECT): {
             A(hvml_jo_value_type(jo)==MKJOT(J_OBJECT_KV), "internal logic error");
             VAL_APPEND(parent, jo);
-            OBJ_APPEND((&parent->jobject), (&jo->jkv));
+            gen->jo = jo;
         } break;
         case MKJOT(J_OBJECT_KV): {
-            VAL_APPEND(parent, jo);
             A(parent->jkv.val == NULL, "internal logic error");
             parent->jkv.val = jo;
-            hvml_jo_value_t *np = VAL_OWNER(parent);
-            A(np, "internal logic error");
-            A(hvml_jo_value_type(np)==MKJOT(J_OBJECT), "internal logic error");
-            gen->jo = np;
+            VAL_APPEND(parent, jo);
+            gen->jo = jo;
         } break;
         default: {
             A(0, "internal logic error");
@@ -857,5 +775,16 @@ static int gen_on_value(hvml_jo_gen_t *gen, hvml_jo_value_t *jo) {
     }
 
     return 0;
+}
+
+static void gen_close_value(hvml_jo_gen_t *gen) {
+    A(gen->jo, "internal logic error");
+    hvml_jo_value_t *parent = hvml_jo_value_parent(gen->jo);
+    if (!parent) return;
+    if (parent->jot == MKJOT(J_OBJECT_KV)) {
+        parent = hvml_jo_value_parent(parent);
+        A(parent, "internal logic error");
+        gen->jo = parent;
+    }
 }
 

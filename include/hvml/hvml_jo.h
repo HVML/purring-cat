@@ -29,7 +29,6 @@ extern "C" {
 #define MKJOS(type) "HVML_JO_"#type
 
 typedef enum {
-    MKJOT(J_UNDEFINED),
     MKJOT(J_TRUE),
     MKJOT(J_FALSE),
     MKJOT(J_NULL),
@@ -44,7 +43,6 @@ typedef struct hvml_jo_value_s         hvml_jo_value_t;
 typedef struct hvml_jo_gen_s           hvml_jo_gen_t;
 
 // generate a specific json value on the heap
-hvml_jo_value_t* hvml_jo_undefined();
 hvml_jo_value_t* hvml_jo_true();
 hvml_jo_value_t* hvml_jo_false();
 hvml_jo_value_t* hvml_jo_null();
