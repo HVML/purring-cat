@@ -784,7 +784,7 @@ static void gen_close_value(hvml_jo_gen_t *gen) {
     if (parent->jot == MKJOT(J_OBJECT_KV)) {
         parent = hvml_jo_value_parent(parent);
         A(parent, "internal logic error");
-        gen->jo = parent;
     }
+    gen->jo = parent;
 }
 
