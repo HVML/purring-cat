@@ -562,12 +562,10 @@ hvml_jo_value_t* hvml_jo_value_load_from_stream(FILE *in) {
 
 
 static int on_begin(void *arg) {
-    D(".");
     return 0;
 }
 
 static int on_open_array(void *arg) {
-    D(".");
     hvml_jo_value_t *jo = hvml_jo_array();
     if (!jo) return -1;
 
@@ -583,7 +581,6 @@ static int on_open_array(void *arg) {
 }
 
 static int on_close_array(void *arg) {
-    D(".");
     hvml_jo_gen_t *gen = (hvml_jo_gen_t*)arg;
     A(gen->jo, "internal logic error");
     A(gen->jo->jot == MKJOT(J_ARRAY), "internal logic error");
@@ -593,7 +590,6 @@ static int on_close_array(void *arg) {
 }
 
 static int on_open_obj(void *arg) {
-    D(".");
     hvml_jo_value_t *jo = hvml_jo_object();
     if (!jo) return -1;
 
@@ -609,7 +605,6 @@ static int on_open_obj(void *arg) {
 }
 
 static int on_close_obj(void *arg) {
-    D(".");
     hvml_jo_gen_t *gen = (hvml_jo_gen_t*)arg;
     A(gen->jo, "internal logic error");
     A(gen->jo->jot == MKJOT(J_OBJECT), "internal logic error");
@@ -619,7 +614,6 @@ static int on_close_obj(void *arg) {
 }
 
 static int on_key(void *arg, const char *key, size_t len) {
-    D(".");
     hvml_jo_gen_t   *gen    = (hvml_jo_gen_t*)arg;
     A(gen->jo->jot == MKJOT(J_OBJECT), "internal logic error");
 
@@ -638,7 +632,6 @@ static int on_key(void *arg, const char *key, size_t len) {
 }
 
 static int on_true(void *arg) {
-    D(".");
     hvml_jo_value_t *jo = hvml_jo_true();
     if (!jo) return -1;
 
@@ -655,7 +648,6 @@ static int on_true(void *arg) {
 }
 
 static int on_false(void *arg) {
-    D(".");
     hvml_jo_value_t *jo = hvml_jo_false();
     if (!jo) return -1;
 
@@ -672,7 +664,6 @@ static int on_false(void *arg) {
 }
 
 static int on_null(void *arg) {
-    D(".");
     hvml_jo_value_t *jo = hvml_jo_null();
     if (!jo) return -1;
 
@@ -689,7 +680,6 @@ static int on_null(void *arg) {
 }
 
 static int on_string(void *arg, const char *val, size_t len) {
-    D(".");
     hvml_jo_value_t *jo = hvml_jo_string(val, len);
     if (!jo) return -1;
 
@@ -706,7 +696,6 @@ static int on_string(void *arg, const char *val, size_t len) {
 }
 
 static int on_integer(void *arg, const char *origin, int64_t val) {
-    D(".");
     hvml_jo_value_t *jo = hvml_jo_integer(val);
     if (!jo) return -1;
 
@@ -723,7 +712,6 @@ static int on_integer(void *arg, const char *origin, int64_t val) {
 }
 
 static int on_double(void *arg, const char *origin, double val) {
-    D(".");
     hvml_jo_value_t *jo = hvml_jo_double(val);
     if (!jo) return -1;
 
@@ -740,7 +728,6 @@ static int on_double(void *arg, const char *origin, double val) {
 }
 
 static int on_end(void *arg) {
-    D(".");
     return 0;
 }
 
