@@ -604,7 +604,7 @@ static int hvml_parser_at_element(hvml_parser_t *parser, const char c, const cha
         int ret = hvml_json_parser_parse_char(parser->jp, c);
         if (ret==0) return 0;
         if (!hvml_json_parser_is_begin(parser->jp) &&
-                !hvml_json_parser_is_ending(parser->jp) )
+            !hvml_json_parser_is_ending(parser->jp) )
         {
             // error message has already been printf'd in hvml_json_parser module
             return -1;
