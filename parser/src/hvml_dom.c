@@ -713,6 +713,8 @@ static int on_true(void *arg) {
         return -1;
     }
 
+    gen->jo = jo;
+
     hvml_jo_value_t *parent = hvml_jo_value_parent(gen->jo);
     if (!parent) return 0;
 
@@ -731,6 +733,8 @@ static int on_false(void *arg) {
         hvml_jo_value_free(jo);
         return -1;
     }
+
+    gen->jo = jo;
 
     hvml_jo_value_t *parent = hvml_jo_value_parent(gen->jo);
     if (!parent) return 0;
@@ -751,6 +755,8 @@ static int on_null(void *arg) {
         return -1;
     }
 
+    gen->jo = jo;
+
     hvml_jo_value_t *parent = hvml_jo_value_parent(gen->jo);
     if (!parent) return 0;
 
@@ -769,6 +775,8 @@ static int on_string(void *arg, const char *val, size_t len) {
         hvml_jo_value_free(jo);
         return -1;
     }
+
+    gen->jo = jo;
 
     hvml_jo_value_t *parent = hvml_jo_value_parent(gen->jo);
     if (!parent) return 0;
@@ -789,6 +797,8 @@ static int on_integer(void *arg, const char *origin, int64_t val) {
         return -1;
     }
 
+    gen->jo = jo;
+
     hvml_jo_value_t *parent = hvml_jo_value_parent(gen->jo);
     if (!parent) return 0;
 
@@ -807,6 +817,8 @@ static int on_double(void *arg, const char *origin, double val) {
         hvml_jo_value_free(jo);
         return -1;
     }
+
+    gen->jo = jo;
 
     hvml_jo_value_t *parent = hvml_jo_value_parent(gen->jo);
     if (!parent) return 0;
