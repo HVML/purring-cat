@@ -59,6 +59,7 @@ void        hvml_dom_detach(hvml_dom_t *dom);
 hvml_dom_t* hvml_dom_select(hvml_dom_t *dom, const char *selector);
 
 void        hvml_dom_str_serialize(const char *str, size_t len, FILE *out);
+void        hvml_dom_attr_val_serialize(const char *str, size_t len, FILE *out);
 
 void        hvml_dom_printf(hvml_dom_t *dom, FILE *out);
 

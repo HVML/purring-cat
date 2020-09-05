@@ -56,6 +56,34 @@ typedef enum {
 #define IS_NAMESTART(c)  (c==':' || c=='_' || isalpha(c))
 #define IS_NAME(c)       (c==':' || c=='_' || c=='-' || c=='.' || isalnum(c))
 
+// https://html.spec.whatwg.org/multipage/syntax.html#syntax-tag-name
+// Tags contain a tag name, giving the element's name. HTML elements all have
+// names that only use ASCII alphanumerics. In the HTML syntax, tag names,
+// even those for foreign elements, may be written with any mix of lower- and
+// uppercase letters that, when converted to all-lowercase, matches the
+// element's tag name; tag names are case-insensitive.
+
+// NOTE: no-foreign-elements support yet
+#define IS_TAG(c)        (isalnum(c))
+
+// https://html.spec.whatwg.org/multipage/syntax.html#syntax-tag-name
+// Attributes have a name and a value. Attribute names must consist of one
+// or more characters other than controls, U+0020 SPACE, U+0022 ("),
+// U+0027 ('), U+003E (>), U+002F (/), U+003D (=), and noncharacters.
+// In the HTML syntax, attribute names, even those for foreign elements,
+// may be written with any mix of ASCII lower and ASCII upper alphas.
+// https://infra.spec.whatwg.org/#control
+// A control is a C0 control or a code point in the range U+007F DELETE
+// to U+009F APPLICATION PROGRAM COMMAND, inclusive.
+// A C0 control is a code point in the range U+0000 NULL to U+001F
+// INFORMATION SEPARATOR ONE, inclusive.
+
+// NOTE: `noncharacters` not check yet
+//       `un-quoted-attr-val` not supported yet
+//       `character-reference` not supported yet
+#define IS_C0(c)         (((unsigned char)c)<=0x1f)
+#define IS_CTRL(c)       ((((unsigned char)c)>=0x7f) && (((unsigned char)c)<=0x9f))
+#define IS_ATTR(c)       (c!=' ' && c!='"' && c!='\'' && c!='>' && c!='/' && c!='=' && !IS_C0(c) && !IS_CTRL(c))
 
 typedef struct string_s                             string_t;
 struct string_s {
@@ -174,7 +202,7 @@ static int hvml_parser_at_begin(hvml_parser_t *parser, const char c, const char 
 }
 
 static int hvml_parser_at_markup(hvml_parser_t *parser, const char c, const char *str_state) {
-    if (IS_NAMESTART(c)) {
+    if (IS_TAG(c)) {
         if (parser->declared==0) parser->declared = 3;
         hvml_parser_pop_state(parser);
         if (parser->tags == 0) {
@@ -313,7 +341,7 @@ static int hvml_parser_at_hvml(hvml_parser_t *parser, const char c, const char *
 }
 
 static int hvml_parser_at_stag(hvml_parser_t *parser, const char c, const char *str_state) {
-    if (IS_NAME(c)) {
+    if (IS_TAG(c)) {
         string_append(&parser->cache, c);
         return 0;
     }
@@ -374,7 +402,7 @@ static int hvml_parser_at_emptytag(hvml_parser_t *parser, const char c, const ch
 
 static int hvml_parser_at_attr_or_end(hvml_parser_t *parser, const char c, const char *str_state) {
     if (isspace(c)) return 0;
-    if (IS_NAMESTART(c)) {
+    if (IS_ATTR(c)) {
         hvml_parser_chg_state(parser, MKSTATE(ATTR));
         return 1; // retry
     }
@@ -401,7 +429,7 @@ static int hvml_parser_at_attr_or_end(hvml_parser_t *parser, const char c, const
 }
 
 static int hvml_parser_at_attr(hvml_parser_t *parser, const char c, const char *str_state) {
-    if (IS_NAME(c)) {
+    if (IS_ATTR(c)) {
         string_append(&parser->cache, c);
         return 0;
     }
@@ -458,7 +486,7 @@ static int hvml_parser_at_attr_done(hvml_parser_t *parser, const char c, const c
         hvml_json_parser_set_offset(parser->jp, parser->line, parser->col + 1);
         return 0;
     }
-    if (IS_NAMESTART(c)) {
+    if (IS_ATTR(c)) {
         hvml_parser_chg_state(parser, MKSTATE(ATTR));
         string_reset(&parser->cache);
         string_append(&parser->cache, c);
@@ -642,7 +670,7 @@ static int hvml_parser_at_element(hvml_parser_t *parser, const char c, const cha
 }
 
 static int hvml_parser_at_etag(hvml_parser_t *parser, const char c, const char *str_state) {
-    if (IS_NAME(c)) {
+    if (IS_TAG(c)) {
         string_append(&parser->cache, c);
         return 0;
     }

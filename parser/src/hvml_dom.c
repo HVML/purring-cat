@@ -23,6 +23,7 @@
 #include "hvml/hvml_parser.h"
 #include "hvml/hvml_string.h"
 
+#include <ctype.h>
 #include <string.h>
 
 // for easy coding
@@ -347,9 +348,25 @@ void hvml_dom_str_serialize(const char *str, size_t len, FILE *out) {
         const char c = *p;
         switch (c) {
             case '&':  { fprintf(out, "&amp;");   break; }
+            case '<':  {
+                if (i<len-1 && !isspace(p[1])) {
+                    fprintf(out, "&lt;");
+                } else {
+                    fprintf(out, "%c", c);
+                }
+            } break;
+            default:   { fprintf(out, "%c", c);   break; }
+        }
+    }
+}
+
+void hvml_dom_attr_val_serialize(const char *str, size_t len, FILE *out) {
+    const char *p = str;
+    for (size_t i=0; i<len; ++i, ++p) {
+        const char c = *p;
+        switch (c) {
+            case '&':  { fprintf(out, "&amp;");   break; }
             case '"':  { fprintf(out, "&quot;");  break; }
-            case '>':  { fprintf(out, "&gt;");    break; }
-            case '<':  { fprintf(out, "&lt;");    break; }
             default:   { fprintf(out, "%c", c);   break; }
         }
     }
@@ -360,7 +377,7 @@ void hvml_dom_printf(hvml_dom_t *dom, FILE *out) {
         case MKDOT(D_TAG):
         {
             fprintf(out, "<");
-            hvml_dom_str_serialize(dom->tag.name.str, dom->tag.name.len, out);
+            fprintf(out, "%s", dom->tag.name.str);
             hvml_dom_t *attr = DOM_ATTR_HEAD(dom);
             while (attr) {
                 fprintf(out, " ");
@@ -377,16 +394,16 @@ void hvml_dom_printf(hvml_dom_t *dom, FILE *out) {
                     child = DOM_NEXT(child);
                 }
                 fprintf(out, "</");
-                hvml_dom_str_serialize(dom->tag.name.str, dom->tag.name.len, out);
+                fprintf(out, "%s", dom->tag.name.str);
                 fprintf(out, ">");
             }
         } break;
         case MKDOT(D_ATTR):
         {
-            hvml_dom_str_serialize(dom->attr.key.str, dom->attr.key.len, out);
+            fprintf(out, "%s", dom->attr.key.str);
             if (dom->attr.val.str) {
                 fprintf(out, ":\"");
-                hvml_dom_str_serialize(dom->attr.val.str, dom->attr.val.len, out);
+                hvml_dom_attr_val_serialize(dom->attr.val.str, dom->attr.val.len, out);
                 fprintf(out, "\"");
             }
         } break;

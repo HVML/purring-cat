@@ -6,7 +6,7 @@
     </head>
 
     <body>
-        <p>$_(&quot;Hello, world!&quot;)</p>
+        <p>$_("Hello, world!")</p>
     </body>
 
 </hvml>

@@ -22,7 +22,7 @@
             <span class:"mobile-operator"/>
             <img class:"wifi-status" src:""/>
             <span class:"local-time">12:00</span>
-            <img class:"battery-status"/>&gt;
+            <img class:"battery-status"/>>
         </header>
 
         <ul class:"user-list">
@@ -69,7 +69,7 @@
         </footer>
 
         <observe on:"$_TIMERS" for:"foo" to:"update" in:"#the-header">
-            <update on:"&gt; span.local-time" textContent:"$_SYSTEM.time('%H:%m')"/>
+            <update on:"> span.local-time" textContent:"$_SYSTEM.time('%H:%m')"/>
         </observe>
 
         <observe on:"$systemStatus" for:"battery" to:"test">
@@ -77,19 +77,19 @@
                 <match for:"100" to:"update" exclusively>
                     <update on:"img.mobile-status" attr.src:"/battery-level-full.png"/>
                 </match>
-                <match for:"&gt;90" to:"update" exclusively>
+                <match for:">90" to:"update" exclusively>
                     <update on:"img.mobile-status" attr.src:"/battery-level-90.png"/>
                 </match>
-                <match for:"&gt;70" to:"update" exclusively>
+                <match for:">70" to:"update" exclusively>
                     <update on:"img.mobile-status" attr.src:"/battery-level-70.png"/>
                 </match>
-                <match for:"&gt;50" to:"update" exclusively>
+                <match for:">50" to:"update" exclusively>
                     <update on:"img.mobile-status" attr.src:"/battery-level-50.png"/>
                 </match>
-                <match for:"&gt;30" to:"update" exclusively>
+                <match for:">30" to:"update" exclusively>
                     <update on:"img.mobile-status" attr.src:"/battery-level-30.png"/>
                 </match>
-                <match for:"&gt;10" to:"update" exclusively>
+                <match for:">10" to:"update" exclusively>
                     <update on:"img.mobile-status" attr.src:"/battery-level-10.png"/>
                 </match>
                 <match for:"*" to:"update">
