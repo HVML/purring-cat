@@ -562,8 +562,10 @@ static int on_attr_key(void *arg, const char *key) {
         hvml_dom_destroy(v);
         return -1;
     }
+    A(gen->dom, "internal logic error");
     if (gen->dom->dt == MKDOT(D_ATTR)) {
         DOM_APPEND(DOM_ATTR_OWNER(gen->dom), v);
+        DOM_ATTR_APPEND(DOM_ATTR_OWNER(gen->dom), v);
     } else {
         A(gen->dom->dt == MKDOT(D_TAG), "internal logic error");
         DOM_ATTR_APPEND(gen->dom, v);
@@ -575,11 +577,13 @@ static int on_attr_key(void *arg, const char *key) {
 
 static int on_attr_val(void *arg, const char *val) {
     hvml_dom_gen_t *gen = (hvml_dom_gen_t*)arg;
+    A(gen->dom, "internal logic error");
     A(gen->dom->dt == MKDOT(D_ATTR), "internal logic error");
     if (hvml_string_set(&gen->dom->attr.val, val, strlen(val))) {
         return -1;
     }
     gen->dom = DOM_ATTR_OWNER(gen->dom);
+    A(gen->dom, "internal logic error");
     A(gen->dom->dt == MKDOT(D_TAG), "internal logic error");
     return 0;
 }
