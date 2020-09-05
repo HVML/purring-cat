@@ -106,7 +106,7 @@ Or,
 
         <init as="messages">
             {
-              "zh_CN" : "世界，您好！"
+              "zh_CN" : "世界，您好！",
               "en_US" : "Hello, world!"
             }
         </init>
