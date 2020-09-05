@@ -3,6 +3,7 @@ set(hvml_parser_src
     hvml_json_parser.c
     hvml_log.c
     hvml_parser.c
+    hvml_string.c
 )
 
 # static
