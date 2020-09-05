@@ -2,6 +2,9 @@
 
 #include "hvml/hvml_log.h"
 
+#include <stdarg.h>
+#include <string.h>
+
 
 void hvml_string_reset(hvml_string_t *str) {
     str->len = 0;
@@ -30,7 +33,7 @@ int hvml_string_push(hvml_string_t *str, const char c) {
     return 0;
 }
 
-int hvml_string_pop(hvml_string_t *str, const char *c) {
+int hvml_string_pop(hvml_string_t *str, char *c) {
     if (!str->str || str->len<=0) return -1;
 
     if (c) *c = str->str[str->len-1];
