@@ -53,10 +53,7 @@ typedef struct hvml_jo_number_s       hvml_jo_number_t;
 typedef struct hvml_jo_string_s       hvml_jo_string_t;
 typedef struct hvml_jo_object_s       hvml_jo_object_t;
 typedef struct hvml_jo_array_s        hvml_jo_array_t;
-
-// internal
 typedef struct hvml_jo_object_kv_s    hvml_jo_object_kv_t;
-static hvml_jo_value_t* hvml_jo_object_kv(const char *key, size_t len);
 
 struct hvml_jo_true_s { };
 
@@ -194,7 +191,7 @@ hvml_jo_value_t* hvml_jo_array() {
     return jo;
 }
 
-static hvml_jo_value_t* hvml_jo_object_kv(const char *key, size_t len) {
+hvml_jo_value_t* hvml_jo_object_kv(const char *key, size_t len) {
     hvml_jo_value_t *jo = (hvml_jo_value_t*)calloc(1, sizeof(*jo));
     if (!jo) return NULL;
 
@@ -208,6 +205,47 @@ static hvml_jo_value_t* hvml_jo_object_kv(const char *key, size_t len) {
     jo->jkv.len = len;
 
     return jo;
+}
+
+int hvml_jo_value_push(hvml_jo_value_t *jo, hvml_jo_value_t *val) {
+    if (!val) return -1;
+    if (!VAL_IS_ORPHAN(val)) {
+        E("val[%p/%s] is NOT orphan", val, hvml_jo_value_type_str(val));
+        return -1;
+    }
+
+    if (!jo) return 0;
+
+    switch (jo->jot) {
+        case MKJOT(J_ARRAY):
+        {
+            VAL_APPEND(jo, val);
+        } break;
+        case MKJOT(J_OBJECT):
+        {
+            if (val->jot != MKJOT(J_OBJECT_KV)) {
+                E("val[%p/%s] is NOT object k/v paire", val, hvml_jo_value_type_str(val));
+                return -1;
+            }
+            VAL_APPEND(jo, val);
+        } break;
+        case MKJOT(J_OBJECT_KV):
+        {
+            if (jo->jkv.val) {
+                A(jo->jkv.val != val, "internal logic error");
+                hvml_jo_value_free(jo->jkv.val);
+            }
+            jo->jkv.val = val;
+            VAL_APPEND(jo, val);
+        } break;
+        default:
+        {
+            E("jo[%p/%s] can not hold sub-val", jo, hvml_jo_value_type_str(jo));
+            return -1;
+        } break;
+    }
+
+    return 0;
 }
 
 hvml_jo_value_t* hvml_jo_object_get_kv_by_key(hvml_jo_value_t *jo, const char *key, size_t len) {
@@ -225,44 +263,23 @@ hvml_jo_value_t* hvml_jo_object_get_kv_by_key(hvml_jo_value_t *jo, const char *k
     return kv;
 }
 
-int hvml_jo_object_set_kv(hvml_jo_value_t *jo, const char *key, size_t len, hvml_jo_value_t *val) {
-    A(jo->jot == MKJOT(J_OBJECT), "internal logic error");
-
-    hvml_jo_value_t *njo = hvml_jo_object_get_kv_by_key(jo, key, len);
-    if (!njo) {
-        njo = hvml_jo_object_kv(key, len);
-        if (!njo) return -1;
-    }
-    A(njo->jot == MKJOT(J_OBJECT_KV), "internal logic error");
-    if (njo->jkv.val!=val) {
-        if (njo->jkv.val) hvml_jo_value_free(njo->jkv.val);
-        njo->jkv.val = val;
-    }
-    return 0;
-}
-
-int hvml_jo_array_append(hvml_jo_value_t *jo, hvml_jo_value_t *val) {
-    if (jo->jot != MKJOT(J_ARRAY)) {
-        E("jo[%p/%s] is NOT array", jo, hvml_jo_value_type_str(jo));
-        return -1;
+hvml_jo_value_t* hvml_jo_object_append_kv(hvml_jo_value_t *jo, hvml_jo_value_t *val) {
+    if (jo->jot != MKJOT(J_OBJECT)) {
+        E("jo[%p/%s] is NOT object", jo, hvml_jo_value_type_str(jo));
+        return NULL;
     }
     if (!VAL_IS_ORPHAN(val)) {
         E("val[%p/%s] is NOT orphan", val, hvml_jo_value_type_str(val));
-        return -1;
+        return NULL;
     }
-    if (jo==val) {
-        E("can NOT append to itself");
-        return -1;
+    if (val->jot != MKJOT(J_OBJECT_KV)) {
+        E("val[%p/%s] is NOT object k/v pair", jo, hvml_jo_value_type_str(val));
+        return NULL;
     }
-
-    size_t count = VAL_COUNT(jo);
 
     VAL_APPEND(jo, val);
 
-    A(count+1 == VAL_COUNT(jo), "internal logic error");
-    A(VAL_OWNER(val) == jo, "internal logic error");
-
-    return 0;
+    return val;
 }
 
 void hvml_jo_value_detach(hvml_jo_value_t *jo) {
@@ -360,14 +377,22 @@ const char* hvml_jo_value_type_str(hvml_jo_value_t *jo) {
 hvml_jo_value_t* hvml_jo_value_parent(hvml_jo_value_t *jo) {
     if (jo == NULL) return NULL;
 
-    return VAL_OWNER(jo);
+    hvml_jo_value_t *val = VAL_OWNER(jo);
+
+    if (val && val->jot == MKJOT(J_OBJECT_KV)) {
+        return VAL_OWNER(val);
+    }
+
+    return val;
 }
 
 hvml_jo_value_t* hvml_jo_value_root(hvml_jo_value_t *jo) {
     if (jo == NULL) return NULL;
 
-    while (VAL_OWNER(jo)) {
-        jo = hvml_jo_value_parent(jo);
+    hvml_jo_value_t *val = NULL;
+
+    while (jo && (val=VAL_OWNER(jo))) {
+        jo = val;
     }
 
     return jo;
@@ -452,9 +477,6 @@ static int on_string(void *arg, const char *val, size_t len);
 static int on_integer(void *arg, const char *origin, int64_t val);
 static int on_double(void *arg, const char *origin, double val);
 static int on_end(void *arg);
-
-static int  gen_open_value(hvml_jo_gen_t *gen, hvml_jo_value_t *jo);
-static void gen_close_value(hvml_jo_gen_t *gen);
 
 hvml_jo_gen_t* hvml_jo_gen_create() {
     hvml_jo_gen_t *gen = (hvml_jo_gen_t*)calloc(1, sizeof(*gen));
@@ -566,25 +588,30 @@ static int on_begin(void *arg) {
 }
 
 static int on_open_array(void *arg) {
+    D(".");
     hvml_jo_value_t *jo = hvml_jo_array();
     if (!jo) return -1;
 
     hvml_jo_gen_t *gen = (hvml_jo_gen_t*)arg;
     A(gen, "internal logic error");
 
-    if (gen_open_value(gen, jo)) {
+    if (hvml_jo_value_push(gen->jo, jo)) {
         hvml_jo_value_free(jo);
         return -1;
     }
+
+    gen->jo = jo;
 
     return 0;
 }
 
 static int on_close_array(void *arg) {
     hvml_jo_gen_t *gen = (hvml_jo_gen_t*)arg;
-    A(gen->jo, "internal logic error");
-    A(gen->jo->jot == MKJOT(J_ARRAY), "internal logic error");
-    gen_close_value(gen);
+
+    hvml_jo_value_t *parent = hvml_jo_value_parent(gen->jo);
+    if (!parent) return 0;
+
+    gen->jo = parent;
 
     return 0;
 }
@@ -596,37 +623,40 @@ static int on_open_obj(void *arg) {
     hvml_jo_gen_t *gen = (hvml_jo_gen_t*)arg;
     A(gen, "internal logic error");
 
-    if (gen_open_value(gen, jo)) {
+    if (hvml_jo_value_push(gen->jo, jo)) {
         hvml_jo_value_free(jo);
         return -1;
     }
+
+    gen->jo = jo;
 
     return 0;
 }
 
 static int on_close_obj(void *arg) {
     hvml_jo_gen_t *gen = (hvml_jo_gen_t*)arg;
-    A(gen->jo, "internal logic error");
-    A(gen->jo->jot == MKJOT(J_OBJECT), "internal logic error");
-    gen_close_value(gen);
+
+    hvml_jo_value_t *parent = hvml_jo_value_parent(gen->jo);
+    if (!parent) return 0;
+
+    gen->jo = parent;
 
     return 0;
 }
 
 static int on_key(void *arg, const char *key, size_t len) {
     hvml_jo_gen_t   *gen    = (hvml_jo_gen_t*)arg;
-    A(gen->jo->jot == MKJOT(J_OBJECT), "internal logic error");
+    A(hvml_jo_value_type(gen->jo) == MKJOT(J_OBJECT), "internal logic error");
 
     hvml_jo_value_t *jo = hvml_jo_object_kv(key, len);
     if (!jo) return -1;
-    A(jo->jot == MKJOT(J_OBJECT_KV), "internal logic error");
 
-    if (gen_open_value(gen, jo)) {
+    if (hvml_jo_value_push(gen->jo, jo)) {
         hvml_jo_value_free(jo);
         return -1;
     }
 
-    A(gen->jo->jot == MKJOT(J_OBJECT_KV), "internal logic error");
+    gen->jo = jo;
 
     return 0;
 }
@@ -637,12 +667,15 @@ static int on_true(void *arg) {
 
     hvml_jo_gen_t *gen = (hvml_jo_gen_t*)arg;
 
-    if (gen_open_value(gen, jo)) {
+    if (hvml_jo_value_push(gen->jo, jo)) {
         hvml_jo_value_free(jo);
         return -1;
     }
 
-    gen_close_value(gen);
+    hvml_jo_value_t *parent = hvml_jo_value_parent(gen->jo);
+    if (!parent) return 0;
+
+    gen->jo = parent;
 
     return 0;
 }
@@ -653,12 +686,15 @@ static int on_false(void *arg) {
 
     hvml_jo_gen_t *gen = (hvml_jo_gen_t*)arg;
 
-    if (gen_open_value(gen, jo)) {
+    if (hvml_jo_value_push(gen->jo, jo)) {
         hvml_jo_value_free(jo);
         return -1;
     }
 
-    gen_close_value(gen);
+    hvml_jo_value_t *parent = hvml_jo_value_parent(gen->jo);
+    if (!parent) return 0;
+
+    gen->jo = parent;
 
     return 0;
 }
@@ -669,12 +705,15 @@ static int on_null(void *arg) {
 
     hvml_jo_gen_t *gen = (hvml_jo_gen_t*)arg;
 
-    if (gen_open_value(gen, jo)) {
+    if (hvml_jo_value_push(gen->jo, jo)) {
         hvml_jo_value_free(jo);
         return -1;
     }
 
-    gen_close_value(gen);
+    hvml_jo_value_t *parent = hvml_jo_value_parent(gen->jo);
+    if (!parent) return 0;
+
+    gen->jo = parent;
 
     return 0;
 }
@@ -685,12 +724,15 @@ static int on_string(void *arg, const char *val, size_t len) {
 
     hvml_jo_gen_t *gen = (hvml_jo_gen_t*)arg;
 
-    if (gen_open_value(gen, jo)) {
+    if (hvml_jo_value_push(gen->jo, jo)) {
         hvml_jo_value_free(jo);
         return -1;
     }
 
-    gen_close_value(gen);
+    hvml_jo_value_t *parent = hvml_jo_value_parent(gen->jo);
+    if (!parent) return 0;
+
+    gen->jo = parent;
 
     return 0;
 }
@@ -701,12 +743,15 @@ static int on_integer(void *arg, const char *origin, int64_t val) {
 
     hvml_jo_gen_t *gen = (hvml_jo_gen_t*)arg;
 
-    if (gen_open_value(gen, jo)) {
+    if (hvml_jo_value_push(gen->jo, jo)) {
         hvml_jo_value_free(jo);
         return -1;
     }
 
-    gen_close_value(gen);
+    hvml_jo_value_t *parent = hvml_jo_value_parent(gen->jo);
+    if (!parent) return 0;
+
+    gen->jo = parent;
 
     return 0;
 }
@@ -717,61 +762,20 @@ static int on_double(void *arg, const char *origin, double val) {
 
     hvml_jo_gen_t *gen = (hvml_jo_gen_t*)arg;
 
-    if (gen_open_value(gen, jo)) {
+    if (hvml_jo_value_push(gen->jo, jo)) {
         hvml_jo_value_free(jo);
         return -1;
     }
 
-    gen_close_value(gen);
+    hvml_jo_value_t *parent = hvml_jo_value_parent(gen->jo);
+    if (!parent) return 0;
+
+    gen->jo = parent;
 
     return 0;
 }
 
 static int on_end(void *arg) {
     return 0;
-}
-
-static int gen_open_value(hvml_jo_gen_t *gen, hvml_jo_value_t *jo) {
-    hvml_jo_value_t *parent = gen->jo;
-    A(jo && VAL_IS_ORPHAN(jo), "internal logic error");
-    if (!parent) {
-        gen->jo = jo;
-        return 0;
-    }
-
-    switch (hvml_jo_value_type(parent)) {
-        case MKJOT(J_ARRAY): {
-            VAL_APPEND(parent, jo);
-            gen->jo = jo;
-        } break;
-        case MKJOT(J_OBJECT): {
-            A(hvml_jo_value_type(jo)==MKJOT(J_OBJECT_KV), "internal logic error");
-            VAL_APPEND(parent, jo);
-            gen->jo = jo;
-        } break;
-        case MKJOT(J_OBJECT_KV): {
-            A(parent->jkv.val == NULL, "internal logic error");
-            parent->jkv.val = jo;
-            VAL_APPEND(parent, jo);
-            gen->jo = jo;
-        } break;
-        default: {
-            A(0, "internal logic error");
-            return -1;
-        } break;
-    }
-
-    return 0;
-}
-
-static void gen_close_value(hvml_jo_gen_t *gen) {
-    A(gen->jo, "internal logic error");
-    hvml_jo_value_t *parent = hvml_jo_value_parent(gen->jo);
-    if (!parent) return;
-    if (parent->jot == MKJOT(J_OBJECT_KV)) {
-        parent = hvml_jo_value_parent(parent);
-        A(parent, "internal logic error");
-    }
-    gen->jo = parent;
 }
 

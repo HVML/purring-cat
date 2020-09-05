@@ -71,18 +71,18 @@ static const char* string_get(string_t *str); // if not initialized, return null
 static size_t      string_len(string_t *str);
 
 struct hvml_json_parser_s {
-      hvml_json_parser_conf_t        conf;
-      HVML_JSON_PARSER_STATE        *ar_states;
-      size_t                         states;
-      string_t                       cache;
-      string_t                       curr;
+    hvml_json_parser_conf_t        conf;
+    HVML_JSON_PARSER_STATE        *ar_states;
+    size_t                         states;
+    string_t                       cache;
+    string_t                       curr;
 
-      size_t                         line;
-      size_t                         col;
+    size_t                         line;
+    size_t                         col;
 
-      uint16_t                       shi;
-      uint16_t                       slo;
-      unsigned int                   shi_:1; // indicate if shi_ done
+    uint16_t                       shi;
+    uint16_t                       slo;
+    unsigned int                   shi_:1; // indicate if shi_ done
 };
 
 static int                    hvml_json_parser_push_state(hvml_json_parser_t *parser, HVML_JSON_PARSER_STATE state);

@@ -51,11 +51,15 @@ hvml_jo_value_t* hvml_jo_double(const double v);
 hvml_jo_value_t* hvml_jo_string(const char *v, size_t len);
 hvml_jo_value_t* hvml_jo_object();
 hvml_jo_value_t* hvml_jo_array();
+hvml_jo_value_t* hvml_jo_object_kv(const char *key, size_t len);
 
-// set key/val part of the json object
-int              hvml_jo_object_set_kv(hvml_jo_value_t *jo, const char *key, size_t len, hvml_jo_value_t *val);
-// append a json value to the tail of json array
-int              hvml_jo_array_append(hvml_jo_value_t *jo, hvml_jo_value_t *val);
+
+// if jo is of array, append val into array jo
+// if jo is of object, val shall be of object_kv, append val as object jo's kv
+// if jo is of object_kv, set val as jo's val-part
+// otherwise, failed with -1
+int              hvml_jo_value_push(hvml_jo_value_t *jo, hvml_jo_value_t *val);
+
 
 // detach a json value from it's parent
 void             hvml_jo_value_detach(hvml_jo_value_t *jo);
@@ -77,7 +81,6 @@ size_t           hvml_jo_value_children(hvml_jo_value_t *jo);
 
 // serialize the json value to the file stream, with `escape` if necessary
 void             hvml_jo_value_printf(hvml_jo_value_t *jo, FILE *out);
-
 
 // create a `generator`, with which we can build a json value from string stream
 hvml_jo_gen_t*   hvml_jo_gen_create();

@@ -18,46 +18,59 @@
 #ifndef _hvml_dom_h_
 #define _hvml_dom_h_
 
+#include "hvml/hvml_jo.h"
+
 #include <stddef.h>
+#include <stdio.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#define MKDT(type)  HVML_DOM_##type
-#define MKDS(type) "HVML_DOM_"#type
+#define MKDOT(type)  HVML_DOM_##type
+#define MKDOS(type) "HVML_DOM_"#type
 
 typedef enum {
-    MKDT(J_ROOT),
-    MKDT(J_TAG),
-    MKDT(J_ATTR),
-        MKDT(J_ATTR_V),
-    MKDT(J_TEXT)
+    MKDOT(D_TAG),
+    MKDOT(D_ATTR),
+    MKDOT(D_TEXT),
+    MKDOT(D_JSON)
 } HVML_DOM_TYPE;
 
 typedef struct hvml_dom_s          hvml_dom_t;
-typedef struct hvml_dom_conf_s     hvml_dom_conf_t;
+typedef struct hvml_dom_gen_s      hvml_dom_gen_t;
 
-struct hvml_dom_conf_s {
-};
-
-hvml_dom_t* hvml_dom_create(hvml_dom_conf_t conf);
+hvml_dom_t* hvml_dom_create();
 void        hvml_dom_destroy(hvml_dom_t *dom);
 
-hvml_dom_t* hvml_dom_set_attr(hvml_dom_t *dom,
-                              const char *key, size_t key_len,
-                              const char *val, size_t val_len);
-hvml_dom_t* hvml_dom_append_context(hvml_dom_t *dom, const char *txt, size_t len);
+hvml_dom_t* hvml_dom_append_attr(hvml_dom_t *dom, const char *key, size_t key_len, const char *val, size_t val_len);
+hvml_dom_t* hvml_dom_set_val(hvml_dom_t *dom, const char *val, size_t val_len);
+hvml_dom_t* hvml_dom_append_content(hvml_dom_t *dom, const char *txt, size_t len);
 hvml_dom_t* hvml_dom_add_tag(hvml_dom_t *dom, const char *tag, size_t len);
+hvml_dom_t* hvml_dom_append_json(hvml_dom_t *dom, hvml_jo_value_t *jo);
 
 hvml_dom_t* hvml_dom_root(hvml_dom_t *dom);
 hvml_dom_t* hvml_dom_parent(hvml_dom_t *dom);
 hvml_dom_t* hvml_dom_next(hvml_dom_t *dom);
 hvml_dom_t* hvml_dom_prev(hvml_dom_t *dom);
 
-hvml_dom_t* hvml_dom_detach(hvml_dom_t *dom);
+void        hvml_dom_detach(hvml_dom_t *dom);
 
 hvml_dom_t* hvml_dom_select(hvml_dom_t *dom, const char *selector);
+
+void        hvml_dom_str_serialize(const char *str, size_t len, FILE *out);
+
+void        hvml_dom_printf(hvml_dom_t *dom, FILE *out);
+
+hvml_dom_gen_t*   hvml_dom_gen_create();
+void              hvml_dom_gen_destroy(hvml_dom_gen_t *gen);
+
+int               hvml_dom_gen_parse_char(hvml_dom_gen_t *gen, const char c);
+int               hvml_dom_gen_parse(hvml_dom_gen_t *gen, const char *buf, size_t len);
+int               hvml_dom_gen_parse_string(hvml_dom_gen_t *gen, const char *str);
+hvml_dom_t*       hvml_dom_gen_parse_end(hvml_dom_gen_t *gen);
+
+hvml_dom_t*       hvml_dom_load_from_stream(FILE *in);
 
 #ifdef __cplusplus
 }
