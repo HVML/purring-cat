@@ -1,6 +1,8 @@
 #ifndef _hvml_string_h
 #define _hvml_string_h
 
+#include <stddef.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -17,7 +19,7 @@ void hvml_string_reset(hvml_string_t *str);
 void hvml_string_clear(hvml_string_t *str);
 
 int  hvml_string_push(hvml_string_t *str, const char c);
-int  hvml_string_pop(hvml_string_t *str, const char *c);
+int  hvml_string_pop(hvml_string_t *str, char *c);
 
 int  hvml_string_get(hvml_string_t *str, char **buf, size_t *len);
 int  hvml_string_set(hvml_string_t *str, const char *buf, size_t len);
