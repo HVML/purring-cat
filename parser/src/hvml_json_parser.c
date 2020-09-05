@@ -1109,6 +1109,10 @@ static int hvml_json_parser_at_exponent(hvml_json_parser_t *parser, const char c
 static int hvml_json_parser_at_end(hvml_json_parser_t *parser, const char c, const char *str_state) {
     if (isspace(c)) return 0;
     switch (c) {
+        case ',':
+        {
+            // just eat it
+        } break;
         default:
         {
             int ret = 0;
