@@ -17,8 +17,9 @@
 
 #include "hvml/hvml_parser.h"
 
-#include "hvml/hvml_log.h"
 #include "hvml/hvml_json_parser.h"
+#include "hvml/hvml_log.h"
+#include "hvml/hvml_utf8.h"
 
 #include <ctype.h>
 #include <string.h>
@@ -114,6 +115,7 @@ struct hvml_parser_s {
     size_t                         col;
 
     hvml_json_parser_t            *jp;
+    hvml_utf8_decoder_t           *decoder;
 };
 
 static int               hvml_parser_push_state(hvml_parser_t *parser, HVML_PARSER_STATE state);
@@ -168,12 +170,21 @@ hvml_parser_t* hvml_parser_create(hvml_parser_conf_t conf) {
     }
 
     parser->conf = conf;
+
+    parser->decoder = hvml_utf8_decoder();
+    if (!parser->decoder) {
+        hvml_parser_destroy(parser);
+        return NULL;
+    }
+
     hvml_parser_push_state(parser, HVML_PARSER_STATE_BEGIN);
 
     return parser;
 }
 
 void hvml_parser_destroy(hvml_parser_t *parser) {
+    if (!parser) return;
+
     string_clear(&parser->cache);
     string_clear(&parser->curr);
     for (size_t i=0; i<parser->tags; ++i) {
@@ -182,6 +193,8 @@ void hvml_parser_destroy(hvml_parser_t *parser) {
     free(parser->ar_tags);   parser->ar_tags   = NULL;
     free(parser->ar_states); parser->ar_states = NULL;
     hvml_json_parser_destroy(parser->jp); parser->jp = NULL;
+    hvml_utf8_decoder_destroy(parser->decoder); parser->decoder = NULL;
+
     free(parser);
 }
 
@@ -886,20 +899,52 @@ static int do_hvml_parser_parse_char(hvml_parser_t *parser, const char c) {
     return 0;
 }
 
-int hvml_parser_parse_char(hvml_parser_t *parser, const char c) {
+#define APPEND_TO_CURR()                         \
+do {                                             \
+    if (c=='\n') {                               \
+        string_reset(&parser->curr);             \
+        ++parser->line;                          \
+        parser->col = 0;                         \
+    } else {                                     \
+        string_append(&parser->curr, c);         \
+        ++parser->col;                           \
+    }                                            \
+} while (0)
+
+static int hvml_parser_parse_char_(hvml_parser_t *parser, const char c) {
     int ret = 1;
     do {
         ret = do_hvml_parser_parse_char(parser, c);
     } while (ret==1); // ret==1: to retry
     if (ret==0) {
-        if (c=='\n') {
-            string_reset(&parser->curr);
-            ++parser->line;
-            parser->col = 0;
-        } else {
-            string_append(&parser->curr, c);
-            ++parser->col;
+        APPEND_TO_CURR();
+    }
+    return ret;
+}
+
+int hvml_parser_parse_char(hvml_parser_t *parser, const char c) {
+    int ret = 1;
+    uint64_t cp = 0;
+    ret = hvml_utf8_decoder_push(parser->decoder, c, &cp);
+    if (ret==-1) {
+        size_t len = 0;
+        const char *cache = hvml_utf8_decoder_cache(parser->decoder, &len);
+        for (size_t i=0; cache && i<len; ++i) {
+            const char c = cache[i];
+            APPEND_TO_CURR();
         }
+        E("==%s%c==: unexpected [0x%02x/%c]@[%ldr/%ldc]",
+          string_get(&parser->curr), c, c, c,
+          parser->line+1, parser->col+1);
+        return -1;
+    }
+    if (ret==0) return 0;
+    size_t len = 0;
+    const char *cache = hvml_utf8_decoder_cache(parser->decoder, &len);
+    ret = 0;
+    for (size_t i=0; cache && i<len; ++i) {
+        ret = hvml_parser_parse_char_(parser, cache[i]);
+        if (ret) break;
     }
     return ret;
 }

@@ -133,6 +133,8 @@ hvml_json_parser_t* hvml_json_parser_create(hvml_json_parser_conf_t conf) {
 }
 
 void hvml_json_parser_destroy(hvml_json_parser_t *parser) {
+    if (!parser) return;
+
     string_clear(&parser->cache);
     string_clear(&parser->curr);
     free(parser->ar_states); parser->ar_states = NULL;
