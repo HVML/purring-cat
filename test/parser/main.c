@@ -21,6 +21,7 @@
 #include "hvml/hvml_jo.h"
 #include "hvml/hvml_json_parser.h"
 #include "hvml/hvml_log.h"
+#include "hvml/hvml_utf8.h"
 
 #include <inttypes.h>
 #include <stdio.h>
@@ -30,6 +31,7 @@ static const char* file_ext(const char *file);
 static int process(FILE *in, const char *ext);
 static int process_hvml(FILE *in);
 static int process_json(FILE *in);
+static int process_utf8(FILE *in);
 
 int main(int argc, char *argv[]) {
     if (argc == 1) return 0;
@@ -67,7 +69,9 @@ static const char* file_ext(const char *file) {
 }
 
 static int process(FILE *in, const char *ext) {
-    if (strcmp(ext, ".json")==0) {
+    if (strcmp(ext, ".utf8")==0) {
+        return process_utf8(in);
+    }else if (strcmp(ext, ".json")==0) {
         return process_json(in);
     } else {
         return process_hvml(in);
@@ -94,5 +98,56 @@ static int process_json(FILE *in) {
         return 0;
     }
     return 1;
+}
+
+static int process_utf8(FILE *in) {
+    char buf[4096] = {0};
+    int  n         = 0;
+    int  ret       = 0;
+
+    hvml_utf8_decoder_t *decoder = hvml_utf8_decoder();
+    if (!decoder) {
+        E("failed to open utf8 decoder");
+        return 1;
+    }
+
+    while ( (n=fread(buf, 1, sizeof(buf), in))>0) {
+        for (int i=0; i<n; ++i) {
+            uint64_t cp = 0;
+            ret = hvml_utf8_decoder_push(decoder, buf[i], &cp);
+            if (ret==0) continue;
+            if (ret==1) {
+                char utf8[5] = {0};
+                size_t len = sizeof(utf8);
+                ret = hvml_utf8_encode(cp, utf8, &len);
+                if (ret) {
+                    ret = -1;
+                    break;
+                }
+                if (len<0 || len>4) {
+                    E("internal logic error");
+                    ret = -1;
+                    break;
+                }
+                utf8[len] = '\0';
+                fprintf(stdout, "%s", utf8);
+                ret = 0;
+                continue;
+            }
+            ret = -1;
+            break;
+        }
+        if (ret==-1) break;
+    }
+
+    if (ret==0) {
+        if (!hvml_utf8_decoder_ready(decoder)) {
+            ret = -1;
+        }
+    }
+    hvml_utf8_decoder_destroy(decoder);
+    decoder = NULL;
+
+    return ret ? 1 : 0;
 }
 
