@@ -20,3 +20,8 @@ foreach(json ${jsons})
     add_test(NAME ${json}, COMMAND sh -c "${PROJECT_BINARY_DIR}${relative}/hp ${json} | python3 -m json.tool | diff - ${json}.output")
 endforeach()
 
+file(GLOB utf8s "test/*.utf8")
+foreach(utf8 ${utf8s})
+    add_test(NAME ${utf8}, COMMAND sh -c "${PROJECT_BINARY_DIR}${relative}/hp ${utf8} | diff - ${utf8}.output")
+endforeach()
+

@@ -4,6 +4,7 @@ set(hvml_parser_src
     hvml_log.c
     hvml_parser.c
     hvml_string.c
+    hvml_utf8.c
 )
 
 # static
