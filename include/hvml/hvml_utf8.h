@@ -39,6 +39,8 @@ int                  hvml_utf8_decoder_push(hvml_utf8_decoder_t *decoder, const 
 // 0:  there's cached utf8 fragment or internal failure
 int                  hvml_utf8_decoder_ready(hvml_utf8_decoder_t *decoder);
 
+const char*          hvml_utf8_decoder_cache(hvml_utf8_decoder_t *decoder, size_t *len);
+
 
 int                  hvml_utf8_encode(const uint64_t cp, char *output, size_t *output_len);
 

@@ -17,6 +17,8 @@
 
 #include "hvml/hvml_utf8.h"
 
+#include "hvml/hvml_string.h"
+
 #include <stdlib.h>
 
 #define MKDT(type)  DECODER##type
@@ -35,6 +37,7 @@ typedef enum {
 struct hvml_utf8_decoder_s {
     DECODER_STATE             state;
     uint64_t                  cp;
+    hvml_string_t             cache;
 };
 
 
@@ -47,6 +50,8 @@ hvml_utf8_decoder_t* hvml_utf8_decoder() {
 
 void hvml_utf8_decoder_destroy(hvml_utf8_decoder_t *decoder) {
     if (!decoder) return;
+
+    hvml_string_clear(&decoder->cache);
 
     free(decoder);
 }
@@ -67,22 +72,35 @@ int hvml_utf8_decoder_push(hvml_utf8_decoder_t *decoder, const char c, uint64_t 
     switch (decoder->state) {
         case MKDT(D_INIT):
         {
+            hvml_string_reset(&decoder->cache);
             if ((uc&0x80)==0) {
+                if (hvml_string_push(&decoder->cache, c)) {
+                   return -1;
+                }
                 decoder->cp = uc;
                 do_output();
                 return 1;
             }
             if ((uc&0xe0)==0xc0) {
+                if (hvml_string_push(&decoder->cache, c)) {
+                   return -1;
+                }
                 decoder->cp = (uc & ~0xe0) << 6;
                 decoder->state = MKDT(D_22);
                 break;
             }
             if ((uc&0xf0)==0xe0) {
+                if (hvml_string_push(&decoder->cache, c)) {
+                   return -1;
+                }
                 decoder->cp = (uc & ~0xf0) << 12;
                 decoder->state = MKDT(D_32);
                 break;
             }
             if ((uc&0xf4)==0xf0) {
+                if (hvml_string_push(&decoder->cache, c)) {
+                   return -1;
+                }
                 decoder->cp = (uc & ~0xf4) << 18;
                 decoder->state = MKDT(D_42);
                 break;
@@ -92,6 +110,9 @@ int hvml_utf8_decoder_push(hvml_utf8_decoder_t *decoder, const char c, uint64_t 
         case MKDT(D_22):
         {
             if ((uc&0xc0)==0x80) {
+                if (hvml_string_push(&decoder->cache, c)) {
+                    return -1;
+                }
                 decoder->cp |= (uc & ~0xc0);
                 do_output();
                 return 1;
@@ -101,6 +122,9 @@ int hvml_utf8_decoder_push(hvml_utf8_decoder_t *decoder, const char c, uint64_t 
         case MKDT(D_32):
         {
             if ((uc&0xc0)==0x80) {
+                if (hvml_string_push(&decoder->cache, c)) {
+                    return -1;
+                }
                 decoder->cp |= (uc & ~0xc0) << 6;
                 decoder->state = MKDT(D_33);
                 break;
@@ -110,6 +134,9 @@ int hvml_utf8_decoder_push(hvml_utf8_decoder_t *decoder, const char c, uint64_t 
         case MKDT(D_33):
         {
             if ((uc&0xc0)==0x80) {
+                if (hvml_string_push(&decoder->cache, c)) {
+                    return -1;
+                }
                 decoder->cp |= (uc & ~0xc0);
                 do_output();
                 return 1;
@@ -119,6 +146,9 @@ int hvml_utf8_decoder_push(hvml_utf8_decoder_t *decoder, const char c, uint64_t 
         case MKDT(D_42):
         {
             if ((uc&0xc0)==0x80) {
+                if (hvml_string_push(&decoder->cache, c)) {
+                    return -1;
+                }
                 decoder->cp |= (uc & ~0xc0) << 12;
                 decoder->state = MKDT(D_43);
                 break;
@@ -128,6 +158,9 @@ int hvml_utf8_decoder_push(hvml_utf8_decoder_t *decoder, const char c, uint64_t 
         case MKDT(D_43):
         {
             if ((uc&0xc0)==0x80) {
+                if (hvml_string_push(&decoder->cache, c)) {
+                    return -1;
+                }
                 decoder->cp |= (uc & ~0xc0) << 6;
                 decoder->state = MKDT(D_44);
                 break;
@@ -137,6 +170,9 @@ int hvml_utf8_decoder_push(hvml_utf8_decoder_t *decoder, const char c, uint64_t 
         case MKDT(D_44):
         {
             if ((uc&0xc0)==0x80) {
+                if (hvml_string_push(&decoder->cache, c)) {
+                    return -1;
+                }
                 decoder->cp |= (uc & ~0xc0);
                 do_output();
                 return 1;
@@ -157,6 +193,14 @@ int hvml_utf8_decoder_ready(hvml_utf8_decoder_t *decoder) {
     if (decoder->state != MKDT(D_INIT)) return 0;
 
     return 1;
+}
+
+const char* hvml_utf8_decoder_cache(hvml_utf8_decoder_t *decoder, size_t *len) {
+    if (!decoder) return NULL;
+
+    if (len) *len = decoder->cache.len;
+
+    return decoder->cache.str;
 }
 
 int hvml_utf8_encode(const uint64_t cp, char *output, size_t *output_len)
