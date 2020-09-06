@@ -47,6 +47,8 @@ hvml_utf8_decoder_t* hvml_utf8_decoder() {
 
 void hvml_utf8_decoder_destroy(hvml_utf8_decoder_t *decoder) {
     if (!decoder) return;
+
+    free(decoder);
 }
 
 #define do_output()                                    \
