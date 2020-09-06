@@ -12,6 +12,7 @@ void hvml_string_reset(hvml_string_t *str) {
         A(str->len==0, "internal logic error");
         return;
     }
+    str->str[0] = '\0';
 }
 
 void hvml_string_clear(hvml_string_t *str) {
@@ -23,12 +24,13 @@ void hvml_string_clear(hvml_string_t *str) {
 }
 
 int hvml_string_push(hvml_string_t *str, const char c) {
-    char *s = (char*)realloc(str->str, str->len + 1);
+    char *s = (char*)realloc(str->str, str->len + 2); // one extra null terminator
     if (!s) return -1;
 
     s[str->len] = c;
     str->str    = s;
     str->len   += 1;
+    s[str->len] = '\0';
 
     return 0;
 }
@@ -39,6 +41,7 @@ int hvml_string_pop(hvml_string_t *str, char *c) {
     if (c) *c = str->str[str->len-1];
 
     str->len -= 1;
+    str->str[str->len] = '\0';
 
     return 0;
 }
@@ -51,7 +54,7 @@ int hvml_string_get(hvml_string_t *str, char **buf, size_t *len) {
 }
 
 int hvml_string_set(hvml_string_t *str, const char *buf, size_t len) {
-    char *s = (char*)realloc(str->str, len + 1);
+    char *s = (char*)realloc(str->str, len + 1); // one extra null terminator
     if (!s) return -1;
 
     memcpy(s, buf, len);
