@@ -13,6 +13,9 @@ struct hvml_string_s {
     size_t          len;
 };
 
+#define hvml_string_str(s) ((s)->str)
+#define hvml_string_len(s) ((s)->len)
+
 // there is no `init`-like function here since hvml_string_t is public
 // and self-descripted
 void hvml_string_reset(hvml_string_t *str);
