@@ -588,7 +588,6 @@ static int on_begin(void *arg) {
 }
 
 static int on_open_array(void *arg) {
-    D(".");
     hvml_jo_value_t *jo = hvml_jo_array();
     if (!jo) return -1;
 

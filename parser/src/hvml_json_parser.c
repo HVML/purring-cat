@@ -517,7 +517,7 @@ static int hvml_json_parser_at_escape_u3(hvml_json_parser_t *parser, const char 
     }
     uint32_t ucs = DECODE_SURROGATE_PAIR(parser->shi, parser->slo);
     if(ucs<0x10000 || ucs>=0x110000) {
-        E("not followed by low surrogate");
+        E("not a valid ucs");
         EPARSE();
         return -1;
     }
