@@ -804,7 +804,7 @@ static int on_string(void *arg, const char *val, size_t len) {
 }
 
 static int on_integer(void *arg, const char *origin, int64_t val) {
-    hvml_jo_value_t *jo = hvml_jo_integer(val);
+    hvml_jo_value_t *jo = hvml_jo_integer(val, origin);
     if (!jo) return -1;
 
     hvml_dom_gen_t *gen = (hvml_dom_gen_t*)arg;
@@ -825,7 +825,7 @@ static int on_integer(void *arg, const char *origin, int64_t val) {
 }
 
 static int on_double(void *arg, const char *origin, double val) {
-    hvml_jo_value_t *jo = hvml_jo_double(val);
+    hvml_jo_value_t *jo = hvml_jo_double(val, origin);
     if (!jo) return -1;
 
     hvml_dom_gen_t *gen = (hvml_dom_gen_t*)arg;
