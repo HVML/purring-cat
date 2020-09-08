@@ -435,7 +435,8 @@ void hvml_jo_value_printf(hvml_jo_value_t *jo, FILE *out) {
             if (jo->jnum.integer) {
                 fprintf(out, "%"PRId64"", jo->jnum.v_i);
             } else {
-                fprintf(out, "%g", jo->jnum.v_d);
+                int prec = strlen(jo->jnum.origin);
+                fprintf(out, "%.*g", prec, jo->jnum.v_d);
             }
         } break;
         case MKJOT(J_STRING): {

@@ -2,6 +2,8 @@
 
 #include "hvml/hvml_log.h"
 
+#include <ctype.h>
+#include <limits.h>
 #include <stdarg.h>
 #include <string.h>
 
@@ -113,5 +115,68 @@ int hvml_string_append_printf(hvml_string_t *str, const char *fmt, ...) {
     str->len += n + 1;
 
     return str->len;
+}
+
+int hvml_string_to_int64(const char *s, int64_t *v) {
+    if (!s) return -1;
+
+    int64_t val = 0;
+    int     n   = 0;
+    int r = sscanf(s, "%"PRId64"%n", &val, &n);
+    if (r!=1 || n!=strlen(s)) {
+        D("failed to parse int64: %s, 0x%"PRIx64"", s, val);
+        return -1;
+    }
+
+    if (val==0) {
+        // for +0/-0
+        const char *t = s;
+        while (*t) {
+            if (*t=='+' || *t=='-' || *t=='0') {
+                ++t;
+                continue;
+            }
+            D("failed to parse int64: %s, 0x%"PRIx64"", s, val);
+            return -1;
+        }
+    } else if (val==INT64_MAX || val==INT64_MIN) {
+        // check potential overflow/underflow
+        char buf[64];
+        if (isdigit(s[0])) {
+            r = snprintf(buf, sizeof(buf), "%"PRId64"", val);
+        } else {
+            // add 'sign'
+            r = snprintf(buf, sizeof(buf), "%+"PRId64"", val);
+        }
+        if (r>=sizeof(buf) || strcmp(buf, s)) {
+            D("failed to check int64: %s, 0x%"PRIx64"", s, val);
+            return -1;
+        }
+    }
+
+    if (v) *v = val;
+
+    return 0;
+}
+
+int hvml_string_to_double(const char *s, double *v) {
+    if (!s) return -1;
+
+    double  val     = 0;
+    int     n       = 0;
+    int     r       = 0;
+    int     G       = strchr(s, 'E')?1:0;
+    if (G) {
+        r = sscanf(s, "%lG%n", &val, &n);
+    } else {
+        r = sscanf(s, "%lg%n", &val, &n);
+    }
+    if (r!=1 || n!=strlen(s)) {
+        return -1;
+    }
+
+    if (v) *v = val;
+
+    return 0;
 }
 

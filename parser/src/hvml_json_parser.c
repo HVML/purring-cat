@@ -100,13 +100,30 @@ do {                                                                            
         ret = -1;                                                                                 \
         break;                                                                                    \
     }                                                                                             \
-    if (parser->conf.on_double) {                                                                 \
-        double v;                                                                                 \
-        int len = 0;                                                                              \
-        int n = sscanf(hvml_string_str(&parser->cache), "%lg%n", &v, &len);                       \
-        ret = -1;                                                                                 \
-        if (n==1 && len == parser->cache.len) {                                                   \
-            ret = parser->conf.on_double(parser->conf.arg, hvml_string_str(&parser->cache), v);   \
+    const char *s = hvml_string_str(&parser->cache);                                              \
+    size_t      l = hvml_string_len(&parser->cache);                                              \
+    int64_t     v = 0;                                                                            \
+    double      d = 0;                                                                            \
+    if (strchr(s, '.') || strchr(s, 'e') || strchr(s, 'E')) {                                     \
+        ret = hvml_string_to_double(s, &d);                                                       \
+        if (ret) {                                                                                \
+            EPARSE();                                                                             \
+            ret = -1;                                                                             \
+            break;                                                                                \
+        }                                                                                         \
+        if (parser->conf.on_double) {                                                             \
+            ret = parser->conf.on_double(parser->conf.arg, s, d);                                 \
+        }                                                                                         \
+    } else {                                                                                      \
+        ret = hvml_string_to_int64(s, &v);                                                        \
+        if (ret) {                                                                                \
+            D("failed to parse int64: %s", s);                                                    \
+            EPARSE();                                                                             \
+            ret = -1;                                                                             \
+            break;                                                                                \
+        }                                                                                         \
+        if (parser->conf.on_integer) {                                                            \
+            ret = parser->conf.on_integer(parser->conf.arg, s, v);                                \
         }                                                                                         \
     }                                                                                             \
     hvml_string_reset(&parser->cache);                                                            \
@@ -1046,7 +1063,7 @@ static int hvml_json_parser_at_decimal(hvml_json_parser_t *parser, const char c,
 
 static int hvml_json_parser_at_esym(hvml_json_parser_t *parser, const char c, const char *str_state) {
     switch (c) {
-        case '+': // not in json standard
+        case '+':
         case '-':
         case '0':
         case '1':

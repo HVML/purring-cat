@@ -1,6 +1,7 @@
 #ifndef _hvml_string_h
 #define _hvml_string_h
 
+#include <inttypes.h>
 #include <stddef.h>
 
 #ifdef __cplusplus
@@ -31,6 +32,11 @@ int  hvml_string_printf(hvml_string_t *str, const char *fmt, ...)
 __attribute__ ((format (printf, 2, 3)));
 int  hvml_string_append_printf(hvml_string_t *str, const char *fmt, ...)
 __attribute__ ((format (printf, 2, 3)));
+
+
+int  hvml_string_to_int64(const char *s, int64_t *v);
+int  hvml_string_to_double(const char *s, double *v);
+
 
 #ifdef __cplusplus
 }
