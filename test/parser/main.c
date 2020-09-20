@@ -32,6 +32,7 @@ static int process(FILE *in, const char *ext);
 static int process_hvml(FILE *in);
 static int process_json(FILE *in);
 static int process_utf8(FILE *in);
+static int process_jee(FILE *in);
 
 int main(int argc, char *argv[]) {
     if (argc == 1) return 0;
@@ -69,7 +70,9 @@ static const char* file_ext(const char *file) {
 }
 
 static int process(FILE *in, const char *ext) {
-    if (strcmp(ext, ".utf8")==0) {
+    if (strcmp(ext, ".jee")==0) {
+        return process_jee(in);
+    }else if (strcmp(ext, ".utf8")==0) {
         return process_utf8(in);
     }else if (strcmp(ext, ".json")==0) {
         return process_json(in);
@@ -149,5 +152,10 @@ static int process_utf8(FILE *in) {
     decoder = NULL;
 
     return ret ? 1 : 0;
+}
+
+static int process_jee(FILE *in) {
+    extern int dummy(hvml_dom_t **pdom, FILE *in);
+    return dummy(NULL, in);
 }
 
