@@ -112,6 +112,8 @@ LINTEGER 0|([1-9][0-9]*)
                       return TOK_HVML_JE_DOLAR2; }
 <DOLAR>[])>]         { S();
                       return *yytext; }
+<DOLAR>[[:space:]]+  { S();
+                       return TOK_HVML_JE_SPACE; }
 <DOLAR>.|\n          { unput(*yytext);
                        POP_STATE(); }
 
