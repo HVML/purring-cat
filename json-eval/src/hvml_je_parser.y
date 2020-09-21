@@ -38,11 +38,13 @@ void yyerror(YYLTYPE *yylloc, hvml_dom_t **pdom, void *arg, char const *s);
 %token <str> TEXT LINTEGER LTOKEN LSTR
 %token DOLAR1 DOLAR2
 
+%destructor { free($$); } <str>
+
 %% /* The grammar follows. */
 
 input:
   %empty
-| input TEXT
+| input TEXT  { D("text: [%s]", $2); free($2); }
 | input jee
 | input error { return -1; }
 ;
@@ -50,9 +52,9 @@ input:
 jee:
   DOLAR1 jae
 | DOLAR2 jae '}'
-| LINTEGER
-| '"'  LSTR '"'
-| '\'' LSTR '\''
+| LINTEGER           { D("integer: [%s]", $1); free($1); }
+| '"'  LSTR '"'      { D("str: [%s]", $2); free($2); }
+| '\'' LSTR '\''     { D("str: [%s]", $2); free($2); }
 ;
 
 jae:
@@ -63,17 +65,17 @@ jae:
 ;
 
 var:
-  '?'
-| '@'
-| '#'
-| '%'
-| ':'
-| LINTEGER
-| LTOKEN
+  '?'                { D("?"); }
+| '@'                { D("@"); }
+| '#'                { D("#"); }
+| '%'                { D("%%"); }
+| ':'                { D(":"); }
+| LINTEGER           { D("integer: [%s]", $1); free($1); }
+| LTOKEN             { D("token: [%s]", $1); free($1); }
 ;
 
 key:
-  LTOKEN
+  LTOKEN             { D("token: [%s]", $1); free($1); }
 ;
 
 args:

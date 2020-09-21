@@ -74,7 +74,7 @@ LINTEGER 0|([1-9][0-9]*)
           PUSH_STATE(DOLAR);
           return TOK_HVML_JE_DOLAR2; }
 [^${]+  { S();
-          yylval->str = yytext;
+          yylval->str = strdup(yytext);
           return TOK_HVML_JE_TEXT; }
 .       { return -1; }
 
@@ -84,10 +84,10 @@ LINTEGER 0|([1-9][0-9]*)
 <DOLAR>[?@#%:]      { S();
                       return *yytext; }
 <DOLAR>{LTOKEN}     { S();
-                      yylval->str = yytext;
+                      yylval->str = strdup(yytext);
                       return TOK_HVML_JE_LTOKEN; }
 <DOLAR>{LINTEGER}   { S();
-                      yylval->str = yytext;
+                      yylval->str = strdup(yytext);
                       return TOK_HVML_JE_LINTEGER; }
 <DOLAR>[.]        { S();
                       return *yytext; }
@@ -120,7 +120,7 @@ LINTEGER 0|([1-9][0-9]*)
                   POP_STATE();
                   return *yytext; }
 <STR>[^"]+      { S();
-                  yylval->str = yytext;
+                  yylval->str = strdup(yytext);
                   return TOK_HVML_JE_LSTR; }
 
     /* no escape support yet */
@@ -128,7 +128,7 @@ LINTEGER 0|([1-9][0-9]*)
                   POP_STATE();
                   return *yytext; }
 <STR1>[^']+     { S();
-                  yylval->str = yytext;
+                  yylval->str = strdup(yytext);
                   return TOK_HVML_JE_LSTR; }
 
 %%
