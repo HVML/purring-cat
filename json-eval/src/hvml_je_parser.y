@@ -35,8 +35,8 @@ void yyerror(YYLTYPE *yylloc, hvml_dom_t **pdom, void *arg, char const *s);
 
 %union { char            *str; }
 
-%token <str> TEXT LINTEGER LTOKEN LSTR
-%token DOLAR1 DOLAR2 SPACE
+%token <str> TEXT LINTEGER LTOKEN LSTR SPACE
+%token DOLAR1 DOLAR2
 
 %destructor { free($$); } <str>
 
@@ -46,21 +46,24 @@ input:
   %empty
 | input TEXT  { D("text: [%s]", $2); free($2); }
 | input jee
+| input SPACE { D("space: [%s]", $2); free($2); }
 | input error { return -1; }
 ;
 
 jee:
-  DOLAR1 jae ows
-| DOLAR2 ows jae ows '}' ows
-| LINTEGER ows       { D("integer: [%s]", $1); free($1); }
-| '"'  LSTR '"' ows  { D("str: [%s]", $2); free($2); }
-| '\'' LSTR '\'' ows { D("str: [%s]", $2); free($2); }
+  DOLAR1 jae
+| DOLAR2 ows jae ows '}'
+| LINTEGER           { D("integer: [%s]", $1); free($1); }
+| '"'  LSTR '"'      { D("str: [%s]", $2); free($2); }
+| '\'' LSTR '\''     { D("str: [%s]", $2); free($2); }
 ;
 
 jae:
   var
 | jae '.' key
+| jae '(' ows ')'
 | jae '(' ows args ows ')'
+| jae '<' ows '>'
 | jae '<' ows args ows '>'
 | jae '[' ows jee ows ']'
 ;
@@ -80,18 +83,13 @@ key:
 ;
 
 args:
-  %empty
-| jees
-;
-
-jees:
   jee
-| jees ows ',' ows jee
+| args ows ',' ows jee
 ;
 
 ows:
   %empty
-| ows SPACE
+| ows SPACE          { D("space: [%s]", $2); free($2); }
 ;
 
 %%

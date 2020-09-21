@@ -11,6 +11,7 @@ endif()
 BISON_TARGET(hvmlJsonEvalParser
              hvml_je_parser.y
              ${CMAKE_CURRENT_BINARY_DIR}/hvml_je_parser.tab.c
+            COMPILE_FLAGS "--graph=${CMAKE_CURRENT_BINARY_DIR}/hvml_je_parser.tab.gv"
 )
 FLEX_TARGET(hvmlJsonEvalScanner
             hvml_je_scanner.l

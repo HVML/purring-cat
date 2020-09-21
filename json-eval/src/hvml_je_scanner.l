@@ -58,10 +58,10 @@ do {                                            \
 %option perf-report
 %option 8bit
 
-LTOKEN   [A-Za-z_][A-Za-z0-9_]*
+LTOKEN   [A-Za-z_]([^[:cntrl:][:punct:][:space:]]|[_-])*
 LINTEGER 0|([1-9][0-9]*)
 
-%x DOLAR VARDONE ARGS STR STR1
+%x DOLAR STR STR1
 
 %%
 <<EOF>> { int state; TOP_STATE(state);
@@ -76,7 +76,8 @@ LINTEGER 0|([1-9][0-9]*)
 [^${]+  { S();
           yylval->str = strdup(yytext);
           return TOK_HVML_JE_TEXT; }
-.       { return -1; }
+.       { S();
+          return *yytext; }
 
 <DOLAR>"}"          { S();
                       POP_STATE();
@@ -92,9 +93,6 @@ LINTEGER 0|([1-9][0-9]*)
 <DOLAR>[.]        { S();
                       return *yytext; }
 <DOLAR>[[(<]      { S();
-                      return *yytext; }
-<DOLAR>[}]        { S();
-                      POP_STATE();
                       return *yytext; }
 <DOLAR>["]           { S();
                       PUSH_STATE(STR);
@@ -113,6 +111,7 @@ LINTEGER 0|([1-9][0-9]*)
 <DOLAR>[])>]         { S();
                       return *yytext; }
 <DOLAR>[[:space:]]+  { S();
+                       yylval->str = strdup(yytext);
                        return TOK_HVML_JE_SPACE; }
 <DOLAR>.|\n          { unput(*yytext);
                        POP_STATE(); }
