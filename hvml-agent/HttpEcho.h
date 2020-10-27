@@ -37,59 +37,59 @@
 class IHttpInfo
 {
 public:
-	IHttpInfo (int port) { listen_port_ = port; };
+    IHttpInfo (int port) { listen_port_ = port; };
 
-	virtual char* GetHttpInfo (int* info_len) = 0;
+    virtual char* GetHttpInfo (int* info_len) = 0;
 
-	int GetListenPort(void) { return listen_port_; };
+    int GetListenPort(void) { return listen_port_; };
 
-	int info_1_;
-	int info_2_;
-	int info_3_;
+    int info_1_;
+    int info_2_;
+    int info_3_;
 
 private:
-	int listen_port_;
+    int listen_port_;
 };
 
 class Http_Listener : public ACE_Event_Handler
 {
 public:
-	Http_Listener (IHttpInfo* ihi);
-	virtual ~Http_Listener (void);
+    Http_Listener (IHttpInfo* ihi);
+    virtual ~Http_Listener (void);
 
-	ACE_HANDLE get_handle (void) const;
-	virtual int handle_input (ACE_HANDLE handle);
-	virtual int handle_close (ACE_HANDLE handle,
-							  ACE_Reactor_Mask close_mask);
+    ACE_HANDLE get_handle (void) const;
+    virtual int handle_input (ACE_HANDLE handle);
+    virtual int handle_close (ACE_HANDLE handle,
+                              ACE_Reactor_Mask close_mask);
 
-	ACE_INET_Addr local_address_;
-	ACE_SOCK_Acceptor acceptor_;
+    ACE_INET_Addr local_address_;
+    ACE_SOCK_Acceptor acceptor_;
 
 private:
-	IHttpInfo* ihi_;
+    IHttpInfo* ihi_;
 };
 
 class Http_Handler : public ACE_Event_Handler
 {
 public:
-	/// Default constructor
-	Http_Handler (ACE_SOCK_Stream &s, IHttpInfo* ihi);
+    /// Default constructor
+    Http_Handler (ACE_SOCK_Stream &s, IHttpInfo* ihi);
 
-	virtual ACE_HANDLE  get_handle (void) const;
-	virtual int handle_input (ACE_HANDLE handle);
-	virtual int handle_close (ACE_HANDLE handle,
-							  ACE_Reactor_Mask close_mask);
+    virtual ACE_HANDLE  get_handle (void) const;
+    virtual int handle_input (ACE_HANDLE handle);
+    virtual int handle_close (ACE_HANDLE handle,
+                              ACE_Reactor_Mask close_mask);
 
-	ACE_SOCK_Stream stream_;
+    ACE_SOCK_Stream stream_;
 
 private:
-	IHttpInfo* ihi_;
+    IHttpInfo* ihi_;
 };
 
 
 class HttpEcho
 {
 public:
-	static void StartServer (IHttpInfo* ihi);
-	static void StopServer (void);
+    static void StartServer (IHttpInfo* ihi);
+    static void StopServer (void);
 };

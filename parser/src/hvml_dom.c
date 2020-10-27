@@ -422,6 +422,65 @@ void hvml_dom_printf(hvml_dom_t *dom, FILE *out) {
     }
 }
 
+void hvml_dom_traverse(hvml_dom_t *dom, FILE *out, traverse_callback *out_funcs) {
+    switch (dom->dt) {
+        case MKDOT(D_TAG):
+        {
+            //fprintf(out, "<");
+            //fprintf(out, "%s", dom->tag.name.str);
+            out_funcs->out_dom_head(out, dom->tag.name.str);
+            hvml_dom_t *attr = DOM_ATTR_HEAD(dom);
+            while (attr) {
+                //fprintf(out, " ");
+                out_funcs->out_attr_separator(out);
+                hvml_dom_printf(attr, out);
+                attr = DOM_ATTR_NEXT(attr);
+            }
+            hvml_dom_t *child = DOM_HEAD(dom);
+            if (!child) {
+                //fprintf(out, "/>");
+                out_funcs->out_simple_close(out);
+            } else {
+                //fprintf(out, ">");
+                out_funcs->out_tag_close(out);
+                while (child) {
+                    hvml_dom_close(child, out);
+                    child = DOM_NEXT(child);
+                }
+                //fprintf(out, "</");
+                //fprintf(out, "%s", dom->tag.name.str);
+                //fprintf(out, ">");
+                out_funcs->out_dom_close(out, dom->tag.name.str);
+            }
+        } break;
+        case MKDOT(D_ATTR):
+        {
+            //fprintf(out, "%s", dom->attr.key.str);
+            out_funcs->out_attr_key(out, dom->attr.key.str);
+            if (dom->attr.val.str) {
+                //fprintf(out, ":\"");
+                //hvml_dom_attr_val_serialize(dom->attr.val.str, dom->attr.val.len, out);
+                //fprintf(out, "\"");
+                out_funcs->out_attr_val(dom->attr.val.str, dom->attr.val.len, out);
+            }
+        } break;
+        case MKDOT(D_TEXT):
+        {
+            //hvml_dom_str_serialize(dom->txt.txt.str, dom->txt.txt.len, out);
+            out_funcs->out_dom_string(dom->txt.txt.str, dom->txt.txt.len, out);
+        } break;
+        case MKDOT(D_JSON):
+        {
+            //hvml_jo_value_printf(dom->jo, out);
+            out_funcs->out_json_value(dom->jo, out);
+        } break;
+        default:
+        {
+            A(0, "internal logic error");
+        } break;
+    }
+}
+
 static int on_open_tag(void *arg, const char *tag);
 static int on_attr_key(void *arg, const char *key);
 static int on_attr_val(void *arg, const char *val);

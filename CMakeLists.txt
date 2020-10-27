@@ -10,4 +10,3 @@ add_subdirectory(json-eval)
 add_subdirectory(json-objects)
 add_subdirectory(test)
 add_subdirectory(bindings)
-
