@@ -1,0 +1,15 @@
+project(hvml-agent) : aceexe {
+
+    exename = hvml-agent
+
+    Source_Files {
+        hvml-agent.cpp
+        HttpEcho.cpp
+        MyInfo.cpp
+    }
+
+    Header_Files {
+        HttpEcho.h
+        MyInfo.h
+    }
+}

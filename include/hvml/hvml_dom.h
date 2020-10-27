@@ -40,6 +40,22 @@ typedef enum {
 typedef struct hvml_dom_s          hvml_dom_t;
 typedef struct hvml_dom_gen_s      hvml_dom_gen_t;
 
+typedef struct traverse_callback_s {
+    // all callback-funcs just mean as name implies
+
+    // hvml output callbacks
+    int  (*out_dom_head)       (FILE *out, char *dom_name);
+    int  (*out_attr_separator) (FILE *out);
+    int  (*out_simple_close)   (FILE *out);
+    int  (*out_tag_close)      (FILE *out);
+    int  (*out_dom_close)      (FILE *out, char *dom_name);
+    int  (*out_attr_key)       (FILE *out, char *key_name);
+    void (*out_attr_val)       (const char *str, size_t len, FILE *out);
+    void (*out_dom_string)     (const char *str, size_t len, FILE *out);
+    void (*out_json_value)     (hvml_jo_value_t *jo, FILE *out);
+
+} traverse_callback;
+
 hvml_dom_t* hvml_dom_create();
 void        hvml_dom_destroy(hvml_dom_t *dom);
 
@@ -62,6 +78,8 @@ void        hvml_dom_str_serialize(const char *str, size_t len, FILE *out);
 void        hvml_dom_attr_val_serialize(const char *str, size_t len, FILE *out);
 
 void        hvml_dom_printf(hvml_dom_t *dom, FILE *out);
+
+void        hvml_dom_traverse(hvml_dom_t *dom, FILE *out, traverse_callback *out_funcs);
 
 hvml_dom_gen_t*   hvml_dom_gen_create();
 void              hvml_dom_gen_destroy(hvml_dom_gen_t *gen);
