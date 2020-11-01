@@ -61,7 +61,17 @@ hvml_dom_t* hvml_dom_select(hvml_dom_t *dom, const char *selector);
 void        hvml_dom_str_serialize(const char *str, size_t len, FILE *out);
 void        hvml_dom_attr_val_serialize(const char *str, size_t len, FILE *out);
 
-void        hvml_dom_printf(hvml_dom_t *dom, FILE *out);
+
+HVML_DOM_TYPE hvml_dom_type(hvml_dom_t *dom);
+const char*   hvml_dom_tag_name(hvml_dom_t *dom);      // tag's name
+const char*   hvml_dom_attr_key(hvml_dom_t *dom);      // attr's key
+const char*   hvml_dom_attr_val(hvml_dom_t *dom);      // attr's val
+const char*   hvml_dom_text(hvml_dom_t *dom);          // elementText
+hvml_jo_value_t* hvml_dom_jo(hvml_dom_t *dom);         // elementJson
+
+
+// tag_open_close: 1-open, 2-single-close, 3-half-close, 4-close
+int         hvml_dom_traverse(hvml_dom_t *dom, void *arg, void (*traverse_cb)(hvml_dom_t *dom, int lvl, int tag_open_close, void *arg, int *breakout));
 
 hvml_dom_gen_t*   hvml_dom_gen_create();
 void              hvml_dom_gen_destroy(hvml_dom_gen_t *gen);

@@ -21,6 +21,7 @@
 #include "hvml/hvml_jo.h"
 #include "hvml/hvml_json_parser.h"
 #include "hvml/hvml_log.h"
+#include "hvml/hvml_printf.h"
 #include "hvml/hvml_utf8.h"
 
 #include <inttypes.h>

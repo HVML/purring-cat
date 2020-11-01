@@ -2,7 +2,7 @@
     <head>
         <init as:"users">[{"id":"1","avatar":"/img/avatars/1.png","name":"Tom","region":"en_US"},{"id":"2","avatar":"/img/avatars/2.png","name":"Jerry","region":"zh_CN"}]</init>
 
-        <init as:"_TIMERS" uniquely by:"id">by:"id"[{"id":"foo","interval":500,"active":"yes"},{"id":"bar","interval":1000,"active":"no"}]</init>
+        <init as:"_TIMERS" uniquely by:"id">[{"id":"foo","interval":500,"active":"yes"},{"id":"bar","interval":1000,"active":"no"}]</init>
 
         <listen on:"hibus://system/status" as:"systemStatus"/>
     </head>

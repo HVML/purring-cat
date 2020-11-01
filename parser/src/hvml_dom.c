@@ -372,54 +372,50 @@ void hvml_dom_attr_val_serialize(const char *str, size_t len, FILE *out) {
     }
 }
 
-void hvml_dom_printf(hvml_dom_t *dom, FILE *out) {
-    switch (dom->dt) {
-        case MKDOT(D_TAG):
-        {
-            fprintf(out, "<");
-            fprintf(out, "%s", dom->tag.name.str);
-            hvml_dom_t *attr = DOM_ATTR_HEAD(dom);
-            while (attr) {
-                fprintf(out, " ");
-                hvml_dom_printf(attr, out);
-                attr = DOM_ATTR_NEXT(attr);
-            }
-            hvml_dom_t *child = DOM_HEAD(dom);
-            if (!child) {
-                fprintf(out, "/>");
-            } else {
-                fprintf(out, ">");
-                while (child) {
-                    hvml_dom_printf(child, out);
-                    child = DOM_NEXT(child);
-                }
-                fprintf(out, "</");
-                fprintf(out, "%s", dom->tag.name.str);
-                fprintf(out, ">");
-            }
-        } break;
-        case MKDOT(D_ATTR):
-        {
-            fprintf(out, "%s", dom->attr.key.str);
-            if (dom->attr.val.str) {
-                fprintf(out, ":\"");
-                hvml_dom_attr_val_serialize(dom->attr.val.str, dom->attr.val.len, out);
-                fprintf(out, "\"");
-            }
-        } break;
-        case MKDOT(D_TEXT):
-        {
-            hvml_dom_str_serialize(dom->txt.txt.str, dom->txt.txt.len, out);
-        } break;
-        case MKDOT(D_JSON):
-        {
-            hvml_jo_value_printf(dom->jo, out);
-        } break;
-        default:
-        {
-            A(0, "internal logic error");
-        } break;
-    }
+HVML_DOM_TYPE hvml_dom_type(hvml_dom_t *dom) {
+    return dom->dt;
+}
+
+const char* hvml_dom_tag_name(hvml_dom_t *dom) {
+    if (dom->dt != MKDOT(D_TAG)) return NULL;
+    return dom->tag.name.str;
+}
+
+const char* hvml_dom_attr_key(hvml_dom_t *dom) {
+    if (dom->dt != MKDOT(D_ATTR)) return NULL;
+    return dom->attr.key.str;
+}
+
+const char* hvml_dom_attr_val(hvml_dom_t *dom) {
+    if (dom->dt != MKDOT(D_ATTR)) return NULL;
+    return dom->attr.val.str;
+}
+
+const char* hvml_dom_text(hvml_dom_t *dom) {
+    if (dom->dt != MKDOT(D_TEXT)) return NULL;
+    return dom->txt.txt.str;
+}
+
+hvml_jo_value_t* hvml_dom_jo(hvml_dom_t *dom) {
+    if (dom->dt != MKDOT(D_JSON)) return NULL;
+    return dom->jo;
+}
+
+
+typedef struct traverse_s          traverse_t;
+struct traverse_s {
+    void      *arg;
+    void     (*traverse_cb)(hvml_dom_t *dom, int lvl, int tag_open_close, void *arg, int *breakout);
+};
+
+static int apply_traverse_callback(hvml_dom_t *dom, int lvl, int tag_open_close, traverse_t *tvs);
+static int do_hvml_dom_traverse(hvml_dom_t *dom, traverse_t *tvs);
+
+int hvml_dom_traverse(hvml_dom_t *dom, void *arg, void (*traverse_cb)(hvml_dom_t *dom, int lvl, int tag_open_close, void *arg, int *breakout)) {
+    traverse_t tvs;
+    tvs.arg         = arg;
+    tvs.traverse_cb = traverse_cb;
+    return do_hvml_dom_traverse(dom, &tvs);
 }
 
 static int on_open_tag(void *arg, const char *tag);
@@ -581,7 +577,6 @@ static int on_attr_key(void *arg, const char *key) {
     }
     A(gen->dom, "internal logic error");
     if (gen->dom->dt == MKDOT(D_ATTR)) {
-        DOM_APPEND(DOM_ATTR_OWNER(gen->dom), v);
         DOM_ATTR_APPEND(DOM_ATTR_OWNER(gen->dom), v);
     } else {
         A(gen->dom->dt == MKDOT(D_TAG), "internal logic error");
@@ -854,5 +849,160 @@ static int on_end(void *arg) {
     // hvml_jo_value_free(val);
     hvml_dom_append_json(gen->dom, val);
     return 0;
+}
+
+static int do_hvml_dom_traverse(hvml_dom_t *dom, traverse_t *tvs) {
+    A(tvs, "internal logic error");
+    int lvl = 0;
+    int r = 0;
+    int pop = 0; // 1:pop from attr, 2:pop from child
+    while (r==0) {
+        switch (dom->dt) {
+            case MKDOT(D_TAG):
+            {
+                if (pop==1) { // pop from attr
+                    hvml_dom_t *child = DOM_HEAD(dom);
+                    if (child) {
+                        A(child->dt==MKDOT(D_TAG) || child->dt==MKDOT(D_TEXT) || child->dt==MKDOT(D_JSON), "");
+                        // half close dom
+                        r = apply_traverse_callback(dom, lvl, 3, tvs);
+                        if (r) continue;
+
+                        ++lvl;
+                        dom = child;
+                        pop = 0;
+                        continue;
+                    }
+                    // single close dom
+                    r = apply_traverse_callback(dom, lvl, 2, tvs);
+                    if (r) continue;
+                    pop = 2; // mock pop from child
+                }
+                if (pop==2) { // pop from child
+                    hvml_dom_t *sibling = DOM_NEXT(dom);
+                    if (sibling) {
+                        dom = sibling;
+                        A(dom->dt==MKDOT(D_TAG) || dom->dt==MKDOT(D_TEXT) || dom->dt==MKDOT(D_JSON), "");
+                        pop = 0;
+                        continue;
+                    }
+                    hvml_dom_t *parent = DOM_OWNER(dom);
+                    if (parent) {
+                        A(parent->dt == MKDOT(D_TAG), "internal logic error");
+                        --lvl;
+                        dom = parent;
+                        // close dom
+                        r = apply_traverse_callback(dom, lvl, 4, tvs);
+                        if (r) continue;
+                        pop = 2; // pop from child
+                        continue;
+                    }
+                    A(lvl==0, "internal logic error:%d", lvl);
+                    return 0; // short cut
+                }
+
+                A(pop==0, "internal logic error");
+                    hvml_dom_t *child = DOM_HEAD(dom);
+
+                r = apply_traverse_callback(dom, lvl, 1, tvs);
+                if (r) continue;
+
+                hvml_dom_t *attr = DOM_ATTR_HEAD(dom);
+                if (attr) {
+                    dom = attr;
+                    A(dom->dt==MKDOT(D_ATTR), "");
+                    continue;
+                }
+
+                pop = 1; // mock pop from attr
+
+                continue;
+            } break;
+            case MKDOT(D_ATTR):
+            {
+                A(pop==0, "internal logic error");
+                r = apply_traverse_callback(dom, lvl, 0, tvs);
+                if (r) continue;
+
+                hvml_dom_t *attr = DOM_ATTR_NEXT(dom);
+                if (attr) {
+                    dom = attr;
+                    A(dom->dt==MKDOT(D_ATTR), "");
+                    continue;
+                }
+
+                hvml_dom_t *parent = DOM_ATTR_OWNER(dom);
+                A(parent, "internal logic error");
+                A(parent->dt == MKDOT(D_TAG), "internal logic error");
+                dom = parent;
+                pop = 1; // pop from attr
+                continue;
+            } break;
+            case MKDOT(D_TEXT):
+            {
+                A(pop==0, "internal logic error");
+                r = apply_traverse_callback(dom, lvl+1, 0, tvs);
+                if (r) continue;
+
+                hvml_dom_t *sibling = DOM_NEXT(dom);
+                if (sibling) {
+                    dom = sibling;
+                        A(dom->dt==MKDOT(D_TAG) || dom->dt==MKDOT(D_TEXT) || dom->dt==MKDOT(D_JSON), "");
+                    pop = 0;
+                    continue;
+                }
+                hvml_dom_t *parent = DOM_OWNER(dom);
+                A(parent, "internal logic error");
+                A(parent->dt == MKDOT(D_TAG), "internal logic error");
+                --lvl;
+                dom = parent;
+                // close dom
+                r = apply_traverse_callback(dom, lvl, 4, tvs);
+                if (r) continue;
+                pop = 2; // pop from child
+                continue;
+            } break;
+            case MKDOT(D_JSON):
+            {
+                A(pop==0, "internal logic error");
+                r = apply_traverse_callback(dom, lvl+1, 0, tvs);
+
+                hvml_dom_t *sibling = DOM_NEXT(dom);
+                if (sibling) {
+                    dom = sibling;
+                        A(dom->dt==MKDOT(D_TAG) || dom->dt==MKDOT(D_TEXT) || dom->dt==MKDOT(D_JSON), "");
+                    pop = 0;
+                    continue;
+                }
+                hvml_dom_t *parent = DOM_OWNER(dom);
+                A(parent, "internal logic error");
+                A(parent->dt == MKDOT(D_TAG), "internal logic error");
+                --lvl;
+                dom = parent;
+                // close dom
+                r = apply_traverse_callback(dom, lvl, 4, tvs);
+                if (r) continue;
+                pop = 2; // pop from child
+                continue;
+            } break;
+            default:
+            {
+                A(0, "internal logic error");
+            } break;
+        }
+        if (r) break;
+    }
+    return r;
+}
+
+static int apply_traverse_callback(hvml_dom_t *dom, int lvl, int tag_open_close, traverse_t *tvs) {
+    A(dom, "internal logic error");
+    A(lvl>=0, "internal logic error");
+    A(tvs, "internal logic error");
+    if (!tvs->traverse_cb) return 0;
+
+    int breakout = 0;
+    tvs->traverse_cb(dom, lvl, tag_open_close, tvs->arg, &breakout);
+    return breakout ? -1 : 0;
 }
 
