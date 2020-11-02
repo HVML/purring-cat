@@ -73,7 +73,7 @@ static void traverse_for_printf(hvml_dom_t *dom, int lvl, int tag_open_close, vo
             fprintf(parg->out, " ");
             fprintf(parg->out, "%s", key);
             if (val) {
-                fprintf(parg->out, ":\"");
+                fprintf(parg->out, "=\"");
                 hvml_dom_attr_val_serialize(val, strlen(val), parg->out);
                 fprintf(parg->out, "\"");
             }

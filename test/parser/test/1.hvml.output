@@ -1,6 +1,6 @@
-<hvml target:"html" script:"python">
+<hvml target="html" script="python">
     <head>
-        <init as:"_" with:"https://foo.bar/messages/$_SYSTEM.locale"/>
+        <init as="_" with="https://foo.bar/messages/$_SYSTEM.locale"/>
 
         <title>Hello, world!</title>
     </head>

@@ -21,6 +21,7 @@
 #include "hvml/hvml_jo.h"
 #include "hvml/hvml_json_parser.h"
 #include "hvml/hvml_log.h"
+#include "hvml/hvml_printf.h"
 #include "hvml/hvml_utf8.h"
 
 #include <inttypes.h>
@@ -29,7 +30,7 @@
 
 static const char* file_ext(const char *file);
 static int process(FILE *in, const char *ext);
-static int process_hvml(FILE *in);
+static int process_hvml(FILE *in, FILE *out);
 static int process_json(FILE *in);
 static int process_utf8(FILE *in);
 
@@ -64,11 +65,11 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    I("processing file: %s", file);
+    I("processing file: %s", file_in);
     int ret = process_hvml(in, out);
 
     if (in) fclose(in);
-    if (out) fcolose(out);
+    if (out) fclose(out);
 
     if (ret) return ret;
     
@@ -86,7 +87,7 @@ static int process_hvml(FILE *in, FILE *out)
     hvml_dom_t *dom = hvml_dom_load_from_stream(in);
     if (dom) {
         hvml_dom_printf(dom, stdout);
-        hvml_dom_to_html(dom, out);
+        // hvml_dom_to_html(dom, out);
         hvml_dom_destroy(dom);
         printf("\n");
         return 0;
