@@ -28,7 +28,9 @@
 extern "C" {
 #endif
 
-void        hvml_dom_printf(hvml_dom_t *dom, FILE *out);
+void hvml_dom_printf(hvml_dom_t *dom, FILE *out);
+void hvml_jo_value_printf(hvml_jo_value_t *jo, FILE *out);
+
 
 #ifdef __cplusplus
 }

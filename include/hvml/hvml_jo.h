@@ -39,6 +39,8 @@ typedef enum {
     MKJOT(J_OBJECT_KV)
 } HVML_JO_TYPE;
 
+const char *hvml_jo_type_str(HVML_JO_TYPE t);
+
 typedef struct hvml_jo_value_s         hvml_jo_value_t;
 typedef struct hvml_jo_gen_s           hvml_jo_gen_t;
 
@@ -71,16 +73,27 @@ HVML_JO_TYPE     hvml_jo_value_type(hvml_jo_value_t *jo);
 // return the type name of the json value
 const char*      hvml_jo_value_type_str(hvml_jo_value_t *jo);
 
-// return the parent of the json value
+// return the parent of the json value, which is a valid json-val
 hvml_jo_value_t* hvml_jo_value_parent(hvml_jo_value_t *jo);
+// return the owner of the json value, which might return a MKJOT(J_OBJECT_KV)
+hvml_jo_value_t* hvml_jo_value_owner(hvml_jo_value_t *jo);
 // return the root of the json value
 hvml_jo_value_t* hvml_jo_value_root(hvml_jo_value_t *jo);
+
+hvml_jo_value_t* hvml_jo_value_child(hvml_jo_value_t *jo);
+hvml_jo_value_t* hvml_jo_value_sibling_next(hvml_jo_value_t *jo);
+hvml_jo_value_t* hvml_jo_value_sibling_prev(hvml_jo_value_t *jo);
+
+int hvml_jo_number_get(hvml_jo_value_t *jo, int *is_integer, int64_t *v, double *d, const char **s);
+int hvml_jo_string_get(hvml_jo_value_t *jo, const char **s);
+int hvml_jo_kv_get(hvml_jo_value_t *jo, const char **key, hvml_jo_value_t **val);
 
 // return # of json value's children
 size_t           hvml_jo_value_children(hvml_jo_value_t *jo);
 
-// serialize the json value to the file stream, with `escape` if necessary
-void             hvml_jo_value_printf(hvml_jo_value_t *jo, FILE *out);
+// action: 1: push; 0: sibling or else; -1: pop
+typedef int (*jo_traverse_f)(hvml_jo_value_t *jo, int lvl, int action, void *arg);
+int hvml_jo_value_traverse(hvml_jo_value_t *jo, void *arg, jo_traverse_f cb);
 
 // create a `generator`, with which we can build a json value from string stream
 hvml_jo_gen_t*   hvml_jo_gen_create();

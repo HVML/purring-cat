@@ -44,6 +44,8 @@ struct hvml_json_parser_conf_s {
     int (*on_string)(void *arg, const char *val, size_t len);
     int (*on_integer)(void *arg, const char *origin, int64_t val);
     int (*on_double)(void *arg, const char *origin, double val);
+    int (*on_item_done)(void *arg);
+    int (*on_val_done)(void *arg);
     int (*on_end)(void *arg);
 
     void *arg;

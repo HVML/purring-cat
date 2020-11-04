@@ -992,7 +992,7 @@ static int do_hvml_dom_traverse(hvml_dom_t *dom, traverse_t *tvs) {
         }
         if (r) break;
     }
-    return r;
+    return r ? -1 : 0;
 }
 
 static int apply_traverse_callback(hvml_dom_t *dom, int lvl, int tag_open_close, traverse_t *tvs) {
