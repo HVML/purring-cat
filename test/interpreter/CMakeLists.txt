@@ -1,0 +1,2 @@
+add_executable(interpreter main.cpp)
+target_link_libraries(interpreter hvml_interpreter_static hvml_parser_static)

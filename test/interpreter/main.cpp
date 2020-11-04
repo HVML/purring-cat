@@ -16,78 +16,101 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "hvml/hvml_parser.h"
-
 #include "hvml/hvml_dom.h"
 #include "hvml/hvml_jo.h"
 #include "hvml/hvml_json_parser.h"
 #include "hvml/hvml_log.h"
-#include "hvml/hvml_printf.h"
 #include "hvml/hvml_utf8.h"
+
+#include "interpreter/ext_tools.h"
+#include "interpreter/interpreter_basic.h"
+#include "interpreter/interpreter_to_three_part.h"
 
 #include <inttypes.h>
 #include <stdio.h>
 #include <string.h>
+#include <fstream>
+#include <algorithm>
+using namespace std;
 
-static const char* file_ext(const char *file);
 static int process(FILE *in, const char *ext);
 static int process_hvml(FILE *in, FILE *out);
 static int process_json(FILE *in);
 static int process_utf8(FILE *in);
 
+#define PATH_MAX    512
+static char out_filename_buffer[PATH_MAX];
+
 int main(int argc, char *argv[])
 {
-    if (argc != 3) {
-	E("arguments error");
+    if (argc < 2 || argc > 3)
+    {
+        E("arguments error");
         return 0;
     }
 
-    if (getenv("NEG")) {
+    if (getenv("NEG"))
+    {
         hvml_log_set_output_only(1);
     }
 
     hvml_log_set_thread_type("main");
 
     const char *file_in = argv[1];
-    const char *file_out = argv[2];
+    const char *file_out = (argc == 3) ? argv[2] : out_filename_buffer;
     const char *fin_ext = file_ext(file_in);
-    const char *fout_ext = file_ext(file_out);
+
+    if (0 != strnicmp(fin_ext, ".hvml", 5))
+    {
+        E("input file name error");
+        return 0;
+    }
+
+    if (argc == 2)
+    {
+        size_t fname_len = min ((size_t)(PATH_MAX - 6), strlen(file_in) - 5);
+        strncpy(out_filename_buffer, file_in, fname_len);
+        strcat(out_filename_buffer, ".html");
+    }
+
+    I("output file: %s", file_out);
 
     FILE *in = fopen(file_in, "rb");
-    if (! in) {
+    if (! in)
+    {
         E("failed to open input file: %s", file_in);
         return 1;
     }
 
     FILE *out = fopen(file_out, "wb");
-    if (! out) {
+    if (! out)
+    {
         E("failed to create output file: %s", file_out);
-        if (out) fclose(out);
+        if (out)
+            fclose(out);
         return 1;
     }
 
     I("processing file: %s", file_in);
+    I("output file: %s", file_out);
     int ret = process_hvml(in, out);
 
-    if (in) fclose(in);
+    if (in)  fclose(in);
     if (out) fclose(out);
-
     if (ret) return ret;
-    
     return 0;
-}
-
-static const char* file_ext(const char *file)
-{
-    const char *p = strrchr(file, '.');
-    return p ? p : "";
 }
 
 static int process_hvml(FILE *in, FILE *out)
 {
     hvml_dom_t *dom = hvml_dom_load_from_stream(in);
-    if (dom) {
-        hvml_dom_printf(dom, stdout);
-        // hvml_dom_to_html(dom, out);
+    if (dom)
+    {
+        // This is a test, print as origin file is.
+        Interpreter_Basic::GetOutput(dom, out);
+
+        //Interpreter_to_ThreePart::GetOutput(dom, out);
+
         hvml_dom_destroy(dom);
         printf("\n");
         return 0;
