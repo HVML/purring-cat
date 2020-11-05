@@ -43,7 +43,7 @@ __attribute__ ((format (printf, 6, 7)));
 do {                                                                            \
     if (statement) break;                                                       \
     hvml_log_printf(__FILE__, __LINE__, __FUNCTION__, stderr, 'A',              \
-                    "Assert failure:[%s];"fmt"", #statement, ##__VA_ARGS__);    \
+                    "Assert failure:[%s];" fmt "", #statement, ##__VA_ARGS__);  \
     abort();                                                                    \
 } while (0)
 
