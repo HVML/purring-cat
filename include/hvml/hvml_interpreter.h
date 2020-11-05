@@ -42,6 +42,7 @@ struct hvml_interpreter_tag_reg_s {
                     const char *exec_name,         // eg.: "CLASS: CTimer",
                     const char **attr_names, ...); // a list of hvml_jdo_t*
     // how to release resources allocated with `executor`?
+    #error failed for github action
 };
 
 hvml_interpreter_t* hvml_interpreter_create(hvml_interpreter_conf_t conf);
