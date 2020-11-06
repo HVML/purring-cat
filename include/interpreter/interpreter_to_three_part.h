@@ -14,7 +14,6 @@
 #include <vector>
 using namespace std;
 
-
 typedef struct observe_s {
     hvml_string_t s_observe_on;
     hvml_string_t s_observe_to;
@@ -22,24 +21,33 @@ typedef struct observe_s {
     hvml_dom_t* ptr_action_group;
 } observe_t;
 
-typedef vector<hvml_dom_t> InitGroup;
-typedef vector<observe_t> ObserveGroup;
+typedef vector<hvml_dom_t*> InitGroup_t;
+typedef vector<observe_t> ObserveGroup_t;
 
 
 class Interpreter_to_ThreePart
 {
 public:
     Interpreter_to_ThreePart(hvml_dom_t** html_part,
-                             InitGroup* init_part,
-                             ObserveGroup* observe_part);
+                             InitGroup_t* init_part,
+                             ObserveGroup_t* observe_part);
 
 public:
     static void ReleaseThreePart(hvml_dom_t** html_part,
-                                 InitGroup* init_part,
-                                 ObserveGroup* observe_part);
+                                 InitGroup_t* init_part,
+                                 ObserveGroup_t* observe_part);
+
+    static void DumpHtmlPart(hvml_dom_t** html_part,
+                             FILE *html_part_f);
+
+    static void DumpInitPart(InitGroup_t* init_part,
+                             FILE *init_part_f);
+
+    static void DumpObservePart(ObserveGroup_t* observe_part,
+                                FILE *observe_part_f);
 
     static void GetOutput(hvml_dom_t *input_dom,
                           hvml_dom_t** html_part,
-                          InitGroup* init_part,
-                          ObserveGroup* observe_part);
+                          InitGroup_t* init_part,
+                          ObserveGroup_t* observe_part);
 };
