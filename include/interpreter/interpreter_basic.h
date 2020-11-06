@@ -17,11 +17,9 @@ class Interpreter_Basic
 {
 public:
     Interpreter_Basic(FILE *out);
+    static void GetOutput(hvml_dom_t *input_dom, FILE *out);
 
 private:
     dom_printf_t m_dom_prtt;
     static void traverse_for_printf(hvml_dom_t *dom, int lvl, int tag_open_close, void *arg, int *breakout);
-
-public:
-    static void GetOutput(hvml_dom_t *input_dom, FILE *out);
 };

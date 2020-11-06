@@ -11,6 +11,7 @@
 
 #include "observe_for.h"
 
+#include <string>
 #include <vector>
 using namespace std;
 
@@ -24,6 +25,12 @@ typedef struct observe_s {
 typedef vector<hvml_dom_t*> InitGroup_t;
 typedef vector<observe_t> ObserveGroup_t;
 
+typedef struct TraverseParam_s {
+    int             lvl;
+    hvml_dom_t**    html_part;
+    InitGroup_t*    init_part;
+    ObserveGroup_t* observe_part;
+} TraverseParam_t;
 
 class Interpreter_to_ThreePart
 {
@@ -50,4 +57,12 @@ public:
                           hvml_dom_t** html_part,
                           InitGroup_t* init_part,
                           ObserveGroup_t* observe_part);
+
+private:
+    TraverseParam_t m_traverse_param;
+    static void traverse_for_divide(hvml_dom_t *dom,
+                                    int lvl,
+                                    int tag_open_close,
+                                    void *arg,
+                                    int *breakout);
 };
