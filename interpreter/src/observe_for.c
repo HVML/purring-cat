@@ -39,3 +39,9 @@ OBSERVE_FOR_TYPE get_observe_for_type(hvml_string_t str)
 
     return for_UNKNOWN;
 }
+
+const char* observe_for_to_string(OBSERVE_FOR_TYPE type)
+{
+    if (type < 0 || type >= for_UNKNOWN) return NULL;
+    return observe_for_type_flag[type];
+}

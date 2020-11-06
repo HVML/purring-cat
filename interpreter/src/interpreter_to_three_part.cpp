@@ -32,18 +32,40 @@ void Interpreter_to_ThreePart::ReleaseThreePart(hvml_dom_t** html_part,
 void Interpreter_to_ThreePart::DumpHtmlPart(hvml_dom_t** html_part,
                                             FILE *html_part_f)
 {
+    hvml_dom_printf(*html_part, html_part_f);
 }
 
 void Interpreter_to_ThreePart::DumpInitPart(InitGroup_t* init_part,
                                             FILE *init_part_f)
 {
-
+    for_each(init_part->begin(),
+             init_part->end(),
+             [&](hvml_dom_t *dom)->void{
+                 hvml_dom_printf(dom, init_part_f);
+                 fprintf(init_part_f, "\n");
+             });
 }
 
 void Interpreter_to_ThreePart::DumpObservePart(ObserveGroup_t* observe_part,
                                                FILE *observe_part_f)
 {
-
+    for_each(observe_part->begin(),
+             observe_part->end(),
+             [&](observe_t &item)->void{
+                 fprintf(observe_part_f, "<observe ");
+                 if (item.s_observe_on.size() > 0) {
+                    fprintf(observe_part_f, "on=\"%s\" ", item.s_observe_on);
+                 }
+                 if (item.s_observe_to.size() > 0) {
+                     fprintf(observe_part_f, "to=\"%s\" ", item.s_observe_to);
+                 }
+                 if (for_UNKNOWN != item.en_observe_for) {
+                     fprintf(observe_part_f, "for=\"%s\"", item.s_observe_to);
+                 }
+                 fprintf(observe_part_f, ">\n");
+                 hvml_dom_printf(item.ptr_action_group, observe_part_f);
+                 fprintf(observe_part_f, "</observe>\n");
+             });
 }
 
 void Interpreter_to_ThreePart::GetOutput(hvml_dom_t *input_dom, 

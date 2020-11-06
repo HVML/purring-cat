@@ -16,10 +16,17 @@
 using namespace std;
 
 typedef struct observe_s {
-    hvml_string_t s_observe_on;
-    hvml_string_t s_observe_to;
+    string s_observe_on;
+    string s_observe_to;
     OBSERVE_FOR_TYPE en_observe_for;
     hvml_dom_t* ptr_action_group;
+
+    observe_s() :
+        s_observe_on(""),
+        s_observe_to(""),
+        en_observe_for(for_UNKNOWN),
+        ptr_action_group(NULL) {}
+        
 } observe_t;
 
 typedef vector<hvml_dom_t*> InitGroup_t;
