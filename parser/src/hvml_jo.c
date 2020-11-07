@@ -864,21 +864,27 @@ static int traverse_for_clone(hvml_jo_value_t *jo, int lvl, int action, void *ar
             }
         } break;
 
-//hvml_jo_value_t* hvml_jo_object();
         case MKJOT(J_OBJECT): {
             switch (action) {
                 case 1: {
-                    if (parent && hvml_jo_value_type(parent)==MKJOT(J_OBJECT_KV)) {
-                        fprintf(parg->out, ":");
-                    } else if (prev) {
-                        fprintf(parg->out, ",");
+                    // "{"
+                    hvml_jo_value_t* o = hvml_jo_object();
+                    if (! o) {
+                        A(0, "internal logic error");
+                        break;
                     }
-                    fprintf(parg->out, "{"); // "}"
+                    int ret = hvml_jo_value_push(*p_cur_jo, o);
+                    if (! ret) {
+                        A(0, "internal logic error");
+                        hvml_jo_value_free(o);
+                        break;
+                    }
+                    *p_cur_jo = o;
                 } break;
 
                 case -1: {
-                    // "{"
-                    fprintf(parg->out, "}");
+                    // "}"
+                    *p_cur_jo = hvml_jo_value_owner(*p_cur_jo);
                 } break;
 
                 default: {
@@ -887,18 +893,24 @@ static int traverse_for_clone(hvml_jo_value_t *jo, int lvl, int action, void *ar
             }
         } break;
 
-//hvml_jo_value_t* hvml_jo_object_kv(const char *key, size_t len);
         case MKJOT(J_OBJECT_KV): {
             switch (action) {
                 case 1: {
-                    if (prev) {
-                        fprintf(parg->out, ",");
-                    }
-                    const char      *key;
+                    const char *key;
                     A(0==hvml_jo_kv_get(jo, &key, NULL), "internal logic error");
                     A(key, "internal logic error");
                     A(parent && hvml_jo_value_type(parent)==MKJOT(J_OBJECT), "internal logic error");
-                    hvml_json_str_printf(parg->out, key, strlen(key));
+                    hvml_jo_value_t* o = hvml_jo_object_kv(key, strlen(key));
+                    if (! o) {
+                        A(0, "internal logic error");
+                        break;
+                    }
+                    int ret = hvml_jo_value_push(*p_cur_jo, o);
+                    if (! ret) {
+                        A(0, "internal logic error");
+                        hvml_jo_value_free(o);
+                        break;
+                    }
                 } break;
 
                 case -1: {
@@ -910,21 +922,29 @@ static int traverse_for_clone(hvml_jo_value_t *jo, int lvl, int action, void *ar
             }
         } break;
 
-//hvml_jo_value_t* hvml_jo_array();
         case MKJOT(J_ARRAY): {
             switch (action) {
                 case 1: {
-                    if (parent && hvml_jo_value_type(parent)==MKJOT(J_OBJECT_KV)) {
-                        fprintf(parg->out, ":");
-                    } else if (prev) {
-                        fprintf(parg->out, ",");
-                    }
-                    fprintf(parg->out, "["); // "]";
-                } break;
-                case -1: {
                     // "["
-                    fprintf(parg->out, "]");
+                    hvml_jo_value_t* o = hvml_jo_array();
+                    if (! o) {
+                        A(0, "internal logic error");
+                        break;
+                    }
+                    int ret = hvml_jo_value_push(*p_cur_jo, o);
+                    if (! ret) {
+                        A(0, "internal logic error");
+                        hvml_jo_value_free(o);
+                        break;
+                    }
+                    *p_cur_jo = o;
                 } break;
+
+                case -1: {
+                    // "]"
+                    *p_cur_jo = hvml_jo_value_owner(*p_cur_jo);
+                } break;
+
                 default: {
                     A(0, "internal logic error");
                 } break;
