@@ -150,16 +150,14 @@ static int process_hvml(FILE *in,
         // This is a test, print as origin file is.
         Interpreter_Basic::GetOutput(dom, output_hvml_f);
 
-        hvml_dom_t* html_part;
-        InitGroup_t init_part;
+        InitGroup_t    init_part;
         ObserveGroup_t observe_part;
         Interpreter_to_ThreePart::GetOutput(dom,
-                                            &html_part,
                                             &init_part,
                                             &observe_part);
 
-        Interpreter_to_ThreePart::DumpHtmlPart(&html_part,
-                                               html_part_f);
+        Interpreter_to_ThreePart::DomToHtml(dom,
+                                            html_part_f);
 
         Interpreter_to_ThreePart::DumpInitPart(&init_part,
                                                init_part_f);
@@ -167,9 +165,8 @@ static int process_hvml(FILE *in,
         Interpreter_to_ThreePart::DumpObservePart(&observe_part,
                                                   observe_part_f);
 
-        Interpreter_to_ThreePart::ReleaseThreePart(&html_part,
-                                                   &init_part,
-                                                   &observe_part);
+        Interpreter_to_ThreePart::ReleaseTwoPart(&init_part,
+                                                 &observe_part);
 
         hvml_dom_destroy(dom);
         printf("\n");

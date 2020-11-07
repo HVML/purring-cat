@@ -17,29 +17,29 @@
 using namespace std;
 
 typedef struct observe_s {
-    string s_observe_on;
-    string s_observe_to;
-    OBSERVE_FOR_TYPE en_observe_for;
+    string s_on;
+    string s_to;
+    OBSERVE_FOR_TYPE en_for;
     hvml_dom_t* ptr_action_group;
 
     observe_s() :
-        s_observe_on(""),
-        s_observe_to(""),
-        en_observe_for(for_UNKNOWN),
+        s_on(""),
+        s_to(""),
+        en_for(for_UNKNOWN),
         ptr_action_group(NULL) {}
         
 } observe_t;
 
 typedef struct init_s {
-    string s_init_as;
-    string s_init_uniquely_by;
-    ADVERB_PROPERTY en_init_adverb;
+    string s_as;
+    string s_by;
+    ADVERB_PROPERTY en_adverb;
     hvml_dom_t* ptr_data_group;
 
     init_s() :
-        s_init_as(""),
-        s_init_uniquely_by(""),
-        en_init_adverb(adv_sync),
+        s_as(""),
+        s_by(""),
+        en_adverb(adv_sync),
         ptr_data_group(NULL) {}
         
 } init_t;
@@ -49,7 +49,6 @@ typedef vector<observe_t> ObserveGroup_t;
 
 typedef struct TraverseParam_s {
     int             lvl;
-    hvml_dom_t**    html_part;
     InitGroup_t*    init_part;
     ObserveGroup_t* observe_part;
 } TraverseParam_t;
@@ -57,17 +56,15 @@ typedef struct TraverseParam_s {
 class Interpreter_to_ThreePart
 {
 public:
-    Interpreter_to_ThreePart(hvml_dom_t** html_part,
-                             InitGroup_t* init_part,
+    Interpreter_to_ThreePart(InitGroup_t* init_part,
                              ObserveGroup_t* observe_part);
 
 public:
-    static void ReleaseThreePart(hvml_dom_t** html_part,
-                                 InitGroup_t* init_part,
-                                 ObserveGroup_t* observe_part);
+    static void ReleaseTwoPart(InitGroup_t* init_part,
+                               ObserveGroup_t* observe_part);
 
-    static void DumpHtmlPart(hvml_dom_t** html_part,
-                             FILE *html_part_f);
+    static void DomToHtml(hvml_dom_t* dom,
+                          FILE *html_part_f);
 
     static void DumpInitPart(InitGroup_t* init_part,
                              FILE *init_part_f);
@@ -75,8 +72,7 @@ public:
     static void DumpObservePart(ObserveGroup_t* observe_part,
                                 FILE *observe_part_f);
 
-    static void GetOutput(hvml_dom_t *input_dom,
-                          hvml_dom_t** html_part,
+    static void GetOutput(hvml_dom_t* input_dom,
                           InitGroup_t* init_part,
                           ObserveGroup_t* observe_part);
 
@@ -87,4 +83,10 @@ private:
                                     int tag_open_close,
                                     void *arg,
                                     int *breakout);
+    
+    static void AddNewInit(InitGroup_t* init_part,
+                           hvml_dom_t* dom);
+    
+    static void AddNewObserve(ObserveGroup_t* observe_part,
+                              hvml_dom_t* dom);
 };

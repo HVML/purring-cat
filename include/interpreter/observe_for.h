@@ -34,7 +34,7 @@ typedef enum {
     for_UNKNOWN,
 } OBSERVE_FOR_TYPE;
 
-OBSERVE_FOR_TYPE get_observe_for_type(hvml_string_t str);
+OBSERVE_FOR_TYPE get_observe_for_type(const char *str);
 const char* observe_for_to_string(OBSERVE_FOR_TYPE type);
 
 #ifdef __cplusplus

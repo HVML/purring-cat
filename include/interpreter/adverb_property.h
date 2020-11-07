@@ -30,7 +30,7 @@ typedef enum {
     adv_UNKNOWN,
 } ADVERB_PROPERTY;
 
-ADVERB_PROPERTY get_adverb_type(hvml_string_t str);
+ADVERB_PROPERTY get_adverb_type(const char *str);
 const char* adverb_to_string(ADVERB_PROPERTY type);
 const char* adverb_to_abbreviation(ADVERB_PROPERTY type);
 

@@ -329,6 +329,18 @@ hvml_dom_t* hvml_dom_prev(hvml_dom_t *dom) {
     return DOM_PREV(dom);
 }
 
+hvml_dom_t* hvml_dom_child(hvml_dom_t *dom) {
+    return DOM_HEAD(dom);
+}
+
+hvml_dom_t* hvml_dom_attr_head(hvml_dom_t *dom) {
+    return DOM_ATTR_HEAD(dom);
+}
+
+hvml_dom_t* hvml_dom_attr_next(hvml_dom_t *attr) {
+    return DOM_ATTR_NEXT(attr);
+}
+
 void hvml_dom_detach(hvml_dom_t *dom) {
     if (DOM_OWNER(dom)) {
         DOM_REMOVE(dom);

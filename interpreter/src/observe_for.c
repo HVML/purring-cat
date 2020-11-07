@@ -26,13 +26,14 @@ static char *observe_for_type_flag[] = {
     "unload",     //用户退出页面
 };
 
+#define OBSERVE_FOR_STRING_LEN_MAX 10
 #define OBSERVE_FOR_FLAG_COUNT (sizeof(observe_for_type_flag) / sizeof(observe_for_type_flag[0]))
 
-OBSERVE_FOR_TYPE get_observe_for_type(hvml_string_t str)
+OBSERVE_FOR_TYPE get_observe_for_type(const char *str)
 {
     int i;
     for (i = 0; i < OBSERVE_FOR_FLAG_COUNT; i ++) {
-        if (0 == strncmp(observe_for_type_flag[i], str.str, str.len)) {
+        if (0 == strncmp(observe_for_type_flag[i], str, OBSERVE_FOR_STRING_LEN_MAX)) {
             return i;
         }
     }
