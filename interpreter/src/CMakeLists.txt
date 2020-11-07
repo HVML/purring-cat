@@ -2,6 +2,7 @@ set(hvml_interpreter_src
     interpreter_basic.cpp
     interpreter_to_three_part.cpp
     observe_for.c
+    adverb_property.c
     ext_tools.c
 )
 

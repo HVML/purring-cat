@@ -10,6 +10,7 @@
 #include "hvml/hvml_utf8.h"
 
 #include "observe_for.h"
+#include "adverb_property.h"
 
 #include <string>
 #include <vector>
@@ -29,7 +30,21 @@ typedef struct observe_s {
         
 } observe_t;
 
-typedef vector<hvml_dom_t*> InitGroup_t;
+typedef struct init_s {
+    string s_init_as;
+    string s_init_uniquely_by;
+    ADVERB_PROPERTY en_init_adverb;
+    hvml_dom_t* ptr_data_group;
+
+    init_s() :
+        s_init_as(""),
+        s_init_uniquely_by(""),
+        en_init_adverb(adv_sync),
+        ptr_data_group(NULL) {}
+        
+} init_t;
+
+typedef vector<init_t> InitGroup_t;
 typedef vector<observe_t> ObserveGroup_t;
 
 typedef struct TraverseParam_s {
