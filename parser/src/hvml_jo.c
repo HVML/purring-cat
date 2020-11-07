@@ -757,8 +757,187 @@ hvml_jo_value_t* hvml_jo_value_load_from_stream(FILE *in) {
     return NULL;
 }
 
+static int traverse_for_clone(hvml_jo_value_t *jo, int lvl, int action, void *arg);
 
+hvml_jo_value_t* hvml_jo_clone(hvml_jo_value_t *jo) {
+    hvml_jo_value_t* new_jo;
+    hvml_jo_value_traverse(jo, &new_jo, traverse_for_clone);
+    return new_jo;
+}
 
+static int traverse_for_clone(hvml_jo_value_t *jo, int lvl, int action, void *arg) {
+
+    hvml_jo_value_t **p_cur_jo = (hvml_jo_value_t**)arg;
+    A(p_cur_jo, "internal logic error");
+    A(*p_cur_jo, "internal logic error");
+
+    int breakout = 0;
+    hvml_jo_value_t *parent = hvml_jo_value_owner(jo);
+    hvml_jo_value_t *prev   = hvml_jo_value_sibling_prev(jo);
+    
+    switch (hvml_jo_value_type(jo))
+    {
+        case MKJOT(J_TRUE): {
+            A(action==0, "internal logic error");
+            hvml_jo_value_t* o = hvml_jo_true();
+            if (! o) {
+                A(0, "internal logic error");
+                break;
+            }
+            int ret = hvml_jo_value_push(*p_cur_jo, o);
+            if (! ret) {
+                A(0, "internal logic error");
+                hvml_jo_value_free(o);
+                break;
+            }
+        } break;
+
+        case MKJOT(J_FALSE): {
+            A(action==0, "internal logic error");
+            hvml_jo_value_t* o = hvml_jo_false();
+            if (! o) {
+                A(0, "internal logic error");
+                break;
+            }
+            int ret = hvml_jo_value_push(*p_cur_jo, o);
+            if (! ret) {
+                A(0, "internal logic error");
+                hvml_jo_value_free(o);
+                break;
+            }
+        } break;
+
+        case MKJOT(J_NULL): {
+            A(action==0, "internal logic error");
+            hvml_jo_value_t* o = hvml_jo_null();
+            if (! o) {
+                A(0, "internal logic error");
+                break;
+            }
+            int ret = hvml_jo_value_push(*p_cur_jo, o);
+            if (! ret) {
+                A(0, "internal logic error");
+                hvml_jo_value_free(o);
+                break;
+            }
+        } break;
+
+        case MKJOT(J_NUMBER): {
+            A(action==0, "internal logic error");
+            int is_integer;
+            int64_t i;
+            double d;
+            const char *s;
+            A(0==hvml_jo_number_get(jo, &is_integer, &i, &d, &s), "internal logic error");
+            hvml_jo_value_t* o = NULL;
+            if (is_integer) {
+                o = hvml_jo_integer(i, s);
+            } else {
+                o = hvml_jo_double(d, s);
+            }
+            if (! o) {
+                A(0, "internal logic error");
+                break;
+            }
+            int ret = hvml_jo_value_push(*p_cur_jo, o);
+            if (! ret) {
+                A(0, "internal logic error");
+                hvml_jo_value_free(o);
+                break;
+            }
+        } break;
+
+        case MKJOT(J_STRING): {
+            A(action==0, "internal logic error");
+            const char *s;
+            A(0==hvml_jo_string_get(jo, &s), "internal logic error");
+            hvml_jo_value_t* o = hvml_jo_string(s, strlen(s));
+            if (! o) {
+                A(0, "internal logic error");
+                break;
+            }
+            int ret = hvml_jo_value_push(*p_cur_jo, o);
+            if (! ret) {
+                A(0, "internal logic error");
+                hvml_jo_value_free(o);
+                break;
+            }
+        } break;
+
+//hvml_jo_value_t* hvml_jo_object();
+        case MKJOT(J_OBJECT): {
+            switch (action) {
+                case 1: {
+                    if (parent && hvml_jo_value_type(parent)==MKJOT(J_OBJECT_KV)) {
+                        fprintf(parg->out, ":");
+                    } else if (prev) {
+                        fprintf(parg->out, ",");
+                    }
+                    fprintf(parg->out, "{"); // "}"
+                } break;
+
+                case -1: {
+                    // "{"
+                    fprintf(parg->out, "}");
+                } break;
+
+                default: {
+                    A(0, "internal logic error");
+                } break;
+            }
+        } break;
+
+//hvml_jo_value_t* hvml_jo_object_kv(const char *key, size_t len);
+        case MKJOT(J_OBJECT_KV): {
+            switch (action) {
+                case 1: {
+                    if (prev) {
+                        fprintf(parg->out, ",");
+                    }
+                    const char      *key;
+                    A(0==hvml_jo_kv_get(jo, &key, NULL), "internal logic error");
+                    A(key, "internal logic error");
+                    A(parent && hvml_jo_value_type(parent)==MKJOT(J_OBJECT), "internal logic error");
+                    hvml_json_str_printf(parg->out, key, strlen(key));
+                } break;
+
+                case -1: {
+                } break;
+
+                default: {
+                    A(0, "internal logic error");
+                } break;
+            }
+        } break;
+
+//hvml_jo_value_t* hvml_jo_array();
+        case MKJOT(J_ARRAY): {
+            switch (action) {
+                case 1: {
+                    if (parent && hvml_jo_value_type(parent)==MKJOT(J_OBJECT_KV)) {
+                        fprintf(parg->out, ":");
+                    } else if (prev) {
+                        fprintf(parg->out, ",");
+                    }
+                    fprintf(parg->out, "["); // "]";
+                } break;
+                case -1: {
+                    // "["
+                    fprintf(parg->out, "]");
+                } break;
+                default: {
+                    A(0, "internal logic error");
+                } break;
+            }
+        } break;
+
+        default: {
+            A(0, "print json type [%d]: not implemented yet", hvml_jo_value_type(jo));
+        } break;
+    }
+
+    return 0;
+}
 
 
 

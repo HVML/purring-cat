@@ -82,6 +82,7 @@ int               hvml_dom_gen_parse_string(hvml_dom_gen_t *gen, const char *str
 hvml_dom_t*       hvml_dom_gen_parse_end(hvml_dom_gen_t *gen);
 
 hvml_dom_t*       hvml_dom_load_from_stream(FILE *in);
+hvml_dom_t*       hvml_dom_clone(hvml_dom_t *dom);
 
 #ifdef __cplusplus
 }

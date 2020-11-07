@@ -540,6 +540,125 @@ hvml_dom_t* hvml_dom_load_from_stream(FILE *in) {
     return NULL;
 }
 
+static void traverse_for_clone(hvml_dom_t *dom, int lvl, int tag_open_close, void *arg, int *breakout);
+
+hvml_dom_t* hvml_dom_clone(hvml_dom_t *dom) {
+    hvml_dom_t* new_dom;
+    hvml_dom_traverse(dom, &new_dom, traverse_for_clone);
+    return new_dom;
+}
+
+static void traverse_for_clone(hvml_dom_t *dom, int lvl, int tag_open_close, void *arg, int *breakout) {
+
+    hvml_dom_t **p_cur_dom = (hvml_dom_t**)arg;
+    A(p_cur_dom, "internal logic error");
+    A(*p_cur_dom, "internal logic error");
+
+    *breakout = 0;
+    hvml_dom_t *cur_dom = NULL;
+
+    switch (hvml_dom_type(dom)) {
+        case MKDOT(D_TAG):
+        {
+            switch (tag_open_close) {
+                case 1: {
+                    hvml_dom_t *v = hvml_dom_create();
+                    if (! v) {
+                        A(0, "internal logic error");
+                        return;
+                    }
+                    const char *tag = hvml_dom_tag_name(dom);
+                    int ret = hvml_string_set(&v->tag.name, tag, strlen(tag));
+                    if (ret) {
+                        A(0, "internal logic error");
+                        hvml_dom_destroy(v);
+                        return;
+                    }
+                    *p_cur_dom = v;
+                } break;
+
+                case 2:
+                case 4: {
+                    cur_dom = hvml_dom_parent(cur_dom);
+                    if (cur_dom) *p_cur_dom = cur_dom;
+                } break;
+
+                case 3: {
+                } break;
+
+                default: {
+                    A(0, "internal logic error");
+                } break;
+            }
+        } break;
+
+        case MKDOT(D_ATTR):
+        {
+            hvml_dom_t *v = hvml_dom_create();
+            if (! v) {
+                A(0, "internal logic error");
+                return;
+            }
+            const char *key = hvml_dom_attr_key(dom);
+            const char *val = hvml_dom_attr_val(dom);
+            v->dt = MKDOT(D_ATTR);
+            int ret = hvml_string_set(&v->attr.key, key, strlen(key));
+            if (ret) {
+                A(0, "internal logic error");
+                hvml_dom_destroy(v);
+                return;
+            }
+            if (val) {
+                int ret = hvml_string_set(&v->attr.val, val, strlen(val));
+                if (ret) {
+                    A(0, "internal logic error");
+                    hvml_dom_destroy(v);
+                    return;
+                }
+            }
+            DOM_ATTR_APPEND(*p_cur_dom, v);
+        } break;
+
+        case MKDOT(D_TEXT):
+        {
+            hvml_dom_t *v = hvml_dom_create();
+            if (! v) {
+                A(0, "internal logic error");
+                return;
+            }
+            const char *text = hvml_dom_text(dom);
+            v->dt = MKDOT(D_TEXT);
+            int ret = hvml_string_set(&v->txt.txt, text, strlen(text));
+            if (ret) {
+                A(0, "internal logic error");
+                hvml_dom_destroy(v);
+                return;
+            }
+            DOM_APPEND(*p_cur_dom, v);
+        } break;
+
+        case MKDOT(D_JSON):
+        {
+            hvml_dom_t *v = hvml_dom_create(dom);
+            if (! v) {
+                A(0, "internal logic error");
+                return;
+            }
+            v->dt = MKDOT(D_JSON);
+            v->jo = hvml_jo_clone(hvml_dom_jo(dom));
+            if (! v->jo) {
+                A(0, "internal logic error");
+                hvml_dom_destroy(v);
+                return;
+            }
+            DOM_APPEND(*p_cur_dom, v);
+        } break;
+
+        default: {
+            A(0, "internal logic error");
+        } break;
+    }
+}
 
 
 
