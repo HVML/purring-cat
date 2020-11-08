@@ -180,3 +180,7 @@ int hvml_string_to_double(const char *s, double *v) {
     return 0;
 }
 
+int  hvml_string_is_empty(hvml_string_t *str) {
+    if (!str) return -1;
+    return (0 == str->len);
+}

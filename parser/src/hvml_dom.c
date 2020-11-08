@@ -555,8 +555,12 @@ hvml_dom_t* hvml_dom_load_from_stream(FILE *in) {
 static void traverse_for_clone(hvml_dom_t *dom, int lvl, int tag_open_close, void *arg, int *breakout);
 
 hvml_dom_t* hvml_dom_clone(hvml_dom_t *dom) {
-    hvml_dom_t* new_dom;
+    A(dom, "internal logic error");
+    
+    hvml_dom_t* new_dom = NULL;
     hvml_dom_traverse(dom, &new_dom, traverse_for_clone);
+
+    A(new_dom, "internal logic error");
     return new_dom;
 }
 
@@ -564,10 +568,8 @@ static void traverse_for_clone(hvml_dom_t *dom, int lvl, int tag_open_close, voi
 
     hvml_dom_t **p_cur_dom = (hvml_dom_t**)arg;
     A(p_cur_dom, "internal logic error");
-    A(*p_cur_dom, "internal logic error");
 
     *breakout = 0;
-    hvml_dom_t *cur_dom = NULL;
 
     switch (hvml_dom_type(dom)) {
         case MKDOT(D_TAG):
@@ -591,8 +593,8 @@ static void traverse_for_clone(hvml_dom_t *dom, int lvl, int tag_open_close, voi
 
                 case 2:
                 case 4: {
-                    cur_dom = hvml_dom_parent(cur_dom);
-                    if (cur_dom) *p_cur_dom = cur_dom;
+                    hvml_dom_t *super_dom = hvml_dom_parent(*p_cur_dom);
+                    if (super_dom) *p_cur_dom = super_dom;
                 } break;
 
                 case 3: {
@@ -651,6 +653,9 @@ static void traverse_for_clone(hvml_dom_t *dom, int lvl, int tag_open_close, voi
 
         case MKDOT(D_JSON):
         {
+            D("......JSON.......");
+            return;
+
             hvml_dom_t *v = hvml_dom_create(dom);
             if (! v) {
                 A(0, "internal logic error");

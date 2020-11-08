@@ -1,4 +1,5 @@
-#pragma once
+#ifndef _interpreter_two_part_h_
+#define _interpreter_two_part_h_
 
 #include "hvml/hvml_string.h"
 #include "hvml/hvml_printf.h"
@@ -17,30 +18,32 @@
 using namespace std;
 
 typedef struct observe_s {
-    string s_on;
-    string s_to;
+    hvml_string_t s_on;
+    hvml_string_t s_to;
     OBSERVE_FOR_TYPE en_for;
     hvml_dom_t* ptr_action_group;
 
     observe_s() :
-        s_on(""),
-        s_to(""),
         en_for(for_UNKNOWN),
-        ptr_action_group(NULL) {}
+        ptr_action_group(NULL) {
+            hvml_string_reset(&s_on);
+            hvml_string_reset(&s_to);
+        }
         
 } observe_t;
 
 typedef struct init_s {
-    string s_as;
-    string s_by;
+    hvml_string_t s_as;
+    hvml_string_t s_by;
     ADVERB_PROPERTY en_adverb;
     hvml_dom_t* ptr_data_group;
 
     init_s() :
-        s_as(""),
-        s_by(""),
         en_adverb(adv_sync),
-        ptr_data_group(NULL) {}
+        ptr_data_group(NULL) {
+            hvml_string_reset(&s_as);
+            hvml_string_reset(&s_by);
+        }
         
 } init_t;
 
@@ -48,16 +51,15 @@ typedef vector<init_t> InitGroup_t;
 typedef vector<observe_t> ObserveGroup_t;
 
 typedef struct TraverseParam_s {
-    int             lvl;
     InitGroup_t*    init_part;
     ObserveGroup_t* observe_part;
 } TraverseParam_t;
 
-class Interpreter_to_ThreePart
+class Interpreter_TwoPart
 {
 public:
-    Interpreter_to_ThreePart(InitGroup_t* init_part,
-                             ObserveGroup_t* observe_part);
+    Interpreter_TwoPart(InitGroup_t* init_part,
+                        ObserveGroup_t* observe_part);
 
 public:
     static void ReleaseTwoPart(InitGroup_t* init_part,
@@ -90,3 +92,5 @@ private:
     static void AddNewObserve(ObserveGroup_t* observe_part,
                               hvml_dom_t* dom);
 };
+
+#endif //_interpreter_two_part_h_
