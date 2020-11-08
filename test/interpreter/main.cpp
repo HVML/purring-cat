@@ -133,24 +133,20 @@ static int process_hvml(FILE *in,
         // This is a test, print as origin file is.
         //Interpreter_Basic::GetOutput(dom, output_hvml_f);
 
-
         InitGroup_t    init_part;
         ObserveGroup_t observe_part;
 
-        D("--------------- GetOutput --------");
         Interpreter_TwoPart::GetOutput(dom,
                                        &init_part,
                                        &observe_part);
 
         // Unfinished function
-        //Interpreter_TwoPart::DomToHtml(dom,
-        //                               output_hvml_f);
+        Interpreter_TwoPart::DomToHtml(dom,
+                                      output_hvml_f);
 
-        D("--------------- DumpInitPart --------");
         Interpreter_TwoPart::DumpInitPart(&init_part,
                                           init_part_f);
 
-        D("--------------- DumpObservePart --------");
         Interpreter_TwoPart::DumpObservePart(&observe_part,
                                              observe_part_f);
 

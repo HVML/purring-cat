@@ -900,6 +900,8 @@ static int do_hvml_dom_traverse(hvml_dom_t *dom, traverse_t *tvs) {
                     }
                     hvml_dom_t *parent = DOM_OWNER(dom);
                     if (parent) {
+                        if (lvl == 0) return 0; // normal end up.
+
                         A(parent->dt == MKDOT(D_TAG), "internal logic error");
                         --lvl;
                         dom = parent;
@@ -914,7 +916,7 @@ static int do_hvml_dom_traverse(hvml_dom_t *dom, traverse_t *tvs) {
                 }
 
                 A(pop==0, "internal logic error");
-                    hvml_dom_t *child = DOM_HEAD(dom);
+                hvml_dom_t *child = DOM_HEAD(dom);
 
                 r = apply_traverse_callback(dom, lvl, 1, tvs);
                 if (r) continue;
@@ -963,6 +965,8 @@ static int do_hvml_dom_traverse(hvml_dom_t *dom, traverse_t *tvs) {
                     pop = 0;
                     continue;
                 }
+                if (lvl == 0) return 0;// normal end up.
+
                 hvml_dom_t *parent = DOM_OWNER(dom);
                 A(parent, "internal logic error");
                 A(parent->dt == MKDOT(D_TAG), "internal logic error");
@@ -986,6 +990,8 @@ static int do_hvml_dom_traverse(hvml_dom_t *dom, traverse_t *tvs) {
                     pop = 0;
                     continue;
                 }
+                if (lvl == 0) return 0;// normal end up.
+                
                 hvml_dom_t *parent = DOM_OWNER(dom);
                 A(parent, "internal logic error");
                 A(parent->dt == MKDOT(D_TAG), "internal logic error");

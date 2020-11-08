@@ -1,3 +1,20 @@
+// This file is a part of Purring Cat, a reference implementation of HVML.
+//
+// Copyright (C) 2020, <liuxinouc@126.com>.
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 #include "interpreter/interpreter_two_part.h"
 #include <string.h>
 
@@ -23,10 +40,10 @@ void Interpreter_TwoPart::DumpInitPart(InitGroup_t* init_part,
              init_part->end(),
              [&](init_t& item)->void{
 
-                 fprintf(init_part_f, "<init ");
+                 fprintf(init_part_f, "<init");
 
                  if (! hvml_string_is_empty(&item.s_as)) {
-                    fprintf(init_part_f, "as=\"%s\" ", item.s_as.str);
+                    fprintf(init_part_f, " as=\"%s\"", item.s_as.str);
                  }
 
                  if (adv_UNKNOWN != item.en_adverb) {
@@ -39,8 +56,8 @@ void Interpreter_TwoPart::DumpInitPart(InitGroup_t* init_part,
                  }
 
                  fprintf(init_part_f, ">\n");
-                 //hvml_dom_printf(item.ptr_data_group, init_part_f);
-                 fprintf(init_part_f, "</init>\n");
+                 hvml_dom_printf(item.ptr_data_group, init_part_f);
+                 fprintf(init_part_f, "\n</init>\n\n");
              });
 }
 
@@ -51,24 +68,24 @@ void Interpreter_TwoPart::DumpObservePart(ObserveGroup_t* observe_part,
              observe_part->end(),
              [&](observe_t& item)->void{
 
-                 fprintf(observe_part_f, "<observe ");
+                 fprintf(observe_part_f, "<observe");
 
                  if (! hvml_string_is_empty(&item.s_on)) {
-                    fprintf(observe_part_f, "on=\"%s\" ", item.s_on.str);
+                    fprintf(observe_part_f, " on=\"%s\"", item.s_on.str);
                  }
 
                  if (for_UNKNOWN != item.en_for) {
-                     fprintf(observe_part_f, "for=\"%s\"",
+                     fprintf(observe_part_f, " for=\"%s\"",
                              observe_for_to_string(item.en_for));
                  }
 
                  if (! hvml_string_is_empty(&item.s_to)) {
-                     fprintf(observe_part_f, "to=\"%s\" ", item.s_to.str);
+                     fprintf(observe_part_f, " to=\"%s\"", item.s_to.str);
                  }
 
                  fprintf(observe_part_f, ">\n");
-                 //hvml_dom_printf(item.ptr_action_group, observe_part_f);
-                 fprintf(observe_part_f, "</observe>\n");
+                 hvml_dom_printf(item.ptr_action_group, observe_part_f);
+                 fprintf(observe_part_f, "\n</observe>\n\n");
              });
 }
 
