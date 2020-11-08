@@ -24,7 +24,7 @@
 
 #include "interpreter/ext_tools.h"
 #include "interpreter/interpreter_basic.h"
-#include "interpreter/interpreter_to_three_part.h"
+#include "interpreter/interpreter_two_part.h"
 
 #include <inttypes.h>
 #include <stdio.h>
@@ -34,82 +34,121 @@
 using namespace std;
 
 static int process(FILE *in, const char *ext);
-static int process_hvml(FILE *in, FILE *out);
+static int process_hvml(FILE *in,
+                        FILE *out,
+                        FILE *init_part_f,
+                        FILE *observe_part_f);
 static int process_json(FILE *in);
 static int process_utf8(FILE *in);
 
 #define PATH_MAX    512
-static char out_filename_buffer[PATH_MAX];
+static char output_filename[PATH_MAX+1];
+static char init_part_filename[PATH_MAX+1];
+static char observe_part_filename[PATH_MAX+1];
 
 int main(int argc, char *argv[])
 {
-    if (argc < 2 || argc > 3)
-    {
+    if (argc != 2) {
         E("arguments error");
         return 0;
     }
 
-    if (getenv("NEG"))
-    {
+    if (getenv("NEG")) {
         hvml_log_set_output_only(1);
     }
 
     hvml_log_set_thread_type("main");
 
     const char *file_in = argv[1];
-    const char *file_out = (argc == 3) ? argv[2] : out_filename_buffer;
     const char *fin_ext = file_ext(file_in);
 
-    if (0 != strnicmp(fin_ext, ".hvml", 5))
-    {
+    if (0 != strnicmp(fin_ext, ".hvml", 5)) {
         E("input file name error");
         return 0;
     }
 
-    if (argc == 2)
-    {
-        size_t fname_len = min ((size_t)(PATH_MAX - 6), strlen(file_in) - 5);
-        strncpy(out_filename_buffer, file_in, fname_len);
-        strcat(out_filename_buffer, ".html");
-    }
+    size_t fname_len = min ((size_t)(PATH_MAX - 6), strlen(file_in) - 5);
+    strncpy(output_filename, file_in, fname_len);
+    strncpy(init_part_filename, file_in, fname_len);
+    strncpy(observe_part_filename, file_in, fname_len);
+    strncat(output_filename, ".output.hvml", PATH_MAX);
+    strncat(init_part_filename, ".init_part.xml", PATH_MAX);
+    strncat(observe_part_filename, ".observe_part.xml", PATH_MAX);
 
-    I("output file: %s", file_out);
+    I("output file: %s", output_filename);
 
     FILE *in = fopen(file_in, "rb");
-    if (! in)
-    {
+    if (! in) {
         E("failed to open input file: %s", file_in);
         return 1;
     }
 
-    FILE *out = fopen(file_out, "wb");
-    if (! out)
-    {
-        E("failed to create output file: %s", file_out);
-        if (out)
-            fclose(out);
+    FILE *out = fopen(output_filename, "wb");
+    if (! out) {
+        E("failed to create output file: %s", output_filename);
+        fclose(in);
+        return 1;
+    }
+
+    FILE *init_part_f = fopen(init_part_filename, "wb");
+    if (! init_part_f) {
+        E("failed to create file: %s", init_part_filename);
+        fclose(in);
+        fclose(out);
+        return 1;
+    }
+
+    FILE *observe_part_f = fopen(observe_part_filename, "wb");
+    if (! observe_part_f) {
+        E("failed to create file: %s", observe_part_filename);
+        fclose(in);
+        fclose(out);
+        fclose(init_part_f);
         return 1;
     }
 
     I("processing file: %s", file_in);
-    I("output file: %s", file_out);
-    int ret = process_hvml(in, out);
+    int ret = process_hvml(in, 
+                           out,
+                           init_part_f,
+                           observe_part_f);
 
-    if (in)  fclose(in);
-    if (out) fclose(out);
+    fclose(in);
+    fclose(out);
+    fclose(init_part_f);
+    fclose(observe_part_f);
+
     if (ret) return ret;
     return 0;
 }
 
-static int process_hvml(FILE *in, FILE *out)
+static int process_hvml(FILE *in,
+                        FILE *output_hvml_f,
+                        FILE *init_part_f,
+                        FILE *observe_part_f)
 {
     hvml_dom_t *dom = hvml_dom_load_from_stream(in);
     if (dom)
     {
         // This is a test, print as origin file is.
-        Interpreter_Basic::GetOutput(dom, out);
+        //Interpreter_Basic::GetOutput(dom, output_hvml_f);
 
-        //Interpreter_to_ThreePart::GetOutput(dom, out);
+        InitGroup_t    init_part;
+        ObserveGroup_t observe_part;
+
+        Interpreter_TwoPart::GetOutput(dom,
+                                       &init_part,
+                                       &observe_part);
+
+        // Unfinished function
+        Interpreter_TwoPart::DomToHtml(dom,
+                                      output_hvml_f);
+
+        Interpreter_TwoPart::DumpInitPart(&init_part,
+                                          init_part_f);
+
+        Interpreter_TwoPart::DumpObservePart(&observe_part,
+                                             observe_part_f);
 
         hvml_dom_destroy(dom);
         printf("\n");

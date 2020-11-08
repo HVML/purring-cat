@@ -1,3 +1,21 @@
+// This file is a part of Purring Cat, a reference implementation of HVML.
+//
+// Copyright (C) 2020, <liuxinouc@126.com>.
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+#include "hvml/hvml_log.h"
 #include "interpreter/observe_for.h"
 #include <string.h>
 
@@ -26,16 +44,25 @@ static char *observe_for_type_flag[] = {
     "unload",     //用户退出页面
 };
 
+#define OBSERVE_FOR_STRING_LEN_MAX 10
 #define OBSERVE_FOR_FLAG_COUNT (sizeof(observe_for_type_flag) / sizeof(observe_for_type_flag[0]))
 
-OBSERVE_FOR_TYPE get_observe_for_type(hvml_string_t str)
+OBSERVE_FOR_TYPE get_observe_for_type(const char *str)
 {
+    //I("-------- get_observe_for_type input: %s ---------", str);
     int i;
     for (i = 0; i < OBSERVE_FOR_FLAG_COUNT; i ++) {
-        if (0 == strncmp(observe_for_type_flag[i], str.str, str.len)) {
+        if (0 == strncmp(observe_for_type_flag[i], str, OBSERVE_FOR_STRING_LEN_MAX)) {
+            //I("-------- get_observe_for_type return: %d ---------", i);
             return i;
         }
     }
 
     return for_UNKNOWN;
+}
+
+const char* observe_for_to_string(OBSERVE_FOR_TYPE type)
+{
+    if (type < 0 || type >= for_UNKNOWN) return NULL;
+    return observe_for_type_flag[type];
 }
