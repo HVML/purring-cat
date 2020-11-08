@@ -10,20 +10,6 @@ Interpreter_TwoPart::Interpreter_TwoPart(InitGroup_t* init_part,
     m_traverse_param.observe_part = observe_part;
 }
 
-void Interpreter_TwoPart::ReleaseTwoPart(InitGroup_t* init_part,
-                                         ObserveGroup_t* observe_part)
-{
-    for_each(init_part->begin(),
-             init_part->end(),
-             [](init_t &item)->void{ hvml_dom_destroy(item.ptr_data_group); });
-    init_part->clear();
-
-    for_each(observe_part->begin(),
-             observe_part->end(),
-             [](observe_t &item)->void{ hvml_dom_destroy(item.ptr_action_group); });
-    observe_part->clear();
-}
-
 void Interpreter_TwoPart::DomToHtml(hvml_dom_t* dom,
                                     FILE *html_part_f)
 {

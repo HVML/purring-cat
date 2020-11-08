@@ -62,9 +62,6 @@ public:
                         ObserveGroup_t* observe_part);
 
 public:
-    static void ReleaseTwoPart(InitGroup_t* init_part,
-                               ObserveGroup_t* observe_part);
-
     static void DomToHtml(hvml_dom_t* dom,
                           FILE *html_part_f);
 

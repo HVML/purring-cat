@@ -133,12 +133,6 @@ static int process_hvml(FILE *in,
         // This is a test, print as origin file is.
         //Interpreter_Basic::GetOutput(dom, output_hvml_f);
 
-        // Test hvml_dom_clone
-        // hvml_dom_t *clone_dom = hvml_dom_clone(dom);
-
-        // Interpreter_Basic::GetOutput(clone_dom, output_hvml_f);
-        // hvml_dom_destroy(clone_dom);
-        // return 0;
 
         InitGroup_t    init_part;
         ObserveGroup_t observe_part;
@@ -151,6 +145,7 @@ static int process_hvml(FILE *in,
         // Unfinished function
         //Interpreter_TwoPart::DomToHtml(dom,
         //                               output_hvml_f);
+
         D("--------------- DumpInitPart --------");
         Interpreter_TwoPart::DumpInitPart(&init_part,
                                           init_part_f);
@@ -158,10 +153,6 @@ static int process_hvml(FILE *in,
         D("--------------- DumpObservePart --------");
         Interpreter_TwoPart::DumpObservePart(&observe_part,
                                              observe_part_f);
-
-        D("--------------- ReleaseTwoPart --------");
-        Interpreter_TwoPart::ReleaseTwoPart(&init_part,
-                                            &observe_part);
 
         hvml_dom_destroy(dom);
         printf("\n");

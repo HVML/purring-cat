@@ -13,15 +13,6 @@ void Interpreter_Basic::GetOutput(hvml_dom_t *input_dom, FILE *out)
     hvml_dom_traverse(input_dom, &ipter.m_dom_prtt, ipter.traverse_for_printf);
 }
 
-// tag_open_close: 1-open, 2-single-close, 3-half-close, 4-close
-//int hvml_dom_traverse(hvml_dom_t *dom,
-//                      void *arg,
-//                      void (*traverse_cb)(hvml_dom_t *dom,
-//                                          int lvl,
-//                                          int tag_open_close,
-//                                          void *arg,
-//                                          int *breakout));
-
 void Interpreter_Basic::traverse_for_printf(hvml_dom_t *dom, int lvl, int tag_open_close, void *arg, int *breakout) {
     dom_printf_t *parg = (dom_printf_t*)arg;
     A(parg, "internal logic error");

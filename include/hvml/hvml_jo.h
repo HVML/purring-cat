@@ -112,9 +112,6 @@ hvml_jo_value_t* hvml_jo_gen_parse_end(hvml_jo_gen_t *gen);
 // load a json value from file stream
 hvml_jo_value_t* hvml_jo_value_load_from_stream(FILE *in);
 
-// clone a json object on the heap
-hvml_jo_value_t* hvml_jo_clone(hvml_jo_value_t *jo);
-
 #ifdef __cplusplus
 }
 #endif
