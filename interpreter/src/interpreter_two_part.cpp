@@ -192,8 +192,8 @@ void Interpreter_TwoPart::AddNewObserve(ObserveGroup_t* observe_part,
         else if (0 == strcmp("to", key)) {
             hvml_string_set(&new_observe.s_to, val, strlen(val));
         }
-        else {
-            new_observe.en_for = get_observe_for_type(key);
+        else if (0 == strcmp("for", key)) {
+            new_observe.en_for = get_observe_for_type(val);
         }
         attr = hvml_dom_attr_next(attr);
     }

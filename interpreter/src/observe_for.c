@@ -15,6 +15,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+#include "hvml/hvml_log.h"
 #include "interpreter/observe_for.h"
 #include <string.h>
 
@@ -48,9 +49,11 @@ static char *observe_for_type_flag[] = {
 
 OBSERVE_FOR_TYPE get_observe_for_type(const char *str)
 {
+    //I("-------- get_observe_for_type input: %s ---------", str);
     int i;
     for (i = 0; i < OBSERVE_FOR_FLAG_COUNT; i ++) {
         if (0 == strncmp(observe_for_type_flag[i], str, OBSERVE_FOR_STRING_LEN_MAX)) {
+            //I("-------- get_observe_for_type return: %d ---------", i);
             return i;
         }
     }
