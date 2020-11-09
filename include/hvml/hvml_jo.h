@@ -95,6 +95,8 @@ size_t           hvml_jo_value_children(hvml_jo_value_t *jo);
 typedef int (*jo_traverse_f)(hvml_jo_value_t *jo, int lvl, int action, void *arg);
 int hvml_jo_value_traverse(hvml_jo_value_t *jo, void *arg, jo_traverse_f cb);
 
+hvml_jo_value_t* hvml_jo_clone(hvml_jo_value_t *jo);
+
 // create a `generator`, with which we can build a json value from string stream
 hvml_jo_gen_t*   hvml_jo_gen_create();
 // destroy the `generator`

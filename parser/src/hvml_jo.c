@@ -646,6 +646,169 @@ int hvml_jo_value_traverse(hvml_jo_value_t *jo, void *arg, jo_traverse_f cb) {
     return do_hvml_jo_value_traverse(jo, &tvs);
 }
 
+typedef struct jo_clone_s            jo_clone_t;
+struct jo_clone_s {
+    hvml_jo_value_t        *jo;
+};
+
+static int traverse_for_clone(hvml_jo_value_t *jo, int lvl, int action, void *arg) {
+    jo_clone_t *jc = (jo_clone_t*)arg;
+    A(jc, "internal logic error");
+    int breakout = 0;
+    hvml_jo_value_t *parent = hvml_jo_value_owner(jo);
+    hvml_jo_value_t *prev   = hvml_jo_value_sibling_prev(jo);
+    hvml_jo_value_t *v      = NULL;
+    HVML_JO_TYPE jot = hvml_jo_value_type(jo);
+    switch (jot) {
+        case MKJOT(J_TRUE):  {
+            D("true");
+            v = hvml_jo_true();
+            if (!v) return -1;
+        } break;
+        case MKJOT(J_FALSE): {
+            D("false");
+            v = hvml_jo_true();
+            if (!v) return -1;
+        } break;
+        case MKJOT(J_NULL): {
+            D("null");
+            v = hvml_jo_true();
+            if (!v) return -1;
+        } break;
+        case MKJOT(J_NUMBER): {
+            D("number");
+            A(action==0, "internal logic error");
+
+            int is_integer;
+            int64_t i;
+            double d;
+            const char *s;
+            A(0==hvml_jo_number_get(jo, &is_integer, &i, &d, &s), "internal logic error");
+            if (is_integer) {
+                v = hvml_jo_integer(i, s);
+            } else {
+                v = hvml_jo_double(d, s);
+            }
+            if (!v) return -1; // out of memory
+        } break;
+        case MKJOT(J_STRING): {
+            D("string");
+            A(action==0, "internal logic error");
+
+            const char *s;
+            if (hvml_jo_string_get(jo, &s)) {
+                A(0, "internal logic error"); // shouldn't reach here
+            }
+            v = hvml_jo_string(s, strlen(s));
+            if (!v) return -1; // out of memory
+        } break;
+        case MKJOT(J_OBJECT): {
+            switch (action) {
+                case 1: {
+                    D("push object");
+                    hvml_jo_value_t *v = hvml_jo_object();
+                    if (!v) return -1; // out of memory
+
+                    if (hvml_jo_value_push(jc->jo, v)) {
+                        hvml_jo_value_free(v);
+                        return -1;
+                    }
+                    jc->jo = v;
+                    return 0; // no need to fulfill post-action
+                } break;
+                case -1: {
+                    D("pop object");
+                    A(hvml_jo_value_type(jc->jo)==MKJOT(J_OBJECT), "internal logic error");
+                    v = VAL_OWNER(jc->jo);
+                    if (v) jc->jo = v;
+                    return 0; // no need to fulfill post-action
+                } break;
+                default: {
+                    A(0, "internal logic error");
+                } break;
+            }
+        } break;
+        case MKJOT(J_OBJECT_KV): {
+            switch (action) {
+                case 1: {
+                    D("push kv");
+                    const char      *key;
+                    A(0==hvml_jo_kv_get(jo, &key, NULL), "internal logic error");
+                    A(key, "internal logic error");
+                    hvml_jo_value_t *v = hvml_jo_object_kv(key, strlen(key));
+                    if (!v) return -1; // out of memory
+                    A(hvml_jo_value_type(jc->jo)==MKJOT(J_OBJECT), "internal logic error");
+                    if (hvml_jo_value_push(jc->jo, v)) {
+                        hvml_jo_value_free(v);
+                        return -1;
+                    }
+                    jc->jo = v;
+                    return 0; // no need to fulfill post-action
+                } break;
+                case -1: {
+                    D("pop kv");
+                    A(hvml_jo_value_type(jc->jo)==MKJOT(J_OBJECT_KV), "internal logic error");
+                    jc->jo = VAL_OWNER(jc->jo);
+                    A(hvml_jo_value_type(jc->jo)==MKJOT(J_OBJECT), "internal logic error");
+                    return 0; // no need to fulfill post-action
+                } break;
+                default: {
+                    A(0, "internal logic error");
+                } break;
+            }
+        } break;
+        case MKJOT(J_ARRAY): {
+            switch (action) {
+                case 1: {
+                    D("push array");
+                    hvml_jo_value_t *v = hvml_jo_array();
+                    if (!v) return -1; // out of memory
+
+                    if (hvml_jo_value_push(jc->jo, v)) {
+                        hvml_jo_value_free(v);
+                        return -1;
+                    }
+                    jc->jo = v;
+                    return 0; // no need to fulfill post-action
+                } break;
+                case -1: {
+                    D("pop array");
+                    A(hvml_jo_value_type(jc->jo)==MKJOT(J_ARRAY), "internal logic error");
+                    v = jc->jo; // need to fulfill post-action
+                    v = VAL_OWNER(jc->jo);
+                    if (v) jc->jo = v;
+                    return 0; // no need to fulfill post-action
+                } break;
+                default: {
+                    A(0, "internal logic error");
+                } break;
+            }
+        } break;
+        default: {
+            A(0, "print json type [%d]: not implemented yet", hvml_jo_value_type(jo));
+        } break;
+    }
+    A(v, "internal logic error");
+    if (hvml_jo_value_push(jc->jo, v)) {
+        hvml_jo_value_free(v);
+        return -1;
+    }
+    hvml_jo_value_t *vp = VAL_OWNER(v);
+    jc->jo = vp ? vp : v;
+    return 0;
+}
+
+hvml_jo_value_t* hvml_jo_clone(hvml_jo_value_t *jo) {
+    jo_clone_t arg = {0};
+    int r = hvml_jo_value_traverse(jo, &arg, traverse_for_clone);
+    if (r && arg.jo) {
+        free(arg.jo);
+        arg.jo = NULL;
+        return NULL;
+    }
+    return hvml_jo_value_root(arg.jo);
+}
+
 static int on_begin(void *arg);
 static int on_open_array(void *arg);
 static int on_close_array(void *arg);
