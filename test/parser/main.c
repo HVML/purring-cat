@@ -28,6 +28,8 @@
 #include <stdio.h>
 #include <string.h>
 
+static int with_clone = 0;
+
 static const char* file_ext(const char *file);
 static int process(FILE *in, const char *ext);
 static int process_hvml(FILE *in);
@@ -44,6 +46,11 @@ int main(int argc, char *argv[]) {
     hvml_log_set_thread_type("main");
 
     for (int i=1; i<argc; ++i) {
+        const char *arg = argv[i];
+        if (strcmp(arg, "-c")==0) {
+            with_clone = 1;
+            continue;
+        }
         const char *file = argv[i];
         const char *ext  = file_ext(file);
 
@@ -80,25 +87,46 @@ static int process(FILE *in, const char *ext) {
 }
 
 static int process_hvml(FILE *in) {
+    int r = 1;
     hvml_dom_t *dom = hvml_dom_load_from_stream(in);
-    if (dom) {
+    do {
+        if (!dom) break;
+
+        if (with_clone) {
+            hvml_dom_t *v = hvml_dom_clone(dom);
+            if (!v) break;
+            hvml_dom_destroy(dom);
+            dom = v;
+        }
+
         hvml_dom_printf(dom, stdout);
-        hvml_dom_destroy(dom);
-        printf("\n");
-        return 0;
-    }
-    return 1;
+        r = 0;
+    } while (0);
+    if (dom) hvml_dom_destroy(dom);
+    printf("\n");
+    return r ? 1 : 0;
 }
 
 static int process_json(FILE *in) {
+    int r = 1;
     hvml_jo_value_t *jo = hvml_jo_value_load_from_stream(in);
-    if (jo) {
+    do {
+        if (!jo) break;
+
+        if (with_clone) {
+            hvml_jo_value_t *v = hvml_jo_clone(jo);
+            if (!v) break;
+            hvml_jo_value_free(jo);
+            jo = v;
+        }
+
         hvml_jo_value_printf(jo, stdout);
-        hvml_jo_value_free(jo);
-        printf("\n");
-        return 0;
-    }
-    return 1;
+        r = 0;
+    } while (0);
+
+    if (jo) hvml_jo_value_free(jo);
+    printf("\n");
+    return r ? 1 : 0;
 }
 
 static int process_utf8(FILE *in) {

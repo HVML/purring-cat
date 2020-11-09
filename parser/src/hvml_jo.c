@@ -661,22 +661,18 @@ static int traverse_for_clone(hvml_jo_value_t *jo, int lvl, int action, void *ar
     HVML_JO_TYPE jot = hvml_jo_value_type(jo);
     switch (jot) {
         case MKJOT(J_TRUE):  {
-            D("true");
             v = hvml_jo_true();
             if (!v) return -1;
         } break;
         case MKJOT(J_FALSE): {
-            D("false");
             v = hvml_jo_true();
             if (!v) return -1;
         } break;
         case MKJOT(J_NULL): {
-            D("null");
             v = hvml_jo_true();
             if (!v) return -1;
         } break;
         case MKJOT(J_NUMBER): {
-            D("number");
             A(action==0, "internal logic error");
 
             int is_integer;
@@ -692,7 +688,6 @@ static int traverse_for_clone(hvml_jo_value_t *jo, int lvl, int action, void *ar
             if (!v) return -1; // out of memory
         } break;
         case MKJOT(J_STRING): {
-            D("string");
             A(action==0, "internal logic error");
 
             const char *s;
@@ -705,7 +700,6 @@ static int traverse_for_clone(hvml_jo_value_t *jo, int lvl, int action, void *ar
         case MKJOT(J_OBJECT): {
             switch (action) {
                 case 1: {
-                    D("push object");
                     hvml_jo_value_t *v = hvml_jo_object();
                     if (!v) return -1; // out of memory
 
@@ -717,7 +711,6 @@ static int traverse_for_clone(hvml_jo_value_t *jo, int lvl, int action, void *ar
                     return 0; // no need to fulfill post-action
                 } break;
                 case -1: {
-                    D("pop object");
                     A(hvml_jo_value_type(jc->jo)==MKJOT(J_OBJECT), "internal logic error");
                     v = VAL_OWNER(jc->jo);
                     if (v) jc->jo = v;
@@ -731,7 +724,6 @@ static int traverse_for_clone(hvml_jo_value_t *jo, int lvl, int action, void *ar
         case MKJOT(J_OBJECT_KV): {
             switch (action) {
                 case 1: {
-                    D("push kv");
                     const char      *key;
                     A(0==hvml_jo_kv_get(jo, &key, NULL), "internal logic error");
                     A(key, "internal logic error");
@@ -746,7 +738,6 @@ static int traverse_for_clone(hvml_jo_value_t *jo, int lvl, int action, void *ar
                     return 0; // no need to fulfill post-action
                 } break;
                 case -1: {
-                    D("pop kv");
                     A(hvml_jo_value_type(jc->jo)==MKJOT(J_OBJECT_KV), "internal logic error");
                     jc->jo = VAL_OWNER(jc->jo);
                     A(hvml_jo_value_type(jc->jo)==MKJOT(J_OBJECT), "internal logic error");
@@ -760,7 +751,6 @@ static int traverse_for_clone(hvml_jo_value_t *jo, int lvl, int action, void *ar
         case MKJOT(J_ARRAY): {
             switch (action) {
                 case 1: {
-                    D("push array");
                     hvml_jo_value_t *v = hvml_jo_array();
                     if (!v) return -1; // out of memory
 
@@ -772,7 +762,6 @@ static int traverse_for_clone(hvml_jo_value_t *jo, int lvl, int action, void *ar
                     return 0; // no need to fulfill post-action
                 } break;
                 case -1: {
-                    D("pop array");
                     A(hvml_jo_value_type(jc->jo)==MKJOT(J_ARRAY), "internal logic error");
                     v = jc->jo; // need to fulfill post-action
                     v = VAL_OWNER(jc->jo);
@@ -801,9 +790,11 @@ static int traverse_for_clone(hvml_jo_value_t *jo, int lvl, int action, void *ar
 hvml_jo_value_t* hvml_jo_clone(hvml_jo_value_t *jo) {
     jo_clone_t arg = {0};
     int r = hvml_jo_value_traverse(jo, &arg, traverse_for_clone);
-    if (r && arg.jo) {
-        free(arg.jo);
-        arg.jo = NULL;
+    if (r) {
+        if (arg.jo) {
+            free(arg.jo);
+            arg.jo = NULL;
+        }
         return NULL;
     }
     return hvml_jo_value_root(arg.jo);

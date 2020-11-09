@@ -37,6 +37,8 @@ typedef enum {
     MKDOT(D_JSON)
 } HVML_DOM_TYPE;
 
+const char *hvml_dom_type_str(HVML_DOM_TYPE t);
+
 typedef struct hvml_dom_s          hvml_dom_t;
 typedef struct hvml_dom_gen_s      hvml_dom_gen_t;
 
@@ -76,6 +78,8 @@ hvml_jo_value_t* hvml_dom_jo(hvml_dom_t *dom);         // elementJson
 // tag_open_close: 1-open, 2-single-close, 3-half-close, 4-close
 int         hvml_dom_traverse(hvml_dom_t *dom, void *arg, void (*traverse_cb)(hvml_dom_t *dom, int lvl, int tag_open_close, void *arg, int *breakout));
 
+hvml_dom_t* hvml_dom_clone(hvml_dom_t *dom);
+
 hvml_dom_gen_t*   hvml_dom_gen_create();
 void              hvml_dom_gen_destroy(hvml_dom_gen_t *gen);
 
@@ -85,7 +89,6 @@ int               hvml_dom_gen_parse_string(hvml_dom_gen_t *gen, const char *str
 hvml_dom_t*       hvml_dom_gen_parse_end(hvml_dom_gen_t *gen);
 
 hvml_dom_t*       hvml_dom_load_from_stream(FILE *in);
-hvml_dom_t*       hvml_dom_clone(hvml_dom_t *dom);
 
 #ifdef __cplusplus
 }
