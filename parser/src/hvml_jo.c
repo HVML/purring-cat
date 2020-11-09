@@ -612,6 +612,7 @@ static int do_hvml_jo_value_traverse(hvml_jo_value_t *jo, traverse_t *tvs) {
                 jo  = sibling;
                 continue;
             }
+            if (lvl==0) return 0;
             hvml_jo_value_t *parent = VAL_OWNER(jo);
             if (parent) {
                 A(lvl>=1, "internal logic error");
