@@ -2,14 +2,27 @@ project(hvml-agent) : aceexe {
 
     exename = hvml-agent
 
+    includes += "$(ACE_ROOT)/apps/JAWS2/"
+    includes += "../include/"
+    
+    libpaths += "$(ACE_ROOT)/apps/JAWS2/HTTPU/"
+    libpaths += "../build/parser/src/"
+    libpaths += "../build/interpreter/src/"
+
+    libs += HTTPU
+    libs += hvml_parser
+    libs += hvml_interpreter
+
     Source_Files {
         hvml-agent.cpp
-        HttpEcho.cpp
-        MyInfo.cpp
+        HttpServer.cpp
+        HvmlEcho.cpp
+        HvmlRuntime.cpp
     }
 
     Header_Files {
-        HttpEcho.h
-        MyInfo.h
+        HttpServer.h
+        HvmlEcho.h
+        HvmlRuntime.h
     }
 }

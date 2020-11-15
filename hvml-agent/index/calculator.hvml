@@ -48,7 +48,7 @@
 
             <div id="c_value">
                 <archetype id="button">
-                    <li class="$?.class">$?.letters</li></li>
+                    <li class="$?.class">$?.letters</li>
                 </archetype>
 
                 <ul>

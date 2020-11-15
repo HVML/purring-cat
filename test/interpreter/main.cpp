@@ -24,7 +24,7 @@
 
 #include "interpreter/ext_tools.h"
 #include "interpreter/interpreter_basic.h"
-#include "interpreter/interpreter_two_part.h"
+#include "interpreter/interpreter_runtime.h"
 
 #include <inttypes.h>
 #include <stdio.h>
@@ -36,6 +36,8 @@ using namespace std;
 static int process(FILE *in, const char *ext);
 static int process_hvml(FILE *in,
                         FILE *out,
+                        FILE *archetype_part_f,
+                        FILE *iterate_part_f,
                         FILE *init_part_f,
                         FILE *observe_part_f);
 static int process_json(FILE *in);
@@ -43,6 +45,8 @@ static int process_utf8(FILE *in);
 
 #define PATH_MAX    512
 static char output_filename[PATH_MAX+1];
+static char archetype_part_filename[PATH_MAX+1];
+static char iterate_part_filename[PATH_MAX+1];
 static char init_part_filename[PATH_MAX+1];
 static char observe_part_filename[PATH_MAX+1];
 
@@ -69,13 +73,15 @@ int main(int argc, char *argv[])
 
     size_t fname_len = min ((size_t)(PATH_MAX - 6), strlen(file_in) - 5);
     strncpy(output_filename, file_in, fname_len);
+    strncpy(archetype_part_filename, file_in, fname_len);
+    strncpy(iterate_part_filename, file_in, fname_len);
     strncpy(init_part_filename, file_in, fname_len);
     strncpy(observe_part_filename, file_in, fname_len);
-    strncat(output_filename, ".output.hvml", PATH_MAX);
+    strncat(output_filename, ".udom_part.html", PATH_MAX);
+    strncat(archetype_part_filename, ".archetype_part.xml", PATH_MAX);
+    strncat(iterate_part_filename, ".iterate_part.xml", PATH_MAX);
     strncat(init_part_filename, ".init_part.xml", PATH_MAX);
     strncat(observe_part_filename, ".observe_part.xml", PATH_MAX);
-
-    I("output file: %s", output_filename);
 
     FILE *in = fopen(file_in, "rb");
     if (! in) {
@@ -90,11 +96,30 @@ int main(int argc, char *argv[])
         return 1;
     }
 
+    FILE *archetype_part_f = fopen(archetype_part_filename, "wb");
+    if (! archetype_part_f) {
+        E("failed to create file: %s", archetype_part_filename);
+        fclose(in);
+        fclose(out);
+        return 1;
+    }
+
+    FILE *iterate_part_f = fopen(iterate_part_filename, "wb");
+    if (! iterate_part_f) {
+        E("failed to create file: %s", iterate_part_filename);
+        fclose(in);
+        fclose(out);
+        fclose(archetype_part_f);
+        return 1;
+    }
+
     FILE *init_part_f = fopen(init_part_filename, "wb");
     if (! init_part_f) {
         E("failed to create file: %s", init_part_filename);
         fclose(in);
         fclose(out);
+        fclose(archetype_part_f);
+        fclose(iterate_part_f);
         return 1;
     }
 
@@ -103,6 +128,8 @@ int main(int argc, char *argv[])
         E("failed to create file: %s", observe_part_filename);
         fclose(in);
         fclose(out);
+        fclose(archetype_part_f);
+        fclose(iterate_part_f);
         fclose(init_part_f);
         return 1;
     }
@@ -110,11 +137,15 @@ int main(int argc, char *argv[])
     I("processing file: %s", file_in);
     int ret = process_hvml(in, 
                            out,
+                           archetype_part_f,
+                           iterate_part_f,
                            init_part_f,
                            observe_part_f);
 
     fclose(in);
     fclose(out);
+    fclose(archetype_part_f);
+    fclose(iterate_part_f);
     fclose(init_part_f);
     fclose(observe_part_f);
 
@@ -124,6 +155,8 @@ int main(int argc, char *argv[])
 
 static int process_hvml(FILE *in,
                         FILE *output_hvml_f,
+                        FILE *archetype_part_f,
+                        FILE *iterate_part_f,
                         FILE *init_part_f,
                         FILE *observe_part_f)
 {
@@ -133,24 +166,38 @@ static int process_hvml(FILE *in,
         // This is a test, print as origin file is.
         //Interpreter_Basic::GetOutput(dom, output_hvml_f);
 
-        InitGroup_t    init_part;
-        ObserveGroup_t observe_part;
+        hvml_dom_t*      udom_part = NULL;
+        ArchetypeGroup_t archetype_part;
+        IterateGroup_t   iterate_part;
+        InitGroup_t      init_part;
+        ObserveGroup_t   observe_part;
 
-        Interpreter_TwoPart::GetOutput(dom,
-                                       &init_part,
-                                       &observe_part);
+        I("................. GetRuntime");
+        Interpreter_Runtime::GetRuntime(dom,
+                                        &udom_part,
+                                        &archetype_part,
+                                        &iterate_part,
+                                        &init_part,
+                                        &observe_part);
 
-        // Unfinished function
-        Interpreter_TwoPart::DomToHtml(dom,
-                                      output_hvml_f);
-
-        Interpreter_TwoPart::DumpInitPart(&init_part,
+        I("................. DumpUdomPart");
+        Interpreter_Runtime::DumpUdomPart(udom_part,
+                                          output_hvml_f);
+        I("................. DumpArchetypePart");
+        Interpreter_Runtime::DumpArchetypePart(&archetype_part,
+                                               archetype_part_f);
+        I("................. DumpIteratePart");
+        Interpreter_Runtime::DumpIteratePart(&iterate_part,
+                                             iterate_part_f);
+        I("................. DumpInitPart");
+        Interpreter_Runtime::DumpInitPart(&init_part,
                                           init_part_f);
-
-        Interpreter_TwoPart::DumpObservePart(&observe_part,
+        I("................. DumpObservePart");
+        Interpreter_Runtime::DumpObservePart(&observe_part,
                                              observe_part_f);
 
         hvml_dom_destroy(dom);
+        hvml_dom_destroy(udom_part);
         printf("\n");
         return 0;
     }
