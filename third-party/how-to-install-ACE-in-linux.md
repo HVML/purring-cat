@@ -74,3 +74,18 @@ At this time, you can see that a new file Makefile.hello is generated.
 
 Hello World!
 
+4. We need the HTTPU lib
+
+4.1 go to the ACE folder, and become root user
+ cd $ACE_ROOT
+ su
+
+4.2 go to the HTTPU folder
+ cd apps/JAWS2/HTTPU/
+
+4.3 generate the Makefile, and run make
+NOTICE: You must be root user when run make.
+ $ACE_ROOT/bin/mpc.pl -type make httpu.mpc
+ make -f Makefile.HTTPU
+ 
+If there is no error occurred, then good luck !

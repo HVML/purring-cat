@@ -15,12 +15,13 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-#include "HttpEcho.h"
+#include "HTTPU/parse_http_request.h"
+#include "HttpServer.h"
 
-Http_Listener::Http_Listener (IHttpInfo* ihi)
-    : local_address_ (ihi->GetListenPort())
+Http_Listener::Http_Listener (IHttpResponse* ihr)
+    : local_address_ (ihr->GetListenPort())
     , acceptor_ (local_address_, 1)
-    , ihi_ (ihi)
+    , ihr_ (ihr)
 {
     this->reactor (ACE_Reactor::instance ());
     int result = this->reactor ()->register_handler
@@ -64,7 +65,7 @@ Http_Listener::handle_input (ACE_HANDLE handle)
     remote_address.dump ();
 
     Http_Handler *handler = 0;
-    ACE_NEW_RETURN (handler, Http_Handler (stream, ihi_), -1);
+    ACE_NEW_RETURN (handler, Http_Handler (stream, ihr_), -1);
 
     return 0;
 }
@@ -83,9 +84,9 @@ Http_Listener::handle_close (ACE_HANDLE handle,
 
 
 
-Http_Handler::Http_Handler (ACE_SOCK_Stream &s, IHttpInfo* ihi)
+Http_Handler::Http_Handler (ACE_SOCK_Stream &s, IHttpResponse* ihr)
     : stream_ (s)
-    , ihi_ (ihi)
+    , ihr_ (ihr)
 {
     this->reactor (ACE_Reactor::instance ());
 
@@ -111,23 +112,34 @@ Http_Handler::handle_input (ACE_HANDLE handle)
         message[result] = 0;
         ACE_DEBUG ((LM_DEBUG, "Remote message: %s\n", message));
 
-        char echo_format[] = 
+        Parse_HTTP_Request http_req(message);
+        const char *url = http_req.url();
+        ACE_DEBUG ((LM_DEBUG, "\nhttp_req: %s\n\n", url));
+
+        const char echo_format[] = 
             "HTTP/1.0 200 OK\r\n"\
             "Content-Type: application/json\r\n"\
             "Vary: Accept-Encoding\r\n"\
             "Content-Length: %d\r\n"\
             "\r\n%s";
 
-        char echo_message[4096];
-        int info_len;
-        char* info = ihi_->GetHttpInfo(&info_len);
-        if (2048 < strlen(info)) {
+        char echo_message[ECMO_MESSAGE_LEN_MAX];
+        int response_len;
+        char* response = ihr_->GetHttpResponse(&response_len, url);
+        if (response_len < 0) {
+            return -1;
+        }
+        if (response_len > ECMO_MESSAGE_LEN_MAX - sizeof(echo_format)) {
             return -1;
         }
 
-        sprintf(echo_message, echo_format, info_len, info);
+        int echo_len = snprintf(echo_message,
+                                ECMO_MESSAGE_LEN_MAX,
+                                echo_format,
+                                response_len,
+                                response);
 
-        this->stream_.send(echo_message, sizeof echo_message);
+        this->stream_.send(echo_message, echo_len);
         return -1;
     }
     else if (result == 0)
@@ -168,22 +180,22 @@ Http_Handler::handle_close (ACE_HANDLE handle,
 static ACE_THR_FUNC_RETURN
 worker_thread (void* param)
 {
-    IHttpInfo* ihi = (IHttpInfo*)param;
+    IHttpResponse* ihr = (IHttpResponse*)param;
 
-    Http_Listener *listener = new Http_Listener(ihi);
+    Http_Listener *listener = new Http_Listener(ihr);
     ACE_UNUSED_ARG (listener);
 
     ACE_Reactor::instance()->run_reactor_event_loop();
     return 0;
 }
 
-void HttpEcho::StartServer (IHttpInfo* ihi)
+void HttpServer::StartServer (IHttpResponse* ihr)
 {
     ACE_Thread_Manager::instance ()->spawn
-        (worker_thread, (void*)ihi);
+        (worker_thread, (void*)ihr);
 }
 
-void HttpEcho::StopServer (void)
+void HttpServer::StopServer (void)
 {
     ACE_Reactor::instance()->end_reactor_event_loop();
     ACE_Thread_Manager::instance ()->wait ();

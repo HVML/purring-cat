@@ -184,13 +184,19 @@ To build with verbose information:
 rm -rf build && cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -B build && cmake --build build
 ```
 
-To run the test program:
+To run the test-parser program:
 
 ```
 ./build/test/parser/hp ./test/parser/test/sample.hvml && echo yes
 ```
 
-To run the interpreter program:
+To run the test-parser-dom-clone program:
+
+```
+./build/test/parser/hp -c ./test/parser/test/sample.hvml && echo yes
+```
+
+To run the test-interpreter program:
 
 ...
 ./build/test/interpreter/interpreter ./test/interpreter/test/calculator.hvml && echo yes

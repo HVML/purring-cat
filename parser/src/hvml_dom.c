@@ -222,7 +222,7 @@ hvml_dom_t* hvml_dom_append_json(hvml_dom_t *dom, hvml_jo_value_t *jo) {
         // jo is root, take owner ship
         v->jo              = jo;
         DOM_APPEND(dom, v);
-        return dom;
+        return v;
     }
     // jo is subvalue, clone it
     v->jo = hvml_jo_clone(jo);
@@ -231,7 +231,7 @@ hvml_dom_t* hvml_dom_append_json(hvml_dom_t *dom, hvml_jo_value_t *jo) {
         return NULL;
     }
     DOM_APPEND(dom, v);
-    return dom;
+    return v;
 }
 
 hvml_dom_t* hvml_dom_root(hvml_dom_t *dom) {
@@ -424,7 +424,7 @@ static void traverse_for_clone(hvml_dom_t *dom, int lvl, int tag_open_close, voi
             v = hvml_dom_append_attr(dc->dom, key, strlen(key), val, val ? strlen(val) : 0);
             if (!v) break;
             A(hvml_dom_type(v)==MKDOT(D_ATTR), "internal logic error");
-            if (DOM_OWNER(v)==dc->dom, "internal logic error");
+            A(DOM_ATTR_OWNER(v)==dc->dom, "internal logic error");
             *breakout = 0;
         } break;
         case MKDOT(D_TEXT): {
@@ -434,7 +434,7 @@ static void traverse_for_clone(hvml_dom_t *dom, int lvl, int tag_open_close, voi
             v = hvml_dom_append_content(dc->dom, text, strlen(text));
             if (!v) break;
             A(hvml_dom_type(v)==MKDOT(D_TEXT), "internal logic error");
-            if (DOM_OWNER(v)==dc->dom, "internal logic error");
+            A(DOM_OWNER(v)==dc->dom, "internal logic error");
             *breakout = 0;
         } break;
         case MKDOT(D_JSON): {
@@ -450,7 +450,7 @@ static void traverse_for_clone(hvml_dom_t *dom, int lvl, int tag_open_close, voi
                 hvml_jo_value_free(jo);
                 break;
             }
-            if (DOM_OWNER(v)==dc->dom, "internal logic error");
+            A(DOM_OWNER(v)==dc->dom, "internal logic error");
             *breakout = 0;
         } break;
         default: {

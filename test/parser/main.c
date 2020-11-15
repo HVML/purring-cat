@@ -79,7 +79,7 @@ static const char* file_ext(const char *file) {
 static int process(FILE *in, const char *ext) {
     if (strcmp(ext, ".utf8")==0) {
         return process_utf8(in);
-    }else if (strcmp(ext, ".json")==0) {
+    } else if (strcmp(ext, ".json")==0) {
         return process_json(in);
     } else {
         return process_hvml(in);

@@ -16,29 +16,66 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "ace/Log_Msg.h"
-#include "HttpEcho.h"
-#include "MyInfo.h"
+#include "interpreter/ext_tools.h"
+#include "HvmlRuntime.h"
+#include "HttpServer.h"
+#include "HvmlEcho.h"
 
+#include <stdlib.h> // function system
+
+#define LISTEN_PORT 20000
+
+static void wait_for_quit();
 int ACE_TMAIN(int argc, char* argv[])
 {
-    MyInfo info(20000);
-    HttpEcho::StartServer(&info);
-    ACE_DEBUG((LM_DEBUG, ACE_TEXT("Start HttpEcho, PORT: 20000\n")));
+    if (argc != 2) {
+        ACE_DEBUG((LM_DEBUG, ACE_TEXT("arguments error\n")));
+        return 0;
+    }
 
+    const char *file_in = argv[1];
+    const char *fin_ext = file_ext(file_in);
+    if (0 != strnicmp(fin_ext, ".hvml", 5)) {
+        ACE_DEBUG((LM_DEBUG, ACE_TEXT("input file name error\n")));
+        return 0;
+    }
+
+    FILE *hvml_in_f = fopen(file_in, "rb");
+    if (! hvml_in_f) {
+        E("failed to open input file: %s", file_in);
+        return 1;
+    }
+
+    HvmlRuntime runtime(hvml_in_f);
+
+    HvmlEcho http_echo(LISTEN_PORT);
+    HttpServer::StartServer(&http_echo);
+    ACE_DEBUG((LM_DEBUG, ACE_TEXT("Start HttpEcho\n")));
+
+    // start firefox
+    char cmdline[64];
+    snprintf(cmdline, sizeof cmdline, "firefox localhost:%d/index", LISTEN_PORT);
+    system (cmdline); // system function would not return until Firefox shut down.
+
+    // wait_for_quit();
+
+    HttpServer::StopServer();
+    ACE_DEBUG((LM_DEBUG, ACE_TEXT("Stop HttpEcho\n\n")));
+    return 0;
+}
+
+static void wait_for_quit()
+{
     printf("Press 'q' and ENTER to Exit\n");
 
     while (1) {
         int c = getchar();
-
         if (c == (int)'q') {
             break;
         }
         else {
             printf("your input is %c\n", c);
+            printf("Press 'q' and ENTER to Exit\n");
         }
     }
-
-    HttpEcho::StopServer();
-    ACE_DEBUG((LM_DEBUG, ACE_TEXT("Stop HttpEcho\n")));
-    return 0;
 }

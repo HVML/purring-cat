@@ -1,6 +1,6 @@
 set(hvml_interpreter_src
     interpreter_basic.cpp
-    interpreter_two_part.cpp
+    interpreter_runtime.cpp
     observe_for.c
     adverb_property.c
     ext_tools.c
