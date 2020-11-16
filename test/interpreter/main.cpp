@@ -36,19 +36,23 @@ using namespace std;
 static int process(FILE *in, const char *ext);
 static int process_hvml(FILE *in,
                         FILE *out,
+                        FILE *mustache_part_f,
                         FILE *archetype_part_f,
                         FILE *iterate_part_f,
                         FILE *init_part_f,
-                        FILE *observe_part_f);
+                        FILE *observe_part_f,
+                        FILE *vdom_f);
 static int process_json(FILE *in);
 static int process_utf8(FILE *in);
 
 #define PATH_MAX    512
 static char output_filename[PATH_MAX+1];
+static char mustache_part_filename[PATH_MAX+1];
 static char archetype_part_filename[PATH_MAX+1];
 static char iterate_part_filename[PATH_MAX+1];
 static char init_part_filename[PATH_MAX+1];
 static char observe_part_filename[PATH_MAX+1];
+static char vdom_filename[PATH_MAX+1];
 
 int main(int argc, char *argv[])
 {
@@ -73,15 +77,19 @@ int main(int argc, char *argv[])
 
     size_t fname_len = min ((size_t)(PATH_MAX - 6), strlen(file_in) - 5);
     strncpy(output_filename, file_in, fname_len);
+    strncpy(mustache_part_filename, file_in, fname_len);
     strncpy(archetype_part_filename, file_in, fname_len);
     strncpy(iterate_part_filename, file_in, fname_len);
     strncpy(init_part_filename, file_in, fname_len);
     strncpy(observe_part_filename, file_in, fname_len);
+    strncpy(vdom_filename, file_in, fname_len);
     strncat(output_filename, ".udom_part.html", PATH_MAX);
+    strncat(mustache_part_filename, ".mustache_part.xml", PATH_MAX);
     strncat(archetype_part_filename, ".archetype_part.xml", PATH_MAX);
     strncat(iterate_part_filename, ".iterate_part.xml", PATH_MAX);
     strncat(init_part_filename, ".init_part.xml", PATH_MAX);
     strncat(observe_part_filename, ".observe_part.xml", PATH_MAX);
+    strncat(vdom_filename, ".vdom_part.xml", PATH_MAX);
 
     FILE *in = fopen(file_in, "rb");
     if (! in) {
@@ -96,11 +104,20 @@ int main(int argc, char *argv[])
         return 1;
     }
 
+    FILE *mustache_part_f = fopen(mustache_part_filename, "wb");
+    if (! mustache_part_f) {
+        E("failed to create file: %s", mustache_part_filename);
+        fclose(in);
+        fclose(out);
+        return 1;
+    }
+
     FILE *archetype_part_f = fopen(archetype_part_filename, "wb");
     if (! archetype_part_f) {
         E("failed to create file: %s", archetype_part_filename);
         fclose(in);
         fclose(out);
+        fclose(mustache_part_f);
         return 1;
     }
 
@@ -109,6 +126,7 @@ int main(int argc, char *argv[])
         E("failed to create file: %s", iterate_part_filename);
         fclose(in);
         fclose(out);
+        fclose(mustache_part_f);
         fclose(archetype_part_f);
         return 1;
     }
@@ -118,6 +136,7 @@ int main(int argc, char *argv[])
         E("failed to create file: %s", init_part_filename);
         fclose(in);
         fclose(out);
+        fclose(mustache_part_f);
         fclose(archetype_part_f);
         fclose(iterate_part_f);
         return 1;
@@ -128,26 +147,44 @@ int main(int argc, char *argv[])
         E("failed to create file: %s", observe_part_filename);
         fclose(in);
         fclose(out);
+        fclose(mustache_part_f);
         fclose(archetype_part_f);
         fclose(iterate_part_f);
         fclose(init_part_f);
         return 1;
     }
 
+    FILE *vdom_part_f = fopen(vdom_filename, "wb");
+    if (! vdom_part_f) {
+        E("failed to create file: %s", vdom_filename);
+        fclose(in);
+        fclose(out);
+        fclose(mustache_part_f);
+        fclose(archetype_part_f);
+        fclose(iterate_part_f);
+        fclose(init_part_f);
+        fclose(observe_part_f);
+        return 1;
+    }
+
     I("processing file: %s", file_in);
     int ret = process_hvml(in, 
                            out,
+                           mustache_part_f,
                            archetype_part_f,
                            iterate_part_f,
                            init_part_f,
-                           observe_part_f);
+                           observe_part_f,
+                           vdom_part_f);
 
     fclose(in);
     fclose(out);
+    fclose(mustache_part_f);
     fclose(archetype_part_f);
     fclose(iterate_part_f);
     fclose(init_part_f);
     fclose(observe_part_f);
+    fclose(vdom_part_f);
 
     if (ret) return ret;
     return 0;
@@ -155,18 +192,21 @@ int main(int argc, char *argv[])
 
 static int process_hvml(FILE *in,
                         FILE *output_hvml_f,
+                        FILE *mustache_part_f,
                         FILE *archetype_part_f,
                         FILE *iterate_part_f,
                         FILE *init_part_f,
-                        FILE *observe_part_f)
+                        FILE *observe_part_f,
+                        FILE *vdom_part_f)
 {
     hvml_dom_t *dom = hvml_dom_load_from_stream(in);
     if (dom)
     {
         // This is a test, print as origin file is.
-        //Interpreter_Basic::GetOutput(dom, output_hvml_f);
+        //Interpreter_Basic::GetOutput(dom, vdom_part_f);
 
         hvml_dom_t*      udom_part = NULL;
+        MustacheGroup_t  mustache_part;
         ArchetypeGroup_t archetype_part;
         IterateGroup_t   iterate_part;
         InitGroup_t      init_part;
@@ -175,6 +215,7 @@ static int process_hvml(FILE *in,
         I("................. GetRuntime");
         Interpreter_Runtime::GetRuntime(dom,
                                         &udom_part,
+                                        &mustache_part,
                                         &archetype_part,
                                         &iterate_part,
                                         &init_part,
@@ -182,7 +223,10 @@ static int process_hvml(FILE *in,
 
         I("................. DumpUdomPart");
         Interpreter_Runtime::DumpUdomPart(udom_part,
-                                          output_hvml_f);
+                                         output_hvml_f);
+        I("................. DumpMustachePart");
+        Interpreter_Runtime::DumpMustachePart(&mustache_part,
+                                              mustache_part_f);
         I("................. DumpArchetypePart");
         Interpreter_Runtime::DumpArchetypePart(&archetype_part,
                                                archetype_part_f);
@@ -195,6 +239,10 @@ static int process_hvml(FILE *in,
         I("................. DumpObservePart");
         Interpreter_Runtime::DumpObservePart(&observe_part,
                                              observe_part_f);
+
+        I("................. Dump vdom part");
+        // Test whether the original dom is damaged.
+        Interpreter_Basic::GetOutput(dom, vdom_part_f);
 
         hvml_dom_destroy(dom);
         hvml_dom_destroy(udom_part);

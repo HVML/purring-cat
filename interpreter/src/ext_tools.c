@@ -41,3 +41,18 @@ int strnicmp(const char *s1, const char *s2, size_t len)
 
     return (int)c1 - (int)c2;
 }
+
+const char *find_mustache(const char *s, size_t *ret_len)
+{
+    const char *ret = strstr(s, "{{");
+    if (ret) {
+        const char *end = strstr(ret, "}}");
+        if (end) {
+            if (ret_len) {
+                *ret_len = (end - ret);
+            }
+            return ret;
+        }
+    }
+    return NULL;
+}

@@ -16,6 +16,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "interpreter/interpreter_runtime.h"
+#include "interpreter/ext_tools.h"
 #include <string.h>
 
 #include<algorithm> // for_each
@@ -24,12 +25,14 @@ typedef struct TraverseParam_s {
     hvml_dom_t**      udom_pptr;
     hvml_dom_t*       udom_curr_ptr;
     hvml_dom_t*       vdom_ignore;
+    MustacheGroup_t*  mustache_part;
     ArchetypeGroup_t* archetype_part;
     IterateGroup_t*   iterate_part;
     InitGroup_t*      init_part;
     ObserveGroup_t*   observe_part;
 
     TraverseParam_s(hvml_dom_t**      udom_part_in,
+                    MustacheGroup_t*  mustache_part_in,
                     ArchetypeGroup_t* archetype_part_in,
                     IterateGroup_t*   iterate_part_in,
                     InitGroup_t*      init_part_in,
@@ -37,6 +40,7 @@ typedef struct TraverseParam_s {
     : udom_pptr(udom_part_in)
     , udom_curr_ptr(NULL)
     , vdom_ignore(NULL)
+    , mustache_part(mustache_part_in)
     , archetype_part(archetype_part_in)
     , iterate_part(iterate_part_in)
     , init_part(init_part_in)
@@ -48,6 +52,40 @@ void Interpreter_Runtime::DumpUdomPart(hvml_dom_t* udom,
                                        FILE *udom_part_f)
 {
     hvml_dom_printf(udom, udom_part_f);
+}
+
+void Interpreter_Runtime::DumpMustachePart(MustacheGroup_t* mustache_part,
+                                           FILE *mustache_part_f)
+{
+    for_each(mustache_part->begin(),
+             mustache_part->end(),
+             [&](mustache_t& item)->void{
+
+                 fprintf(mustache_part_f, "{{ ");
+
+                 if (! hvml_string_is_empty(&item.s_inner_str)) {
+                    fprintf(mustache_part_f, "%s", item.s_inner_str.str);
+                 }
+
+                 fprintf(mustache_part_f, " }}\n");
+                 
+                 hvml_dom_t *dom = item.vdom;
+                 switch (hvml_dom_type(dom))
+                 {
+                     case MKDOT(D_ATTR): {
+                        const char *key = hvml_dom_attr_key(dom);
+                        const char *val = hvml_dom_attr_val(dom);
+                        fprintf(mustache_part_f, "%s=\"%s\"\n", key, val);
+                     }
+                     break;
+
+                     case MKDOT(D_TEXT): {
+                         const char *text = hvml_dom_text(dom);
+                         fprintf(mustache_part_f, "%s\n", text);
+                     }
+                     break;
+                 }
+             });
 }
 
 void Interpreter_Runtime::DumpArchetypePart(ArchetypeGroup_t* archetype_part,
@@ -154,12 +192,14 @@ void Interpreter_Runtime::DumpObservePart(ObserveGroup_t* observe_part,
 
 void Interpreter_Runtime::GetRuntime(hvml_dom_t* input_dom, 
                                      hvml_dom_t** udom_part,
+                                     MustacheGroup_t* mustache_part,
                                      ArchetypeGroup_t* archetype_part,
                                      IterateGroup_t* iterate_part,
                                      InitGroup_t* init_part,
                                      ObserveGroup_t* observe_part)
 {
     TraverseParam_t traverse_param(udom_part,
+                                   mustache_part,
                                    archetype_part,
                                    iterate_part,
                                    init_part,
@@ -222,12 +262,12 @@ void Interpreter_Runtime::traverse_for_divide(hvml_dom_t *dom,
                     }
                     else {
                         I("----- A <udom-%s> ---", tag_name);
-                        hvml_dom_t* v = hvml_dom_add_tag(param->udom_curr_ptr,
+                        hvml_dom_t* u = hvml_dom_add_tag(param->udom_curr_ptr,
                                         tag_name, strlen(tag_name));
-                        A(v, "internal logic error");
-                        param->udom_curr_ptr = v;
+                        A(u, "internal logic error");
+                        param->udom_curr_ptr = u;
                         if (0 == strcmp("hvml", tag_name)) {
-                            *(param->udom_pptr) = v;
+                            *(param->udom_pptr) = u;
                         }
                     }
  
@@ -274,9 +314,20 @@ void Interpreter_Runtime::traverse_for_divide(hvml_dom_t *dom,
             const char *key = hvml_dom_attr_key(dom);
             const char *val = hvml_dom_attr_val(dom);
             A(key, "internal logic error");
-            hvml_dom_t* v = hvml_dom_append_attr(param->udom_curr_ptr,
+            hvml_dom_t* u = hvml_dom_append_attr(param->udom_curr_ptr,
                             key, strlen(key), val, val ? strlen(val) : 0);
-            A(v, "internal logic error");
+            A(u, "internal logic error");
+
+            size_t mustache_str_len;
+            const char *mustache_str = find_mustache(val, &mustache_str_len);
+            if (mustache_str) {
+                AddNewMustache(param->mustache_part,
+                               mustache_str + 2, // skip the "{{"
+                               mustache_str_len - 2,
+                               dom,
+                               param->udom_curr_ptr,
+                               u);
+            }
         } break;
 
         case MKDOT(D_TEXT): {
@@ -289,9 +340,20 @@ void Interpreter_Runtime::traverse_for_divide(hvml_dom_t *dom,
 
             const char *text = hvml_dom_text(dom);
             A(text, "internal logic error");
-            hvml_dom_t* v = hvml_dom_append_content(param->udom_curr_ptr,
+            hvml_dom_t* u = hvml_dom_append_content(param->udom_curr_ptr,
                             text, strlen(text));
-            A(v, "internal logic error");
+            A(u, "internal logic error");
+
+            size_t mustache_str_len;
+            const char *mustache_str = find_mustache(text, &mustache_str_len);
+            if (mustache_str) {
+                AddNewMustache(param->mustache_part,
+                               mustache_str + 2, // skip the "{{"
+                               mustache_str_len - 2,
+                               dom,
+                               param->udom_curr_ptr,
+                               u);
+            }
         } break;
 
         case MKDOT(D_JSON): {
@@ -316,13 +378,28 @@ void Interpreter_Runtime::traverse_for_divide(hvml_dom_t *dom,
     }
 }
 
+void Interpreter_Runtime::AddNewMustache(MustacheGroup_t* mustache_part,
+                                         const char* str_inner,
+                                         size_t      str_inner_len,
+                                         hvml_dom_t* vdom,
+                                         hvml_dom_t* udom_owner,
+                                         hvml_dom_t* udom)
+{
+    mustache_t new_mustache(str_inner,
+                            str_inner_len,
+                            vdom,
+                            udom_owner,
+                            udom);
+    mustache_part->push_back(new_mustache);
+}
+
 void Interpreter_Runtime::AddNewArchetype(ArchetypeGroup_t* archetype_part,
-                                          hvml_dom_t* dom,
+                                          hvml_dom_t* vdom,
                                           hvml_dom_t* udom_owner)
 {
     archetype_t new_archetype;
 
-    hvml_dom_t *attr = hvml_dom_attr_head(dom);
+    hvml_dom_t *attr = hvml_dom_attr_head(vdom);
     while (attr) {
         const char *key = hvml_dom_attr_key(attr);
         const char *val = hvml_dom_attr_val(attr);
@@ -331,18 +408,18 @@ void Interpreter_Runtime::AddNewArchetype(ArchetypeGroup_t* archetype_part,
         }
         attr = hvml_dom_attr_next(attr);
     }
-    new_archetype.vdom = hvml_dom_child(dom);
+    new_archetype.vdom = hvml_dom_child(vdom);
     new_archetype.udom_owner = udom_owner;
     archetype_part->push_back(new_archetype);
 }
 
 void Interpreter_Runtime::AddNewIterate(IterateGroup_t* iterate_part,
-                                        hvml_dom_t* dom,
+                                        hvml_dom_t* vdom,
                                         hvml_dom_t* udom_owner)
 {
     iterate_t new_iterate;
 
-    hvml_dom_t *attr = hvml_dom_attr_head(dom);
+    hvml_dom_t *attr = hvml_dom_attr_head(vdom);
     while (attr) {
         const char *key = hvml_dom_attr_key(attr);
         const char *val = hvml_dom_attr_val(attr);
@@ -358,17 +435,17 @@ void Interpreter_Runtime::AddNewIterate(IterateGroup_t* iterate_part,
         }
         attr = hvml_dom_attr_next(attr);
     }
-    new_iterate.vdom = hvml_dom_child(dom);
+    new_iterate.vdom = hvml_dom_child(vdom);
     new_iterate.udom_owner = udom_owner;
     iterate_part->push_back(new_iterate);
 }
 
 void Interpreter_Runtime::AddNewInit(InitGroup_t* init_part,
-                                     hvml_dom_t* dom)
+                                     hvml_dom_t* vdom)
 {
     init_t new_init;
 
-    hvml_dom_t *attr = hvml_dom_attr_head(dom);
+    hvml_dom_t *attr = hvml_dom_attr_head(vdom);
     while (attr) {
         const char *key = hvml_dom_attr_key(attr);
         const char *val = hvml_dom_attr_val(attr);
@@ -383,16 +460,16 @@ void Interpreter_Runtime::AddNewInit(InitGroup_t* init_part,
         }
         attr = hvml_dom_attr_next(attr);
     }
-    new_init.vdom = hvml_dom_child(dom);
+    new_init.vdom = hvml_dom_child(vdom);
     init_part->push_back(new_init);
 }
 
 void Interpreter_Runtime::AddNewObserve(ObserveGroup_t* observe_part,
-                                        hvml_dom_t* dom)
+                                        hvml_dom_t* vdom)
 {
     observe_t new_observe;
 
-    hvml_dom_t *attr = hvml_dom_attr_head(dom);
+    hvml_dom_t *attr = hvml_dom_attr_head(vdom);
     while (attr) {
         const char *key = hvml_dom_attr_key(attr);
         const char *val = hvml_dom_attr_val(attr);
@@ -408,6 +485,6 @@ void Interpreter_Runtime::AddNewObserve(ObserveGroup_t* observe_part,
         attr = hvml_dom_attr_next(attr);
     }
 
-    new_observe.vdom = hvml_dom_child(dom);
+    new_observe.vdom = hvml_dom_child(vdom);
     observe_part->push_back(new_observe);
 }
