@@ -43,7 +43,7 @@ HvmlRuntime::~HvmlRuntime()
 }
 
 
-static char html_filename[] = "index/index.html";
+const char html_filename[] = "index/index.html";
 
 size_t HvmlRuntime::GetIndexResponse(char* response,
                                      size_t response_limit)
@@ -64,4 +64,50 @@ size_t HvmlRuntime::GetIndexResponse(char* response,
     response[ret_len] = '\0';
     fclose(out);
     return ret_len;
+}
+
+void HvmlRuntime::Refresh(void)
+{
+    TransformMustacheGroup();
+    TransformArchetypeGroup();
+    TransformIterateGroup();
+    TransformObserveGroup();
+}
+
+void HvmlRuntime::TransformMustacheGroup()
+{
+    for_each(m_mustache_part.begin(),
+             m_mustache_part.end(),
+             [&](mustache_t& item)->void{
+
+                 hvml_dom_t *dom = item.vdom;
+                 switch (hvml_dom_type(dom))
+                 {
+                     case MKDOT(D_ATTR): {
+                        const char *key = hvml_dom_attr_key(dom);
+                        const char *val = hvml_dom_attr_val(dom);
+                     }
+                     break;
+
+                     case MKDOT(D_TEXT): {
+                         const char *text = hvml_dom_text(dom);
+                     }
+                     break;
+                 }
+             });
+}
+
+void HvmlRuntime::TransformArchetypeGroup()
+{
+    ;
+}
+
+void HvmlRuntime::TransformIterateGroup()
+{
+    ;
+}
+
+void HvmlRuntime::TransformObserveGroup()
+{
+    ;
 }

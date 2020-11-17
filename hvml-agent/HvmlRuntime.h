@@ -29,6 +29,8 @@ public:
     size_t GetIndexResponse(char* response,
                             size_t response_limit);
 
+    void Refresh(void);
+
 private:
     hvml_dom_t *m_vdom; // origin hvml dom
     hvml_dom_t *m_udom; // dom for display
@@ -37,6 +39,12 @@ private:
     IterateGroup_t   m_iterate_part;
     InitGroup_t      m_init_part;
     ObserveGroup_t   m_observe_part;
+
+private:
+    void TransformMustacheGroup();
+    void TransformArchetypeGroup();
+    void TransformIterateGroup();
+    void TransformObserveGroup();
 };
 
 #endif //_hvml_runtime_h_

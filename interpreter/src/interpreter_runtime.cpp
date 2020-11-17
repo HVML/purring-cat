@@ -16,7 +16,6 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "interpreter/interpreter_runtime.h"
-#include "interpreter/ext_tools.h"
 #include <string.h>
 
 #include<algorithm> // for_each
@@ -331,7 +330,7 @@ void Interpreter_Runtime::traverse_for_divide(hvml_dom_t *dom,
             if (mustache_str) {
                 AddNewMustache(param->mustache_part,
                                mustache_str + 2, // skip the "{{"
-                               mustache_str_len - 2,
+                               mustache_str_len - 4,// skip the "}}"
                                dom,
                                param->udom_curr_ptr,
                                u);
@@ -357,7 +356,7 @@ void Interpreter_Runtime::traverse_for_divide(hvml_dom_t *dom,
             if (mustache_str) {
                 AddNewMustache(param->mustache_part,
                                mustache_str + 2, // skip the "{{"
-                               mustache_str_len - 2,
+                               mustache_str_len - 4,// skip the "}}"
                                dom,
                                param->udom_curr_ptr,
                                u);

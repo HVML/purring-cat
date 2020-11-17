@@ -49,10 +49,30 @@ const char *find_mustache(const char *s, size_t *ret_len)
         const char *end = strstr(ret, "}}");
         if (end) {
             if (ret_len) {
-                *ret_len = (end - ret);
+                *ret_len = (end - ret + 2);
             }
             return ret;
         }
     }
     return NULL;
+}
+
+char *str_trim(char *s)
+{
+    char *p = s;
+    while (*p == ' ' || *p == '\t' && *p != '\0') p++;
+    if (*p == '\0') {
+        *s = '\0';
+        return s;
+    }
+    char *q = s;
+    do {
+        *q = *p;
+        q++;
+        p++;
+    } while (*p);
+    q --;
+    while (*q == ' ' || *q == '\t') q--;
+    *(q+1) ='\0';
+    return s;
 }

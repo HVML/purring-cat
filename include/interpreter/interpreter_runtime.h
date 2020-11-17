@@ -27,10 +27,12 @@
 #include "hvml/hvml_log.h"
 #include "hvml/hvml_utf8.h"
 
+#include "ext_tools.h"
 #include "observe_for.h"
 #include "adverb_property.h"
 
-#include <string>
+#include <string.h>
+
 #include <vector>
 using namespace std;
 
@@ -53,6 +55,8 @@ typedef struct mustache_s {
         hvml_string_set(&s_inner_str,
                         str_inner,
                         str_inner_len);
+        str_trim(s_inner_str.str);
+        s_inner_str.len = strlen(s_inner_str.str);
     }
 } mustache_t;
 

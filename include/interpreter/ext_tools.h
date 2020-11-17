@@ -30,6 +30,7 @@ extern "C"
 const char *file_ext(const char *file);
 int strnicmp(const char *s1, const char *s2, size_t len);
 const char *find_mustache(const char *s, size_t *ret_len);
+char *str_trim(char *s);
 
 #ifdef __cplusplus
 }

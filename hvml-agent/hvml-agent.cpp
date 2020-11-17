@@ -47,6 +47,10 @@ int ACE_TMAIN(int argc, char* argv[])
     }
 
     HvmlRuntime runtime(hvml_in_f);
+    if (! runtime.Refresh()) {
+        E("failed to refresh HVML file: %s", file_in);
+        return 1;
+    }
 
     HvmlEcho http_echo(LISTEN_PORT, runtime);
     HttpServer::StartServer(&http_echo);
