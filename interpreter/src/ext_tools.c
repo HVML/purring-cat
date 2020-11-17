@@ -17,14 +17,12 @@
 
 #include "interpreter/ext_tools.h"
 
-const char *file_ext(const char *file)
-{
+const char *file_ext(const char *file) {
     const char *p = strrchr(file, '.');
     return p ? p : "";
 }
 
-int strnicmp(const char *s1, const char *s2, size_t len)
-{
+int strnicmp(const char *s1, const char *s2, size_t len) {
     unsigned char c1, c2;
     c1 = c2 = 0;
     if (len) {
@@ -42,8 +40,7 @@ int strnicmp(const char *s1, const char *s2, size_t len)
     return (int)c1 - (int)c2;
 }
 
-const char *find_mustache(const char *s, size_t *ret_len)
-{
+const char *find_mustache(const char *s, size_t *ret_len) {
     const char *ret = strstr(s, "{{");
     if (ret) {
         const char *end = strstr(ret, "}}");
@@ -57,8 +54,25 @@ const char *find_mustache(const char *s, size_t *ret_len)
     return NULL;
 }
 
-char *str_trim(char *s)
-{
+const char *get_mustache_inner(const char *s, size_t *ret_len) {
+    const char *ret = strstr(s, "{{");
+    if (ret) {
+        ret += 2;
+        while (*ret == ' ' || *ret == '\t' && *ret != '\0') ret++;
+        if (*ret == '\0') return NULL;
+        const char *end = strstr(ret, "}}");
+        if (end) {
+            while (*end == ' ' || *end == '\t') end--;
+            if (ret_len) {
+                *ret_len = (end - ret + 1);
+            }
+            return ret;
+        }
+    }
+    return NULL;
+}
+
+char *str_trim(char *s) {
     char *p = s;
     while (*p == ' ' || *p == '\t' && *p != '\0') p++;
     if (*p == '\0') {
@@ -75,4 +89,31 @@ char *str_trim(char *s)
     while (*q == ' ' || *q == '\t') q--;
     *(q+1) ='\0';
     return s;
+}
+
+hvml_string_t replace_string(hvml_string_t replaced_s,
+                             hvml_string_t after_replaced_s,
+                             const char* orig_str)
+{
+    hvml_string_t ret_s = {NULL, 0};
+    size_t orign_len = strlen(orig_str);
+    size_t new_length = orign_len
+                        + after_replaced_s.len
+                        - replaced_s.len;
+    if (new_length <= 0) return ret_s;
+
+    hvml_string_set(&ret_s, orig_str, new_length);
+    char* p = strstr(ret_s.str, replaced_s.str);
+    if (! p) return ret_s;
+
+    const char* q = orig_str 
+                    + (p - ret_s.str)
+                    + replaced_s.len;
+    memcpy ((void*)p, after_replaced_s.str, after_replaced_s.len);
+    p += after_replaced_s.len;
+    size_t tail_length = new_length - (p - ret_s.str);
+    if (tail_length > 0) {
+        memcpy (p, q, tail_length);
+    }
+    return ret_s;
 }

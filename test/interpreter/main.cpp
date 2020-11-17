@@ -21,6 +21,7 @@
 #include "hvml/hvml_json_parser.h"
 #include "hvml/hvml_log.h"
 #include "hvml/hvml_utf8.h"
+#include "hvml/hvml_string.h"
 
 #include "interpreter/ext_tools.h"
 #include "interpreter/interpreter_basic.h"
@@ -185,6 +186,28 @@ int main(int argc, char *argv[])
     fclose(init_part_f);
     fclose(observe_part_f);
     fclose(vdom_part_f);
+
+    I("----------------- Test replace_string");
+    const char* replaced_str = "Tom";
+    const char* after_replaced_str = "my old friend";
+    const char* orig_str = "Hello Tom, you looks so good !";
+    hvml_string_t replaced_s = {NULL, 0};
+    hvml_string_t after_replaced_s = {NULL, 0};
+    hvml_string_set (&replaced_s, replaced_str, strlen(replaced_str));
+    hvml_string_set (&after_replaced_s, after_replaced_str, strlen(after_replaced_str));
+    hvml_string_t replace_ret = replace_string(replaced_s,
+                                       after_replaced_s,
+                                       orig_str);
+    I("replaced_s: %s\n", replaced_s);
+    I("after_replaced_s: %s\n", after_replaced_s);
+    I("orig_str: %s\n", orig_str);
+    I("result: %s\n", replace_ret.str);
+    hvml_string_clear(&replaced_s);
+    hvml_string_clear(&after_replaced_s);
+    hvml_string_clear(&replace_ret);
+    I("----------------- Test replace_string end.");
+
+
 
     if (ret) return ret;
     return 0;

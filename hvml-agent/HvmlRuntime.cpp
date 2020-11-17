@@ -15,7 +15,12 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+#include "hvml/hvml_string.h"
 #include "HvmlRuntime.h"
+
+#include <iostream>
+#include <exception>
+#include <algorithm> // for_each
 
 HvmlRuntime::HvmlRuntime(FILE *hvml_in_f)
 : m_vdom(NULL)
@@ -66,12 +71,19 @@ size_t HvmlRuntime::GetIndexResponse(char* response,
     return ret_len;
 }
 
-void HvmlRuntime::Refresh(void)
+bool HvmlRuntime::Refresh(void)
 {
-    TransformMustacheGroup();
-    TransformArchetypeGroup();
-    TransformIterateGroup();
-    TransformObserveGroup();
+    try {
+        TransformMustacheGroup();
+        TransformArchetypeGroup();
+        TransformIterateGroup();
+        TransformObserveGroup();
+    }
+    catch (std::exception& e) { 
+        std::cout << e.what() << '\n';
+        return false;
+    }
+    return true;
 }
 
 void HvmlRuntime::TransformMustacheGroup()
@@ -80,20 +92,29 @@ void HvmlRuntime::TransformMustacheGroup()
              m_mustache_part.end(),
              [&](mustache_t& item)->void{
 
-                 hvml_dom_t *dom = item.vdom;
-                 switch (hvml_dom_type(dom))
+                 hvml_string_t s = TransformMustacheString(item.s_inner_str);
+                 hvml_string_t s_replaced = {NULL, 0};
+
+                 hvml_dom_t *udom = item.udom;
+                 switch (hvml_dom_type(udom))
                  {
                      case MKDOT(D_ATTR): {
-                        const char *key = hvml_dom_attr_key(dom);
-                        const char *val = hvml_dom_attr_val(dom);
+                        const char *val = hvml_dom_attr_val(udom);
+                        s_replaced = replace_string(item.s_full_str, s, val);
+                        hvml_dom_attr_set_val(udom, s_replaced.str, s_replaced.len);
                      }
                      break;
 
                      case MKDOT(D_TEXT): {
-                         const char *text = hvml_dom_text(dom);
+                         const char *text = hvml_dom_text(udom);
+                         s_replaced = replace_string(item.s_full_str, s, text);
+                         hvml_dom_set_text(udom, s_replaced.str, s_replaced.len);
                      }
                      break;
                  }
+
+                 hvml_string_clear(&s);
+                 hvml_string_clear(&s_replaced);
              });
 }
 
@@ -110,4 +131,10 @@ void HvmlRuntime::TransformIterateGroup()
 void HvmlRuntime::TransformObserveGroup()
 {
     ;
+}
+
+hvml_string_t HvmlRuntime::TransformMustacheString(hvml_string_t& mustache_s)
+{
+    hvml_string_t ret_s;
+    return ret_s;
 }

@@ -29,7 +29,7 @@ public:
     size_t GetIndexResponse(char* response,
                             size_t response_limit);
 
-    void Refresh(void);
+    bool Refresh(void);
 
 private:
     hvml_dom_t *m_vdom; // origin hvml dom
@@ -45,6 +45,7 @@ private:
     void TransformArchetypeGroup();
     void TransformIterateGroup();
     void TransformObserveGroup();
+    hvml_string_t TransformMustacheString(hvml_string_t& mustache_s);
 };
 
 #endif //_hvml_runtime_h_

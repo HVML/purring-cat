@@ -17,8 +17,7 @@
 
 #include "interpreter/interpreter_runtime.h"
 #include <string.h>
-
-#include<algorithm> // for_each
+#include <algorithm> // for_each
 
 typedef struct TraverseParam_s {
     hvml_dom_t**      udom_pptr;
@@ -326,11 +325,11 @@ void Interpreter_Runtime::traverse_for_divide(hvml_dom_t *dom,
             A(u, "internal logic error");
 
             size_t mustache_str_len;
-            const char *mustache_str = find_mustache(val, &mustache_str_len);
-            if (mustache_str) {
+            const char *mustache_inner_str = find_mustache(val, &mustache_str_len);
+            if (mustache_inner_str) {
                 AddNewMustache(param->mustache_part,
-                               mustache_str + 2, // skip the "{{"
-                               mustache_str_len - 4,// skip the "}}"
+                               mustache_inner_str,
+                               mustache_str_len,
                                dom,
                                param->udom_curr_ptr,
                                u);
@@ -352,11 +351,11 @@ void Interpreter_Runtime::traverse_for_divide(hvml_dom_t *dom,
             A(u, "internal logic error");
 
             size_t mustache_str_len;
-            const char *mustache_str = find_mustache(text, &mustache_str_len);
-            if (mustache_str) {
+            const char *mustache_inner_str = find_mustache(text, &mustache_str_len);
+            if (mustache_inner_str) {
                 AddNewMustache(param->mustache_part,
-                               mustache_str + 2, // skip the "{{"
-                               mustache_str_len - 4,// skip the "}}"
+                               mustache_inner_str,
+                               mustache_str_len ,
                                dom,
                                param->udom_curr_ptr,
                                u);

@@ -38,23 +38,28 @@ using namespace std;
 
 typedef struct mustache_s {
     hvml_string_t s_inner_str;
+    hvml_string_t s_full_str;
     hvml_dom_t* vdom;
     hvml_dom_t* udom_owner;
     hvml_dom_t* udom;
 
-    mustache_s(const char* str_inner,
-               size_t      str_inner_len,
+    mustache_s(const char* str_mustache,
+               size_t      str_len,
                hvml_dom_t* vdom_in,
                hvml_dom_t* udom_owner_in,
                hvml_dom_t* udom_in)
     : s_inner_str({NULL, 0})
+    , s_full_str({NULL, 0})
     , vdom(vdom_in)
     , udom_owner(udom_owner_in)
     , udom(udom_in)
     {
+        hvml_string_set(&s_full_str,
+                        str_mustache,
+                        str_len);
         hvml_string_set(&s_inner_str,
-                        str_inner,
-                        str_inner_len);
+                        str_mustache + 2,
+                        str_len - 4);
         str_trim(s_inner_str.str);
         s_inner_str.len = strlen(s_inner_str.str);
     }
