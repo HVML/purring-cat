@@ -51,6 +51,7 @@ typedef struct TraverseParam_s {
 void Interpreter_Runtime::DumpUdomPart(hvml_dom_t* udom,
                                        FILE *udom_part_f)
 {
+    fprintf(udom_part_f, "<!DOCTYPE html>\n");
     hvml_dom_printf(udom, udom_part_f);
 }
 
@@ -262,12 +263,19 @@ void Interpreter_Runtime::traverse_for_divide(hvml_dom_t *dom,
                     }
                     else {
                         I("----- A <udom-%s> ---", tag_name);
-                        hvml_dom_t* u = hvml_dom_add_tag(param->udom_curr_ptr,
-                                        tag_name, strlen(tag_name));
-                        A(u, "internal logic error");
-                        param->udom_curr_ptr = u;
                         if (0 == strcmp("hvml", tag_name)) {
+                            tag_name = "html";
+                            hvml_dom_t* u = hvml_dom_add_tag(param->udom_curr_ptr,
+                                            tag_name, strlen(tag_name));
+                            A(u, "internal logic error");
+                            param->udom_curr_ptr = u;
                             *(param->udom_pptr) = u;
+                        }
+                        else {
+                            hvml_dom_t* u = hvml_dom_add_tag(param->udom_curr_ptr,
+                                        tag_name, strlen(tag_name));
+                            A(u, "internal logic error");
+                            param->udom_curr_ptr = u;
                         }
                     }
  

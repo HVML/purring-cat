@@ -18,6 +18,7 @@
 #ifndef _hvml_runtime_h_
 #define _hvml_runtime_h_
 
+#include "interpreter/interpreter_basic.h"
 #include "interpreter/interpreter_runtime.h"
 
 class HvmlRuntime : public Interpreter_Runtime
@@ -25,10 +26,13 @@ class HvmlRuntime : public Interpreter_Runtime
 public:
     HvmlRuntime(FILE *hvml_in_f);
     ~HvmlRuntime();
+    size_t GetIndexResponse(char* response,
+                            size_t response_limit);
 
 private:
     hvml_dom_t *m_vdom; // origin hvml dom
     hvml_dom_t *m_udom; // dom for display
+    MustacheGroup_t  m_mustache_part;
     ArchetypeGroup_t m_archetype_part;
     IterateGroup_t   m_iterate_part;
     InitGroup_t      m_init_part;

@@ -24,12 +24,13 @@
 class HvmlEcho : public IHttpResponse
 {
 public:
-    HvmlEcho(int listen_port);
+    HvmlEcho(int listen_port, HvmlRuntime& runtime);
     char* GetHttpResponse (int* info_len,
                            const char* request);
 
 private:
     char info_message_[INFO_MESSAGE_LEN];
+    HvmlRuntime& runtime_;
 };
 
 #endif //_hvml_echo_h_

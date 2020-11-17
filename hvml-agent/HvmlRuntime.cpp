@@ -24,6 +24,7 @@ HvmlRuntime::HvmlRuntime(FILE *hvml_in_f)
     m_vdom = hvml_dom_load_from_stream(hvml_in_f);
     GetRuntime(m_vdom,
                &m_udom,
+               &m_mustache_part,
                &m_archetype_part,
                &m_iterate_part,
                &m_init_part,
@@ -34,8 +35,33 @@ HvmlRuntime::~HvmlRuntime()
 {
     if (m_vdom) hvml_dom_destroy(m_vdom);
     if (m_udom) hvml_dom_destroy(m_udom);
+    m_mustache_part.clear();
     m_archetype_part.clear();
     m_iterate_part.clear();
     m_init_part.clear();
     m_observe_part.clear();
+}
+
+
+static char html_filename[] = "index/index.html";
+
+size_t HvmlRuntime::GetIndexResponse(char* response,
+                                     size_t response_limit)
+{
+    if (! m_udom) return 0;
+
+    FILE *out = fopen(html_filename, "wb+");
+    if (! out) {
+        E("failed to create output file: %s", html_filename);
+        
+        return 0;
+    }
+
+    DumpUdomPart(m_udom, out);
+
+    fseek(out, 0, SEEK_SET);
+    size_t ret_len = fread(response, 1, response_limit, out);
+    response[ret_len] = '\0';
+    fclose(out);
+    return ret_len;
 }
