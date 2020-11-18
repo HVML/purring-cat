@@ -15,35 +15,24 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-#ifndef _ext_tools_h_
-#define _ext_tools_h_
+#ifndef _str_tools_h_
+#define _str_tools_h_
 
 #include "hvml/hvml_string.h"
 #include <string.h>
 #include <stddef.h>
 #include <ctype.h>
 
-#ifndef __cplusplus
-#define max(a,b)    (((a) > (b)) ? (a) : (b))
-#define min(a,b)    (((a) < (b)) ? (a) : (b))
-#endif //__cplusplus
+#include <vector>
+using namespace std;
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
+typedef vector<hvml_string_t>  StringArray_t;
 
-const char *file_ext(const char *file);
-int strnicmp(const char *s1, const char *s2, size_t len);
-const char *find_mustache(const char *s, size_t *ret_len);
-const char *get_mustache_inner(const char *s, size_t *ret_len);
-char *str_trim(char *s);
-hvml_string_t replace_string(hvml_string_t replaced_s,
-                             hvml_string_t after_replaced_s,
-                             const char* orig_str);
+hvml_string_t create_string(const char* str, size_t len);
+hvml_string_t create_trim_string(const char* str, size_t len);
+void clear_StringArray(StringArray_t& sa);
+size_t split_string(StringArray_t& sa,
+                    hvml_string_t src_s,
+                    hvml_string_t delimiter_s);
 
-#ifdef __cplusplus
-}
-#endif
-
-#endif //_ext_tools_h_
+#endif //_str_tools_h_

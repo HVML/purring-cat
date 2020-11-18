@@ -102,7 +102,7 @@ hvml_string_t replace_string(hvml_string_t replaced_s,
                         - replaced_s.len;
     if (new_length <= 0) return ret_s;
 
-    hvml_string_set(&ret_s, orig_str, new_length);
+    hvml_string_set(&ret_s, orig_str, max (new_length, orign_len));
     char* p = strstr(ret_s.str, replaced_s.str);
     if (! p) return ret_s;
 
@@ -115,5 +115,7 @@ hvml_string_t replace_string(hvml_string_t replaced_s,
     if (tail_length > 0) {
         memcpy (p, q, tail_length);
     }
+    ret_s.str[new_length] = '\0';
+    ret_s.len = new_length;
     return ret_s;
 }

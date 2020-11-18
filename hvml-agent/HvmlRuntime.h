@@ -21,6 +21,11 @@
 #include "interpreter/interpreter_basic.h"
 #include "interpreter/interpreter_runtime.h"
 
+typedef enum {
+    enDollarNormal,
+    enDollarIterate
+} DOLLAR_STRING_TYPE;
+
 class HvmlRuntime : public Interpreter_Runtime
 {
 public:
@@ -45,7 +50,17 @@ private:
     void TransformArchetypeGroup();
     void TransformIterateGroup();
     void TransformObserveGroup();
-    hvml_string_t TransformMustacheString(hvml_string_t& mustache_s);
+    hvml_dom_t* FindInitData(const char* as_s);
+    bool GetDollarString(hvml_string_t& dollar_s,
+                         hvml_string_t* output_s,
+                         DOLLAR_STRING_TYPE type = enDollarNormal,
+                         const char* init_as_s = NULL,
+                         int dollar_index = 0);
+    bool SetDollarString(hvml_string_t& dollar_s,
+                         hvml_string_t* input_s,
+                         DOLLAR_STRING_TYPE type = enDollarNormal,
+                         const char* init_as_s = NULL,
+                         int dollar_index = 0);
 };
 
 #endif //_hvml_runtime_h_

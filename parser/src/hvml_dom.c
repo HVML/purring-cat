@@ -330,7 +330,7 @@ void hvml_dom_attr_set_key(hvml_dom_t *dom, const char *key, size_t key_len) {
 
 void hvml_dom_attr_set_val(hvml_dom_t *dom, const char *val, size_t val_len) {
     A((dom->dt == MKDOT(D_ATTR)), "internal logic error");
-    hvml_string_set(&dom->attr.key, val, val_len);
+    hvml_string_set(&dom->attr.val, val, val_len);
 }
 
 void hvml_dom_set_text(hvml_dom_t *dom, const char *txt, size_t txt_len) {
