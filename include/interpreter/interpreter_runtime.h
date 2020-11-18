@@ -27,12 +27,43 @@
 #include "hvml/hvml_log.h"
 #include "hvml/hvml_utf8.h"
 
+#include "ext_tools.h"
 #include "observe_for.h"
 #include "adverb_property.h"
 
-#include <string>
+#include <string.h>
+
 #include <vector>
 using namespace std;
+
+typedef struct mustache_s {
+    hvml_string_t s_inner_str;
+    hvml_string_t s_full_str;
+    hvml_dom_t* vdom;
+    hvml_dom_t* udom_owner;
+    hvml_dom_t* udom;
+
+    mustache_s(const char* str_mustache,
+               size_t      str_len,
+               hvml_dom_t* vdom_in,
+               hvml_dom_t* udom_owner_in,
+               hvml_dom_t* udom_in)
+    : s_inner_str({NULL, 0})
+    , s_full_str({NULL, 0})
+    , vdom(vdom_in)
+    , udom_owner(udom_owner_in)
+    , udom(udom_in)
+    {
+        hvml_string_set(&s_full_str,
+                        str_mustache,
+                        str_len);
+        hvml_string_set(&s_inner_str,
+                        str_mustache + 2,
+                        str_len - 4);
+        str_trim(s_inner_str.str);
+        s_inner_str.len = strlen(s_inner_str.str);
+    }
+} mustache_t;
 
 typedef struct archetype_s {
     hvml_string_t s_id;
@@ -94,6 +125,7 @@ typedef struct observe_s {
     {}
 } observe_t;
 
+typedef vector<mustache_t>  MustacheGroup_t;
 typedef vector<archetype_t> ArchetypeGroup_t;
 typedef vector<iterate_t>   IterateGroup_t;
 typedef vector<init_t>      InitGroup_t;
@@ -105,6 +137,9 @@ class Interpreter_Runtime
 public:
     static void DumpUdomPart(hvml_dom_t* udom,
                              FILE *udom_part_f);
+
+    static void DumpMustachePart(MustacheGroup_t* mustache_part,
+                                 FILE *mustache_part_f);
 
     static void DumpArchetypePart(ArchetypeGroup_t* archetype_part,
                                   FILE *archetype_part_f);
@@ -118,8 +153,9 @@ public:
     static void DumpObservePart(ObserveGroup_t* observe_part,
                                 FILE *observe_part_f);
 
-    static void GetRuntime(hvml_dom_t* input_dom,
+    static void GetRuntime(hvml_dom_t*  input_dom,
                            hvml_dom_t** udom_part,
+                           MustacheGroup_t* mustache_part,
                            ArchetypeGroup_t* archetype_part,
                            IterateGroup_t* iterate_part,
                            InitGroup_t* init_part,
@@ -132,12 +168,19 @@ private:
                                     void *arg,
                                     int *breakout);
 
+    static void AddNewMustache(MustacheGroup_t* mustache_part,
+                               const char* str_inner,
+                               size_t      str_inner_len,
+                               hvml_dom_t* vdom,
+                               hvml_dom_t* udom_owner,
+                               hvml_dom_t* udom);
+
     static void AddNewArchetype(ArchetypeGroup_t* archetype_part,
-                                hvml_dom_t* dom,
+                                hvml_dom_t* vdom,
                                 hvml_dom_t* udom_owner);
 
     static void AddNewIterate(IterateGroup_t* iterate_part,
-                              hvml_dom_t* dom,
+                              hvml_dom_t* vdom,
                               hvml_dom_t* udom_owner);
 
     static void AddNewInit(InitGroup_t* init_part,

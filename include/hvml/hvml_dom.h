@@ -65,7 +65,9 @@ hvml_dom_t* hvml_dom_select(hvml_dom_t *dom, const char *selector);
 
 void        hvml_dom_str_serialize(const char *str, size_t len, FILE *out);
 void        hvml_dom_attr_val_serialize(const char *str, size_t len, FILE *out);
-
+void        hvml_dom_attr_set_key(hvml_dom_t *dom, const char *key, size_t key_len);
+void        hvml_dom_attr_set_val(hvml_dom_t *dom, const char *val, size_t val_len);
+void        hvml_dom_set_text(hvml_dom_t *dom, const char *txt, size_t txt_len);
 
 HVML_DOM_TYPE hvml_dom_type(hvml_dom_t *dom);
 const char*   hvml_dom_tag_name(hvml_dom_t *dom);      // tag's name

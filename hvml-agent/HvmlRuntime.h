@@ -18,21 +18,49 @@
 #ifndef _hvml_runtime_h_
 #define _hvml_runtime_h_
 
+#include "interpreter/interpreter_basic.h"
 #include "interpreter/interpreter_runtime.h"
+
+typedef enum {
+    enDollarNormal,
+    enDollarIterate
+} DOLLAR_STRING_TYPE;
 
 class HvmlRuntime : public Interpreter_Runtime
 {
 public:
     HvmlRuntime(FILE *hvml_in_f);
     ~HvmlRuntime();
+    size_t GetIndexResponse(char* response,
+                            size_t response_limit);
+
+    bool Refresh(void);
 
 private:
     hvml_dom_t *m_vdom; // origin hvml dom
     hvml_dom_t *m_udom; // dom for display
+    MustacheGroup_t  m_mustache_part;
     ArchetypeGroup_t m_archetype_part;
     IterateGroup_t   m_iterate_part;
     InitGroup_t      m_init_part;
     ObserveGroup_t   m_observe_part;
+
+private:
+    void TransformMustacheGroup();
+    void TransformArchetypeGroup();
+    void TransformIterateGroup();
+    void TransformObserveGroup();
+    hvml_dom_t* FindInitData(const char* as_s);
+    bool GetDollarString(hvml_string_t& dollar_s,
+                         hvml_string_t* output_s,
+                         DOLLAR_STRING_TYPE type = enDollarNormal,
+                         const char* init_as_s = NULL,
+                         int dollar_index = 0);
+    bool SetDollarString(hvml_string_t& dollar_s,
+                         hvml_string_t* input_s,
+                         DOLLAR_STRING_TYPE type = enDollarNormal,
+                         const char* init_as_s = NULL,
+                         int dollar_index = 0);
 };
 
 #endif //_hvml_runtime_h_

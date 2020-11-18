@@ -4,5 +4,4 @@ NOTICE: Install the ACE first, reference to the file:
 
 $ ./gen-make.sh
 $ make -f Makefile.hvml_agent
-$ ./copy-so.sh
 $ ./run-test.sh

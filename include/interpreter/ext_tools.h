@@ -18,9 +18,15 @@
 #ifndef _ext_tools_h_
 #define _ext_tools_h_
 
+#include "hvml/hvml_string.h"
 #include <string.h>
 #include <stddef.h>
 #include <ctype.h>
+
+#ifndef __cplusplus
+#define max(a,b)    (((a) > (b)) ? (a) : (b))
+#define min(a,b)    (((a) < (b)) ? (a) : (b))
+#endif //__cplusplus
 
 #ifdef __cplusplus
 extern "C"
@@ -28,7 +34,13 @@ extern "C"
 #endif
 
 const char *file_ext(const char *file);
-int strnicmp(const char *, const char *, size_t);
+int strnicmp(const char *s1, const char *s2, size_t len);
+const char *find_mustache(const char *s, size_t *ret_len);
+const char *get_mustache_inner(const char *s, size_t *ret_len);
+char *str_trim(char *s);
+hvml_string_t replace_string(hvml_string_t replaced_s,
+                             hvml_string_t after_replaced_s,
+                             const char* orig_str);
 
 #ifdef __cplusplus
 }

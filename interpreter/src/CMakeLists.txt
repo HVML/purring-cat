@@ -4,6 +4,7 @@ set(hvml_interpreter_src
     observe_for.c
     adverb_property.c
     ext_tools.c
+    str_tools.cpp
 )
 
 # static

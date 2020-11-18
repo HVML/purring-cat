@@ -15,22 +15,24 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-#ifndef _hvml_echo_h_
-#define _hvml_echo_h_
+#ifndef _str_tools_h_
+#define _str_tools_h_
 
-#include "HttpServer.h"
+#include "hvml/hvml_string.h"
+#include <string.h>
+#include <stddef.h>
+#include <ctype.h>
 
-#define INFO_MESSAGE_LEN    4096
-class HvmlEcho : public IHttpResponse
-{
-public:
-    HvmlEcho(int listen_port, HvmlRuntime& runtime);
-    char* GetHttpResponse (int* info_len,
-                           const char* request);
+#include <vector>
+using namespace std;
 
-private:
-    char info_message_[INFO_MESSAGE_LEN];
-    HvmlRuntime& runtime_;
-};
+typedef vector<hvml_string_t>  StringArray_t;
 
-#endif //_hvml_echo_h_
+hvml_string_t create_string(const char* str, size_t len);
+hvml_string_t create_trim_string(const char* str, size_t len);
+void clear_StringArray(StringArray_t& sa);
+size_t split_string(StringArray_t& sa,
+                    hvml_string_t src_s,
+                    hvml_string_t delimiter_s);
+
+#endif //_str_tools_h_
