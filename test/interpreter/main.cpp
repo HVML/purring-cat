@@ -198,8 +198,8 @@ int main(int argc, char *argv[])
     hvml_string_t replace_ret = replace_string(replaced_s,
                                        after_replaced_s,
                                        orig_str);
-    I("replaced_s: %s\n", replaced_s);
-    I("after_replaced_s: %s\n", after_replaced_s);
+    I("replaced_s: %s\n", replaced_s.str);
+    I("after_replaced_s: %s\n", after_replaced_s.str);
     I("orig_str: %s\n", orig_str);
     I("result: %s\n", replace_ret.str);
     hvml_string_clear(&replaced_s);
