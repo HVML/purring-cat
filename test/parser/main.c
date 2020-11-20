@@ -92,9 +92,11 @@ static int process_hvml(FILE *in) {
     do {
         if (!dom) break;
 
+        A(hvml_dom_type(dom)==MKDOT(D_ROOT), "internal logic error");
         if (with_clone) {
             hvml_dom_t *v = hvml_dom_clone(dom);
             if (!v) break;
+            A(hvml_dom_type(v)==hvml_dom_type(dom), "internal logic error");
             hvml_dom_destroy(dom);
             dom = v;
         }

@@ -31,6 +31,7 @@ extern "C" {
 #define MKDOS(type) "HVML_DOM_"#type
 
 typedef enum {
+    MKDOT(D_ROOT),
     MKDOT(D_TAG),
     MKDOT(D_ATTR),
     MKDOT(D_TEXT),
@@ -45,12 +46,15 @@ typedef struct hvml_dom_gen_s      hvml_dom_gen_t;
 hvml_dom_t* hvml_dom_create();
 void        hvml_dom_destroy(hvml_dom_t *dom);
 
+hvml_dom_t* hvml_dom_make_root(hvml_dom_t *dom);
+
 hvml_dom_t* hvml_dom_append_attr(hvml_dom_t *dom, const char *key, size_t key_len, const char *val, size_t val_len);
 hvml_dom_t* hvml_dom_set_val(hvml_dom_t *dom, const char *val, size_t val_len);
 hvml_dom_t* hvml_dom_append_content(hvml_dom_t *dom, const char *txt, size_t len);
 hvml_dom_t* hvml_dom_add_tag(hvml_dom_t *dom, const char *tag, size_t len);
 hvml_dom_t* hvml_dom_append_json(hvml_dom_t *dom, hvml_jo_value_t *jo);
 
+hvml_dom_t* hvml_dom_root(hvml_dom_t *dom);
 hvml_dom_t* hvml_dom_doc(hvml_dom_t *dom);
 hvml_dom_t* hvml_dom_parent(hvml_dom_t *dom);
 hvml_dom_t* hvml_dom_next(hvml_dom_t *dom);

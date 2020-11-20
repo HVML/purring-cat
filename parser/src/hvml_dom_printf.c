@@ -24,6 +24,7 @@
 
 typedef struct dom_printf_s        dom_printf_t;
 struct dom_printf_s {
+    unsigned int    rooted:1;
     int             lvl;
     FILE           *out;
 };
@@ -32,6 +33,7 @@ static void traverse_for_printf(hvml_dom_t *dom, int lvl, int tag_open_close, vo
 
 void hvml_dom_printf(hvml_dom_t *dom, FILE *out) {
     dom_printf_t parg;
+    parg.rooted = 0;
     parg.lvl = -1;
     parg.out = out;
     hvml_dom_traverse(dom, &parg, traverse_for_printf);
@@ -44,6 +46,11 @@ static void traverse_for_printf(hvml_dom_t *dom, int lvl, int tag_open_close, vo
     *breakout = 0;
 
     switch (hvml_dom_type(dom)) {
+        case MKDOT(D_ROOT):
+        {
+            A(parg->rooted==0, "internal logic error");
+            parg->rooted = 1;
+        } break;
         case MKDOT(D_TAG):
         {
             switch (tag_open_close) {
@@ -67,7 +74,7 @@ static void traverse_for_printf(hvml_dom_t *dom, int lvl, int tag_open_close, vo
         } break;
         case MKDOT(D_ATTR):
         {
-            A(parg->lvl >= 0, "internal logic error");
+            A(parg->lvl >= parg->rooted ? 1 : 0, "internal logic error");
             const char *key = hvml_dom_attr_key(dom);
             const char *val = hvml_dom_attr_val(dom);
             fprintf(parg->out, " ");
