@@ -88,7 +88,7 @@ struct hvml_dom_s {
 
 struct hvml_dom_gen_s {
     hvml_dom_t          *dom;
-    hvml_dom_t          *root;
+    hvml_dom_t          *doc;
     hvml_parser_t       *parser;
     hvml_jo_value_t     *jo;
 };
@@ -234,7 +234,7 @@ hvml_dom_t* hvml_dom_append_json(hvml_dom_t *dom, hvml_jo_value_t *jo) {
     return v;
 }
 
-hvml_dom_t* hvml_dom_root(hvml_dom_t *dom) {
+hvml_dom_t* hvml_dom_doc(hvml_dom_t *dom) {
     while (dom) {
         hvml_dom_t *parent = NULL;
         switch (hvml_dom_type(dom)) {
@@ -485,9 +485,9 @@ hvml_dom_t* hvml_dom_clone(hvml_dom_t *dom) {
         return NULL;
     }
     if (!arg.dom) return NULL;
-    hvml_dom_t *root = hvml_dom_root(arg.dom);
-    A(root, "internal logic error");
-    return root;
+    hvml_dom_t *doc = hvml_dom_doc(arg.dom);
+    A(doc, "internal logic error");
+    return doc;
 }
 
 static int on_open_tag(void *arg, const char *tag);
@@ -550,8 +550,8 @@ hvml_dom_gen_t* hvml_dom_gen_create() {
 
 void hvml_dom_gen_destroy(hvml_dom_gen_t *gen) {
     if (gen->dom) {
-        hvml_dom_t *root = hvml_dom_root(gen->dom);
-        hvml_dom_destroy(root);
+        hvml_dom_t *doc = hvml_dom_doc(gen->dom);
+        hvml_dom_destroy(doc);
         gen->dom = NULL;
     }
 
@@ -684,13 +684,13 @@ static int on_close_tag(void *arg) {
         A(gen->dom->dt == MKDOT(D_TAG), "internal logic error");
         return 0;
     }
-    gen->root = gen->dom;
+    gen->doc = gen->dom;
     return 0;
 }
 
 static int on_text(void *arg, const char *txt) {
     hvml_dom_gen_t *gen = (hvml_dom_gen_t*)arg;
-    A(gen->root == NULL, "internal logic error");
+    A(gen->doc == NULL, "internal logic error");
     hvml_dom_t *v       = hvml_dom_create();
     if (!v) return -1;
     v->dt      = MKDOT(D_TEXT);
