@@ -27,3 +27,11 @@ foreach(utf8 ${utf8s})
     add_test(NAME ${utf8}, COMMAND sh -c "${PROJECT_BINARY_DIR}${relative}/hp ${utf8} | diff - ${utf8}.output")
 endforeach()
 
+file(GLOB xpaths "test/*.xpath")
+foreach(xpath ${xpaths})
+    add_test(NAME ${xpath}, COMMAND sh -c "${PROJECT_BINARY_DIR}${relative}/hp ${xpath}")
+    if ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+        add_test(NAME ${xpath}_v, COMMAND sh -c "valgrind --leak-check=full --show-leak-kinds=all -s ${PROJECT_BINARY_DIR}${relative}/hp ${xpath}")
+    endif ()
+endforeach()
+

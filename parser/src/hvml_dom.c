@@ -17,6 +17,8 @@
 
 #include "hvml/hvml_dom.h"
 
+#include "hvml_dom_xpath_parser.h"
+
 #include "hvml/hvml_jo.h"
 #include "hvml/hvml_json_parser.h"
 #include "hvml/hvml_list.h"
@@ -54,6 +56,15 @@
 #define DOM_ATTR_IS_EMPTY(v)      HLIST_IS_EMPTY(hvml_dom_t, hvml_dom_t, _attr_, v)
 #define DOM_ATTR_APPEND(ov,v)     HLIST_APPEND(hvml_dom_t, hvml_dom_t, _attr_, ov, v)
 #define DOM_ATTR_REMOVE(v)        HLIST_REMOVE(hvml_dom_t, hvml_dom_t, _attr_, v)
+
+typedef enum {
+    HVML_DOM_XPATH_EVAL_UNKNOWN,
+    HVML_DOM_XPATH_EVAL_BOOL,
+    HVML_DOM_XPATH_EVAL_INTEGER,
+    HVML_DOM_XPATH_EVAL_DOUBLE,
+    HVML_DOM_XPATH_EVAL_LITERAL,
+    HVML_DOM_XPATH_EVAL_DOMS
+} HVML_DOM_XPATH_EVAL_TYPE;
 
 typedef struct hvml_dom_tag_s               hvml_dom_tag_t;
 typedef struct hvml_dom_attr_s              hvml_dom_attr_t;
@@ -101,6 +112,82 @@ const char *hvml_dom_type_str(HVML_DOM_TYPE t) {
         case MKDOT(D_JSON):               return "D_JSON";
         default: return "D_UNKNOWN";
     }
+}
+
+typedef struct hvml_dom_xpath_eval_s           hvml_dom_xpath_eval_t;
+
+struct hvml_dom_xpath_eval_s {
+    HVML_DOM_XPATH_EVAL_TYPE     et;
+    union {
+        int              b;
+        int64_t          i64;
+        double           dbl;
+        const char      *literal;
+        hvml_doms_t      doms;
+    };
+};
+
+static void hvml_dom_xpath_eval_cleanup(hvml_dom_xpath_eval_t *ev) {
+    if (!ev) return;
+    switch (ev->et) {
+        case HVML_DOM_XPATH_EVAL_UNKNOWN: break;
+        case HVML_DOM_XPATH_EVAL_BOOL: {
+            ev->b = 0;
+        } break;
+        case HVML_DOM_XPATH_EVAL_INTEGER: {
+            ev->i64 = 0;
+        } break;
+        case HVML_DOM_XPATH_EVAL_DOUBLE: {
+            ev->dbl = 0;
+        } break;
+        case HVML_DOM_XPATH_EVAL_LITERAL: {
+            ev->literal = NULL;
+        } break;
+        case HVML_DOM_XPATH_EVAL_DOMS: {
+            hvml_doms_cleanup(&ev->doms);
+        } break;
+        default: {
+            A(0, "internal logic error");
+        } break;
+    }
+    ev->et = HVML_DOM_XPATH_OP_UNSPECIFIED;
+}
+
+const hvml_doms_t null_doms = {0};
+
+int hvml_doms_append_dom(hvml_doms_t *doms, hvml_dom_t *dom) {
+    if (!doms) return -1;
+    if (!dom) return 0;
+    hvml_dom_t **e = (hvml_dom_t**)realloc(doms->doms, (doms->ndoms+1)*sizeof(*e));
+    if (!e) return -1;
+    e[doms->ndoms] = dom;
+    doms->doms     = e;
+    doms->ndoms   += 1;
+    return 0;
+}
+
+int hvml_doms_append_doms(hvml_doms_t *doms, hvml_doms_t *in) {
+    if (!doms) return -1;
+    if (!in) return 0;
+    if (in->ndoms==0) return 0;
+
+    int r = 0;
+    size_t n = doms->ndoms + in->ndoms;
+    hvml_dom_t **e = (hvml_dom_t**)realloc(doms->doms, (n)*sizeof(*e));
+    if (!e) return -1;
+    memcpy(e + doms->ndoms, in->doms, in->ndoms * sizeof(*e));
+    doms->doms     = e;
+    doms->ndoms    = n;
+
+    return r;
+}
+
+void hvml_doms_cleanup(hvml_doms_t *doms) {
+    if (!doms) return;
+
+    free(doms->doms);
+    doms->doms     = NULL;
+    doms->ndoms    = 0;
 }
 
 hvml_dom_t* hvml_dom_create() {
@@ -222,7 +309,7 @@ hvml_dom_t* hvml_dom_append_json(hvml_dom_t *dom, hvml_jo_value_t *jo) {
         // jo is root, take owner ship
         v->jo              = jo;
         DOM_APPEND(dom, v);
-        return dom;
+        return v;
     }
     // jo is subvalue, clone it
     v->jo = hvml_jo_clone(jo);
@@ -231,7 +318,7 @@ hvml_dom_t* hvml_dom_append_json(hvml_dom_t *dom, hvml_jo_value_t *jo) {
         return NULL;
     }
     DOM_APPEND(dom, v);
-    return dom;
+    return v;
 }
 
 hvml_dom_t* hvml_dom_root(hvml_dom_t *dom) {
@@ -355,18 +442,34 @@ hvml_jo_value_t* hvml_dom_jo(hvml_dom_t *dom) {
 
 typedef struct traverse_s          traverse_t;
 struct traverse_s {
-    void      *arg;
-    void     (*traverse_cb)(hvml_dom_t *dom, int lvl, int tag_open_close, void *arg, int *breakout);
+    void                  *arg;
+    hvml_dom_traverse_cb   traverse_cb;
 };
 
 static int apply_traverse_callback(hvml_dom_t *dom, int lvl, int tag_open_close, traverse_t *tvs);
 static int do_hvml_dom_traverse(hvml_dom_t *dom, traverse_t *tvs);
 
-int hvml_dom_traverse(hvml_dom_t *dom, void *arg, void (*traverse_cb)(hvml_dom_t *dom, int lvl, int tag_open_close, void *arg, int *breakout)) {
+int hvml_dom_traverse(hvml_dom_t *dom, void *arg, hvml_dom_traverse_cb traverse_cb) {
     traverse_t tvs;
     tvs.arg         = arg;
     tvs.traverse_cb = traverse_cb;
     return do_hvml_dom_traverse(dom, &tvs);
+}
+
+typedef struct back_traverse_s          back_traverse_t;
+struct back_traverse_s {
+    void                       *arg;
+    hvml_dom_back_traverse_cb   back_traverse_cb;
+};
+
+static int apply_back_traverse_callback(hvml_dom_t *dom, int lvl, back_traverse_t *tvs);
+static int do_hvml_dom_back_traverse(hvml_dom_t *dom, back_traverse_t *tvs);
+
+int hvml_dom_back_traverse(hvml_dom_t *dom, void *arg, hvml_dom_back_traverse_cb back_traverse_cb) {
+    back_traverse_t tvs;
+    tvs.arg         = arg;
+    tvs.back_traverse_cb = back_traverse_cb;
+    return do_hvml_dom_back_traverse(dom, &tvs);
 }
 
 typedef struct dom_clone_s            dom_clone_t;
@@ -424,7 +527,7 @@ static void traverse_for_clone(hvml_dom_t *dom, int lvl, int tag_open_close, voi
             v = hvml_dom_append_attr(dc->dom, key, strlen(key), val, val ? strlen(val) : 0);
             if (!v) break;
             A(hvml_dom_type(v)==MKDOT(D_ATTR), "internal logic error");
-            if (DOM_OWNER(v)==dc->dom, "internal logic error");
+            A(DOM_ATTR_OWNER(v)==dc->dom, "internal logic error");
             *breakout = 0;
         } break;
         case MKDOT(D_TEXT): {
@@ -434,7 +537,7 @@ static void traverse_for_clone(hvml_dom_t *dom, int lvl, int tag_open_close, voi
             v = hvml_dom_append_content(dc->dom, text, strlen(text));
             if (!v) break;
             A(hvml_dom_type(v)==MKDOT(D_TEXT), "internal logic error");
-            if (DOM_OWNER(v)==dc->dom, "internal logic error");
+            A(DOM_OWNER(v)==dc->dom, "internal logic error");
             *breakout = 0;
         } break;
         case MKDOT(D_JSON): {
@@ -450,7 +553,7 @@ static void traverse_for_clone(hvml_dom_t *dom, int lvl, int tag_open_close, voi
                 hvml_jo_value_free(jo);
                 break;
             }
-            if (DOM_OWNER(v)==dc->dom, "internal logic error");
+            A(DOM_OWNER(v)==dc->dom, "internal logic error");
             *breakout = 0;
         } break;
         default: {
@@ -597,6 +700,958 @@ hvml_dom_t* hvml_dom_load_from_stream(FILE *in) {
     return NULL;
 }
 
+typedef struct collect_descentant_s          collect_descentant_t;
+struct collect_descentant_s {
+    hvml_doms_t        *out;
+    int                 failed;
+};
+
+static void collect_descentant_cb(hvml_dom_t *dom, int lvl, int tag_open_close, void *arg, int *breakout) {
+    collect_descentant_t *parg = (collect_descentant_t*)arg;
+    A(parg, "internal logic error");
+
+    *breakout = 0;
+
+    int r = 0;
+    switch (hvml_dom_type(dom)) {
+        case MKDOT(D_TAG):
+        {
+            switch (tag_open_close) {
+                case 1: {
+                    r = hvml_doms_append_dom(parg->out, dom);
+                } break;
+                case 2: break;
+                case 3: break;
+                case 4: break;
+                default: {
+                    A(0, "internal logic error");
+                } break;
+            }
+        } break;
+        case MKDOT(D_ATTR): break;
+        case MKDOT(D_TEXT): {
+            r = hvml_doms_append_dom(parg->out, dom);
+        } break;
+        case MKDOT(D_JSON): {
+            r = hvml_doms_append_dom(parg->out, dom);
+        } break;
+        default: {
+            A(0, "internal logic error");
+        } break;
+    }
+
+    if (r) {
+        *breakout = 1;
+        parg->failed = 1;
+    }
+}
+
+static int hvml_doms_append_descentant(hvml_doms_t *out, hvml_dom_t *dom) {
+    A(out,    "internal logic error");
+    A(dom,    "internal logic error");
+    collect_descentant_t      collect = {0};
+    collect.out = out;
+    collect.failed = 0;
+    hvml_dom_traverse(dom, &collect, collect_descentant_cb);
+    return collect.failed ? -1 : 0;
+}
+
+
+typedef struct collect_relative_s          collect_relative_t;
+struct collect_relative_s {
+    hvml_doms_t        *out;
+    int                 following;
+    hvml_dom_t         *relative;
+    int                 hit;
+    int                 failed;
+};
+
+static void collect_relative_cb(hvml_dom_t *dom, int lvl, int tag_open_close, void *arg, int *breakout) {
+    collect_relative_t *parg = (collect_relative_t*)arg;
+    A(parg, "internal logic error");
+
+    *breakout = 0;
+
+    int r = 0;
+    switch (hvml_dom_type(dom)) {
+        case MKDOT(D_TAG):
+        {
+            switch (tag_open_close) {
+                case 1: break;
+                case 2: return;
+                case 3: return;
+                case 4: return;
+                default: {
+                    A(0, "internal logic error");
+                } break;
+            }
+        } break;
+        case MKDOT(D_ATTR): return;
+        case MKDOT(D_TEXT): break;
+        case MKDOT(D_JSON): break;
+        default: {
+            A(0, "internal logic error");
+        } break;
+    }
+    if (parg->following) {
+        if (!parg->hit) {
+            if (dom == parg->relative) {
+                parg->hit = 1;
+            }
+            return;
+        }
+    } else {
+        A(!parg->hit, "internal logic error");
+        if (dom == parg->relative) {
+            parg->hit = 1;
+            *breakout = 1;
+            return;
+        }
+    }
+
+    r = hvml_doms_append_dom(parg->out, dom);
+
+    if (r) {
+        *breakout = 1;
+        parg->failed = 1;
+    }
+}
+
+static int hvml_doms_append_relative(hvml_doms_t *out, int following, hvml_dom_t *dom) {
+    A(out,    "internal logic error");
+    A(dom,    "internal logic error");
+    collect_relative_t      collect = {0};
+    collect.out       = out;
+    collect.following = following;
+    collect.relative  = dom;
+    collect.hit       = 0;
+    collect.failed    = 0;
+    hvml_dom_t *root = hvml_dom_root(dom);
+    A(root, "internal logic error");
+    hvml_dom_traverse(root, &collect, collect_relative_cb);
+    return collect.failed ? -1 : 0;
+}
+
+
+static hvml_dom_t* do_hvml_dom_check_node_test(hvml_dom_t *dom, hvml_dom_xpath_node_test_t *node_test, int *r);
+
+static int do_hvml_dom_eval_location(hvml_dom_t *dom, hvml_dom_xpath_steps_t *steps, hvml_doms_t *out);
+static int do_hvml_doms_eval_step(hvml_doms_t *doms, hvml_dom_xpath_step_t *step, hvml_doms_t *out);
+static int do_hvml_dom_eval_step(hvml_dom_t *dom, size_t position, size_t range, hvml_dom_xpath_step_t *step, hvml_doms_t *out);
+static int do_hvml_dom_eval_axis(hvml_dom_t *dom, hvml_dom_xpath_step_axis_t *axis, hvml_doms_t *out);
+static int do_hvml_dom_eval_node_test(hvml_dom_t *dom, hvml_dom_xpath_node_test_t *node_test, hvml_dom_t **v);
+static int do_hvml_dom_eval_exprs(hvml_dom_t *dom, size_t position, size_t range, hvml_dom_xpath_exprs_t *exprs, hvml_dom_t **v);
+static int do_hvml_dom_eval_expr(hvml_dom_t *dom, size_t position, size_t range, hvml_dom_xpath_expr_t *expr, hvml_dom_xpath_eval_t *ev);
+static int do_hvml_dom_eval_union_expr(hvml_dom_t *dom, size_t position, size_t range, hvml_dom_xpath_union_expr_t *expr, hvml_dom_t **v);
+static int do_hvml_dom_eval_path_expr(hvml_dom_t *dom, size_t position, size_t range, hvml_dom_xpath_path_expr_t *expr, hvml_dom_t **v);
+static int do_hvml_dom_eval_filter(hvml_dom_t *dom, size_t position, size_t range, hvml_dom_xpath_filter_expr_t *filter, hvml_doms_t *doms);
+static int do_hvml_dom_eval_primary(hvml_dom_t *dom, size_t position, size_t range, hvml_dom_xpath_primary_t *primary, hvml_dom_xpath_eval_t *ev);
+static int do_hvml_dom_eval_func(hvml_dom_t *dom, size_t position, size_t range, hvml_dom_xpath_func_t *func_call, hvml_dom_xpath_eval_t *ev);
+
+static int hvml_dom_xpath_eval_or(hvml_dom_xpath_eval_t *left, hvml_dom_xpath_eval_t *right, hvml_dom_xpath_eval_t *ev);
+static int hvml_dom_xpath_eval_and(hvml_dom_xpath_eval_t *left, hvml_dom_xpath_eval_t *right, hvml_dom_xpath_eval_t *ev);
+static int hvml_dom_xpath_eval_eq(hvml_dom_xpath_eval_t *left, hvml_dom_xpath_eval_t *right, hvml_dom_xpath_eval_t *ev);
+static int hvml_dom_xpath_eval_neq(hvml_dom_xpath_eval_t *left, hvml_dom_xpath_eval_t *right, hvml_dom_xpath_eval_t *ev);
+static int hvml_dom_xpath_eval_lt(hvml_dom_xpath_eval_t *left, hvml_dom_xpath_eval_t *right, hvml_dom_xpath_eval_t *ev);
+static int hvml_dom_xpath_eval_gt(hvml_dom_xpath_eval_t *left, hvml_dom_xpath_eval_t *right, hvml_dom_xpath_eval_t *ev);
+static int hvml_dom_xpath_eval_lte(hvml_dom_xpath_eval_t *left, hvml_dom_xpath_eval_t *right, hvml_dom_xpath_eval_t *ev);
+static int hvml_dom_xpath_eval_gt3(hvml_dom_xpath_eval_t *left, hvml_dom_xpath_eval_t *right, hvml_dom_xpath_eval_t *ev);
+static int hvml_dom_xpath_eval_plus(hvml_dom_xpath_eval_t *left, hvml_dom_xpath_eval_t *right, hvml_dom_xpath_eval_t *ev);
+static int hvml_dom_xpath_eval_minus(hvml_dom_xpath_eval_t *left, hvml_dom_xpath_eval_t *right, hvml_dom_xpath_eval_t *ev);
+static int hvml_dom_xpath_eval_multi(hvml_dom_xpath_eval_t *left, hvml_dom_xpath_eval_t *right, hvml_dom_xpath_eval_t *ev);
+static int hvml_dom_xpath_eval_div(hvml_dom_xpath_eval_t *left, hvml_dom_xpath_eval_t *right, hvml_dom_xpath_eval_t *ev);
+static int hvml_dom_xpath_eval_mod(hvml_dom_xpath_eval_t *left, hvml_dom_xpath_eval_t *right, hvml_dom_xpath_eval_t *ev);
+
+static hvml_dom_t* do_hvml_dom_check_node_test(hvml_dom_t *dom, hvml_dom_xpath_node_test_t *node_test, int *r) {
+    A(dom,          "internal logic error");
+    A(node_test,    "internal logic error");
+    A(r,            "internal logic error");
+    A(node_test->is_cleanedup==0, "internal logic error");
+
+    if (!node_test->is_name_test) {
+        switch (node_test->node_type) {
+            case HVML_DOM_XPATH_NT_UNSPECIFIED: {
+            } break;
+            case HVML_DOM_XPATH_NT_COMMENT: {
+                dom = NULL;
+            } break;
+            case HVML_DOM_XPATH_NT_TEXT: {
+                if (dom->dt != MKDOT(D_TEXT)) dom = NULL;
+            } break;
+            case HVML_DOM_XPATH_NT_PROCESSING_INSTRUCTION: {
+                dom = NULL;
+            } break;
+            case HVML_DOM_XPATH_NT_NODE: {
+                if (dom->dt != MKDOT(D_TAG)) dom = NULL;
+            } break;
+            case HVML_DOM_XPATH_NT_JSON: {
+                if (dom->dt != MKDOT(D_JSON)) dom = NULL;
+            } break;
+            default: {
+                A(0, "internal logic error");
+                dom = NULL; // never reached here
+            } break;
+        }
+        return dom;
+    }
+
+    const char *prefix     = node_test->name_test.prefix;
+    const char *local_part = node_test->name_test.local_part;
+    A(local_part, "internal logic error");
+    const char *tok = NULL;
+    if (dom->dt == MKDOT(D_TAG)) {
+        tok = hvml_dom_tag_name(dom);
+    } else if (dom->dt == MKDOT(D_ATTR)) {
+        tok = hvml_dom_attr_key(dom);
+    }
+    const char *colon = tok ? strchr(tok, ':') : NULL;
+
+    if (strcmp(local_part, "*")==0) {
+        if (prefix==NULL) {
+            // "*"
+            return dom;
+        }
+        // prefix:*
+        if (!tok) return NULL;
+        if (strstr(tok, prefix)!=tok) return NULL;
+        if (tok[strlen(prefix)]!=':') return NULL;
+        return dom;
+    }
+    if (prefix && strcmp(prefix, "*")==0) {
+        // "*:xxx"
+        if (!tok) return NULL;
+        if (!colon) return NULL;
+        if (strcmp(colon+1, local_part)==0) return dom;
+        return NULL;
+    }
+    if (!prefix) {
+        // "xxx"
+        if (!tok) return NULL;
+        if (strcmp(tok, local_part)==0) return dom;
+        return NULL;
+    }
+    // "xxx:yyy"
+    if (!tok) return NULL;
+    if (!colon) return NULL;
+    if (strstr(tok, prefix)!=tok) return NULL;
+    if (strcmp(colon+1, local_part)==0) return dom;
+    return NULL;
+}
+
+static int do_hvml_dom_eval_union_expr(hvml_dom_t *dom, size_t position, size_t range, hvml_dom_xpath_union_expr_t *expr, hvml_dom_t **v) {
+    A(dom,          "internal logic error");
+    A(expr,         "internal logic error");
+    A(v,            "internal logic error");
+    A(expr->is_cleanedup==0, "internal logic error");
+    A(expr->paths && expr->npaths>0,  "internal logic error");
+
+    /*
+    hvml_dom_xpath_path_expr_t    *paths;
+    size_t                         npaths;
+    int                            uminus;
+    */
+
+    *v = NULL;
+
+    int r = 0;
+    for (size_t i=0; i<expr->npaths && r==0; ++i) {
+        hvml_dom_xpath_path_expr_t *path_expr = expr->paths + i;
+        hvml_dom_t *d = NULL;
+        r = do_hvml_dom_eval_path_expr(dom, position, range, path_expr, &d);
+        if (r) return r;
+        if (d) {
+            A(dom==d, "internal logic error");
+            return 0;
+        }
+    }
+
+    return 0;
+}
+
+static int do_hvml_dom_eval_primary(hvml_dom_t *dom, size_t position, size_t range, hvml_dom_xpath_primary_t *primary, hvml_dom_xpath_eval_t *ev) {
+    A(dom,          "internal logic error");
+    A(primary,      "internal logic error");
+    A(ev,           "internal logic error");
+    A(primary->is_cleanedup==0, "internal logic error");
+    /*
+    HVML_DOM_XPATH_PRIMARY_TYPE primary_type;
+    union {
+        hvml_dom_xpath_qname_t  variable;
+        hvml_dom_xpath_expr_t   expr;
+        int64_t                 integer;
+        double                  dbl;
+        char                   *literal;
+        hvml_dom_xpath_func_t   func_call;
+    };
+    */
+    int r = 0;
+
+    do {
+        switch (primary->primary_type) {
+            case HVML_DOM_XPATH_PRIMARY_UNSPECIFIED: {
+                A(0, "internal logic error");
+			} break;
+            case HVML_DOM_XPATH_PRIMARY_VARIABLE: {
+                A(0, "not implemented yet");
+			} break;
+            case HVML_DOM_XPATH_PRIMARY_EXPR: {
+                r = do_hvml_dom_eval_expr(dom, position, range, &primary->expr, ev);
+                return r;
+			} break;
+            case HVML_DOM_XPATH_PRIMARY_INTEGER: {
+                ev->et = HVML_DOM_XPATH_EVAL_INTEGER;
+                ev->i64 = primary->integer;
+                return r;
+			} break;
+            case HVML_DOM_XPATH_PRIMARY_DOUBLE: {
+                ev->et = HVML_DOM_XPATH_EVAL_DOUBLE;
+                ev->dbl = primary->integer;
+                return r;
+			} break;
+            case HVML_DOM_XPATH_PRIMARY_LITERAL: {
+                A(0, "not implemented yet");
+			} break;
+            case HVML_DOM_XPATH_PRIMARY_FUNC: {
+                r = do_hvml_dom_eval_func(dom, position, range, &primary->func_call, ev);
+			} break;
+            default: {
+                A(0, "internal logic error");
+            } break;
+        }
+    } while (0);
+
+    return r;
+}
+
+static int do_hvml_dom_eval_filter(hvml_dom_t *dom, size_t position, size_t range, hvml_dom_xpath_filter_expr_t *filter, hvml_doms_t *doms) {
+    A(dom,          "internal logic error");
+    A(filter,       "internal logic error");
+    A(doms,         "internal logic error");
+    A(filter->is_cleanedup==0, "internal logic error");
+    /*
+    hvml_dom_xpath_primary_t  primary;
+    hvml_dom_xpath_exprs_t    exprs;
+    */
+
+    int r = 0;
+
+    hvml_doms_t out = {0};
+
+    do {
+        hvml_dom_xpath_eval_t ev = {0};
+        r = do_hvml_dom_eval_primary(dom, position, range, &filter->primary, &ev);
+        if (r) break;
+
+        hvml_dom_t *e = NULL;
+        r = do_hvml_dom_eval_exprs(dom, position, range, &filter->exprs, &e);
+        if (r) break;
+        if (e==NULL) break;
+        A(dom==e, "internal logic error");
+
+        r = hvml_doms_append_dom(&out, e);
+        if (r) break;
+    } while (0);
+
+    if (r==0) {
+        if (doms) {
+            *doms = out;
+        }
+    }
+    return r;
+}
+
+static int do_hvml_dom_eval_path_expr(hvml_dom_t *dom, size_t position, size_t range, hvml_dom_xpath_path_expr_t *expr, hvml_dom_t **v) {
+    A(dom,          "internal logic error");
+    A(expr,         "internal logic error");
+    A(v,            "internal logic error");
+    A(expr->is_cleanedup==0, "internal logic error");
+
+    int r = 0;
+    hvml_dom_t *d = NULL;
+    hvml_doms_t doms = {0};
+    do {
+        if (expr->is_location) {
+            r = do_hvml_dom_eval_location(dom, &expr->location, &doms);
+            if (r) break;
+            if (doms.ndoms>0) d = dom;
+        } else {
+            r = do_hvml_dom_eval_filter(dom, position, range, &expr->filter_expr, &d);
+            if (r) break;
+            if (!d) break;
+            A(d==dom, "internal logic error");
+        }
+    } while (0);
+
+    hvml_doms_cleanup(&doms);
+
+    if (r==0) {
+        *v = d;
+    }
+
+    return r;
+}
+
+static int do_hvml_dom_eval_expr(hvml_dom_t *dom, size_t position, size_t range, hvml_dom_xpath_expr_t *expr, hvml_dom_xpath_eval_t *ev) {
+    A(dom,          "internal logic error");
+    A(expr,         "internal logic error");
+    A(ev,           "internal logic error");
+    /*
+    unsigned int is_binary_op:1;
+
+    hvml_dom_xpath_union_expr_t    *unary;
+
+    HVML_DOM_XPATH_OP_TYPE         op_type;
+    hvml_dom_xpath_expr_t          *left;
+    hvml_dom_xpath_expr_t          *right;
+    */
+
+    int r = 0;
+
+    if (!expr->is_binary_op) {
+        hvml_dom_t *v = NULL;
+        r = do_hvml_dom_eval_union_expr(dom, position, range, expr->unary, &v);
+        if (r) return r;
+        ev->et = HVML_DOM_XPATH_EVAL_DOMS;
+        ev->dom = v;
+        return 0;
+    } else {
+        hvml_dom_xpath_eval_t left  = {0};
+        hvml_dom_xpath_eval_t right = {0};
+
+        hvml_dom_xpath_eval_t r = {0};
+
+        A(expr->left, "internal logic error");
+        do {
+            // note: recursive
+            r = do_hvml_dom_eval_expr(dom, position, range, expr->left, &left);
+            if (r) break;
+            if (expr->right) {
+                r = do_hvml_dom_eval_expr(dom, position, range, expr->right, &right);
+                if (r) break;
+            }
+            switch (expr->op_type) {
+                case HVML_DOM_XPATH_OP_UNSPECIFIED: {
+                    A(0, "internal logic error");
+                } break;
+                case HVML_DOM_XPATH_OP_OR: {
+                    r = hvml_dom_xpath_eval_or(&left, &right, ev);
+				} break;
+                case HVML_DOM_XPATH_OP_AND: {
+                    r = hvml_dom_xpath_eval_and(&left, &right, ev);
+				} break;
+                case HVML_DOM_XPATH_OP_EQ: {
+                    r = hvml_dom_xpath_eval_eq(&left, &right, ev);
+				} break;
+                case HVML_DOM_XPATH_OP_NEQ: {
+                    r = hvml_dom_xpath_eval_neq(&left, &right, ev);
+				} break;
+                case HVML_DOM_XPATH_OP_LT: {
+                    r = hvml_dom_xpath_eval_lt(&left, &right, ev);
+				} break;
+                case HVML_DOM_XPATH_OP_GT: {
+                    r = hvml_dom_xpath_eval_gt(&left, &right, ev);
+				} break;
+                case HVML_DOM_XPATH_OP_LTE: {
+                    r = hvml_dom_xpath_eval_lte(&left, &right, ev);
+				} break;
+                case HVML_DOM_XPATH_OP_GTE: {
+                    r = hvml_dom_xpath_eval_gte(&left, &right, ev);
+				} break;
+                case HVML_DOM_XPATH_OP_PLUS: {
+                    r = hvml_dom_xpath_eval_plus(&left, &right, ev);
+				} break;
+                case HVML_DOM_XPATH_OP_MINUS: {
+                    r = hvml_dom_xpath_eval_minus(&left, &right, ev);
+				} break;
+                case HVML_DOM_XPATH_OP_MULTI: {
+                    r = hvml_dom_xpath_eval_multi(&left, &right, ev);
+				} break;
+                case HVML_DOM_XPATH_OP_DIV: {
+                    r = hvml_dom_xpath_eval_div(&left, &right, ev);
+				} break;
+                case HVML_DOM_XPATH_OP_MOD: {
+                    r = hvml_dom_xpath_eval_mod(&left, &right, ev);
+				} break;
+                default: {
+                    A(0, "internal logic error");
+                } break;
+            }
+        } while (0);
+
+        hvml_dom_xpath_eval_cleanup(&left);
+        hvml_dom_xpath_eval_cleanup(&right);
+
+        return r;
+    }
+}
+
+static int do_hvml_dom_eval_exprs(hvml_dom_t *dom, size_t position, size_t range, hvml_dom_xpath_exprs_t *exprs, hvml_dom_t **v) {
+    A(dom,    "internal logic error");
+    A(exprs,  "internal logic error");
+    A(v,      "internal logic error");
+
+    *v = NULL;
+
+    int r = 0;
+
+    *v = NULL;
+
+    for (size_t i=0; i<exprs->nexprs; ++i) {
+        hvml_dom_xpath_expr_t *expr = exprs->exprs + i;
+        hvml_dom_xpath_eval_t ev = {0};
+        r = do_hvml_dom_eval_expr(dom, position, range, expr, &ev);
+        if (r) return r;
+        switch (ev.et) {
+            case HVML_DOM_XPATH_EVAL_UNKNOWN: {
+                A(0, "internal logic error");
+			} break;
+            case HVML_DOM_XPATH_EVAL_BOOL: {
+                if (!ev.b) return 0;
+			} break;
+            case HVML_DOM_XPATH_EVAL_INTEGER: {
+                if (ev.i64!=position) return 0;
+			} break;
+            case HVML_DOM_XPATH_EVAL_DOUBLE: {
+                A(0, "internal logic error");
+			} break;
+            case HVML_DOM_XPATH_EVAL_LITERAL: {
+                A(0, "internal logic error");
+			} break;
+            case HVML_DOM_XPATH_EVAL_DOMS: {
+                if (ev.doms.ndoms==0) return 0;
+			} break;
+            default: {
+                A(0, "internal logic error");
+            } break;
+        }
+    }
+
+    *v = dom;
+
+    return 0;
+}
+
+static int do_hvml_dom_eval_node_test(hvml_dom_t *dom, hvml_dom_xpath_node_test_t *node_test, hvml_dom_t **v) {
+    A(dom,               "internal logic error");
+    A(node_test,         "internal logic error");
+    A(v,                 "internal logic error");
+    A(node_test->is_cleanedup==0, "internal logic error");
+
+    int r = 0;
+
+    *v = NULL;
+
+    if (!node_test->is_name_test) {
+        switch (node_test->node_type) {
+            case HVML_DOM_XPATH_NT_UNSPECIFIED: {
+                A(0, "internal logic error");
+            } break;
+            case HVML_DOM_XPATH_NT_COMMENT: {
+            } break;
+            case HVML_DOM_XPATH_NT_TEXT: {
+                if (dom->dt == MKDOT(D_TEXT)) *v = dom;
+            } break;
+            case HVML_DOM_XPATH_NT_PROCESSING_INSTRUCTION: {
+                A(0, "not implemented yet");
+            } break;
+            case HVML_DOM_XPATH_NT_NODE: {
+                if (dom->dt == MKDOT(D_TAG)) *v = dom;
+            } break;
+            case HVML_DOM_XPATH_NT_JSON: {
+                if (dom->dt == MKDOT(D_JSON)) *v = dom;
+            } break;
+            default: {
+                A(0, "internal logic error");
+                // never reached here
+            } break;
+        }
+
+        return r;
+    }
+
+    const char *prefix     = node_test->name_test.prefix;
+    const char *local_part = node_test->name_test.local_part;
+    A(local_part, "internal logic error");
+    const char *tok = NULL;
+    if (dom->dt == MKDOT(D_TAG)) {
+        tok = hvml_dom_tag_name(dom);
+    } else if (dom->dt == MKDOT(D_ATTR)) {
+        tok = hvml_dom_attr_key(dom);
+    }
+    const char *colon = tok ? strchr(tok, ':') : NULL;
+
+    do {
+        if (strcmp(local_part, "*")==0) {
+            if (prefix==NULL) {
+                // "*"
+                *v = dom;
+                break;
+            }
+            // prefix:*
+            if (!tok) break;
+            if (strstr(tok, prefix)!=tok) break;
+            if (tok[strlen(prefix)]!=':') break;
+            *v = dom;
+            break;
+        }
+        if (prefix && strcmp(prefix, "*")==0) {
+            // "*:xxx"
+            if (!tok) break;
+            if (!colon) break;
+            if (strcmp(colon+1, local_part)) break;
+            *v = dom;
+            break;
+        }
+        if (!prefix) {
+            // "xxx"
+            if (!tok) break;
+            if (strcmp(tok, local_part)) break;
+            *v = dom;
+            break;
+        }
+        // "xxx:yyy"
+        if (!tok) break;
+        if (!colon) break;
+        if (strstr(tok, prefix)!=tok) break;
+        if (strcmp(colon+1, local_part)) break;
+        *v = dom;
+    } while (0);
+
+    return r;
+}
+
+static int do_hvml_dom_eval_axis(hvml_dom_t *dom, hvml_dom_xpath_step_axis_t *axis, hvml_doms_t *out) {
+    A(dom,               "internal logic error");
+    A(axis,              "internal logic error");
+    A(out,               "internal logic error");
+    A(axis->is_cleanedup==0, "internal logic error");
+
+    /*
+    unsigned int is_cleanedup:1;
+    HVML_DOM_XPATH_AXIS_TYPE          axis;
+    hvml_dom_xpath_node_test_t        node_test;
+    hvml_dom_xpath_exprs_t            exprs;
+    */
+
+    int r = 0;
+    hvml_doms_t in = {0};
+
+    switch (axis->axis) {
+        case HVML_DOM_XPATH_AXIS_UNSPECIFIED: {
+            r = hvml_doms_append_dom(&in, dom);
+        } break;
+        case HVML_DOM_XPATH_AXIS_ANCESTOR: {
+            if (dom->dt==MKDOT(D_ATTR)) break;
+            dom = DOM_OWNER(dom);
+            while (r==0 && dom) {
+                r = hvml_doms_append_dom(&in, dom);
+                if (r) break;
+                dom = DOM_OWNER(dom);
+            }
+        } break;
+        case HVML_DOM_XPATH_AXIS_ANCESTOR_OR_SELF: {
+            if (dom->dt==MKDOT(D_ATTR)) break;
+            while (r==0 && dom) {
+                r = hvml_doms_append_dom(&in, dom);
+                if (r) break;
+                dom = DOM_OWNER(dom);
+            }
+        } break;
+        case HVML_DOM_XPATH_AXIS_ATTRIBUTE: {
+            if (dom->dt!=MKDOT(D_TAG)) break;
+            dom = DOM_ATTR_HEAD(dom);
+            while (r==0 && dom) {
+                r = hvml_doms_append_dom(&in, dom);
+                if (r) break;
+                dom = DOM_ATTR_NEXT(dom);
+            }
+        } break;
+        case HVML_DOM_XPATH_AXIS_CHILD: {
+            if (dom->dt!=MKDOT(D_TAG)) break;
+            dom = DOM_HEAD(dom);
+            while (r==0 && dom) {
+                r = hvml_doms_append_dom(&in, dom);
+                if (r) break;
+                dom = DOM_NEXT(dom);
+            }
+        } break;
+        case HVML_DOM_XPATH_AXIS_DESCENDANT: {
+            if (dom->dt!=MKDOT(D_TAG)) break;
+            r = hvml_doms_append_descentant(&in, dom);
+        } break;
+        case HVML_DOM_XPATH_AXIS_DESCENDANT_OR_SELF: {
+            if (dom->dt!=MKDOT(D_TAG)) break;
+            r = hvml_doms_append_dom(&in, dom);
+            if (r) break;
+            r = hvml_doms_append_descentant(&in, dom);
+        } break;
+        case HVML_DOM_XPATH_AXIS_FOLLOWING: {
+            if (dom->dt==MKDOT(D_ATTR)) break;
+            r = hvml_doms_append_relative(&in, 1, dom);
+        } break;
+        case HVML_DOM_XPATH_AXIS_FOLLOWING_SIBLING: {
+            if (dom->dt==MKDOT(D_ATTR)) break;
+            dom = DOM_NEXT(dom);
+            while (r==0 && dom) {
+                r = hvml_doms_append_dom(&in, dom);
+                if (r) break;
+                dom = DOM_NEXT(dom);
+            }
+        } break;
+        case HVML_DOM_XPATH_AXIS_NAMESPACE: {
+            if (dom->dt==MKDOT(D_ATTR)) break;
+            r = hvml_doms_append_relative(&in, 0, dom);
+        } break;
+        case HVML_DOM_XPATH_AXIS_PARENT: {
+            if (dom->dt==MKDOT(D_ATTR)) break;
+            dom = DOM_OWNER(dom);
+            r = hvml_doms_append_dom(&in, dom);
+        } break;
+        case HVML_DOM_XPATH_AXIS_PRECEDING: {
+            if (dom->dt==MKDOT(D_ATTR)) break;
+            A(0, "not implemented yet");
+        } break;
+        case HVML_DOM_XPATH_AXIS_PRECEDING_SIBLING: {
+            if (dom->dt==MKDOT(D_ATTR)) break;
+            dom = DOM_PREV(dom);
+            while (r==0 && dom) {
+                r = hvml_doms_append_dom(&in, dom);
+                if (r) break;
+                dom = DOM_PREV(dom);
+            }
+        } break;
+        case HVML_DOM_XPATH_AXIS_SELF: {
+            r = hvml_doms_append_dom(&in, dom);
+        } break;
+        case HVML_DOM_XPATH_AXIS_SLASH: {
+            do {
+                if (dom->dt!=MKDOT(D_TAG)) break;
+                dom = DOM_OWNER(dom);
+                r = hvml_doms_append_dom(&in, dom);
+                if (r) break;
+                if (out) {
+                    *out = in;
+                    in = null_doms;
+                }
+            } while (0);
+            hvml_doms_cleanup(&in);
+            return r;
+        } break;
+        case HVML_DOM_XPATH_AXIS_SLASH2: {
+            do {
+                if (dom->dt!=MKDOT(D_TAG)) break;
+                dom = hvml_dom_root(dom);
+                r = hvml_doms_append_dom(&in, dom);
+                if (r) break;
+                r = hvml_doms_append_descentant(&in, dom);
+                if (r) break;
+                if (out) {
+                    *out = in;
+                    in = null_doms;
+                }
+            } while (0);
+            hvml_doms_cleanup(&in);
+            return r;
+        } break;
+        default: {
+            A(0, "internal logic error");
+            r = -1;
+        } break;
+    }
+
+    if (r) {
+        hvml_doms_cleanup(&in);
+        return r;
+    }
+
+    hvml_doms_t tmp = {0};
+
+    for (size_t i=0; i<in.ndoms && r==0; ++i) {
+        hvml_dom_t *d = in.doms[i];
+        if (!d) continue;
+
+        hvml_dom_t *e = NULL;
+
+        r = do_hvml_dom_eval_node_test(d, &axis->node_test, &e);
+        if (r) break;
+        if (e==NULL) continue;
+        A(d==e, "internal logic error");
+
+        e = NULL;
+        r = do_hvml_dom_eval_exprs(d, i, in.ndoms, &axis->exprs, &e);
+        if (r) break;
+        if (e==NULL) continue;
+        A(d==e, "internal logic error");
+
+        r = hvml_doms_append_dom(&tmp, d);
+        if (r) break;
+    }
+
+    if (r==0) {
+        if (out) {
+            *out = tmp;
+            tmp = null_doms;
+        }
+    }
+
+    hvml_doms_cleanup(&tmp);
+    hvml_doms_cleanup(&in);
+
+    return r;
+}
+
+static int do_hvml_dom_eval_step(hvml_dom_t *dom, size_t position, size_t range, hvml_dom_xpath_step_t *step, hvml_doms_t *out) {
+    A(dom,               "internal logic error");
+    A(step,              "internal logic error");
+    A(out,               "internal logic error");
+    A(step->is_cleanedup==0, "internal logic error");
+
+    int r = 0;
+    hvml_doms_t o = {0};
+
+    do {
+        if (step->is_axis) {
+            r = do_hvml_dom_eval_axis(dom, &step->axis, &o);
+            break;
+        }
+
+        switch (step->abbre) {
+            case HVML_DOM_XPATH_AS_UNSPECIFIED: {
+                A(0, "internal logic error");
+            } break;
+            case HVML_DOM_XPATH_AS_PARENT: {
+                A(dom->dt!=MKDOT(D_ATTR), "internal logic error");
+                dom = DOM_OWNER(dom);
+                if (!dom) break;
+                r = hvml_doms_append_dom(&o, dom);
+            } break;
+            case HVML_DOM_XPATH_AS_GRANDPARENT: {
+                A(dom->dt!=MKDOT(D_ATTR), "internal logic error");
+                dom = DOM_OWNER(dom);
+                if (!dom) break;
+                dom = DOM_OWNER(dom);
+                if (!dom) break;
+                r = hvml_doms_append_dom(&o, dom);
+            } break;
+            default: {
+                A(0, "internal logic error");
+                r = -1;
+            } break;
+        }
+    } while (0);
+
+    if (r==0) {
+        if (out) {
+            *out = o;
+            o = null_doms;
+        }
+    }
+
+    hvml_doms_cleanup(&o);
+
+    return r;
+}
+
+static int do_hvml_doms_eval_step(hvml_doms_t *doms, hvml_dom_xpath_step_t *step, hvml_doms_t *out) {
+    A(doms,              "internal logic error");
+    A(step,              "internal logic error");
+    A(out,               "internal logic error");
+
+    int r = 0;
+    hvml_doms_t o = null_doms;
+    hvml_doms_t tmp = null_doms;
+
+    for (size_t i=0; i<doms->ndoms; ++i) {
+        hvml_dom_t *dom = doms->doms[i];
+
+        r = do_hvml_dom_eval_step(dom, i, doms->ndoms, step, &tmp);
+        if (r) break;
+
+        r = hvml_doms_append_doms(&o, &tmp);
+        if (r) break;
+
+        hvml_doms_cleanup(&tmp);
+    }
+
+    hvml_doms_cleanup(&tmp);
+
+    if (r==0) {
+        if (out) {
+            *out = o;
+            o = null_doms;
+        }
+    }
+
+    hvml_doms_cleanup(&o);
+
+    return r;
+}
+
+static int do_hvml_dom_eval_location(hvml_dom_t *dom, hvml_dom_xpath_steps_t *steps, hvml_doms_t *out) {
+    A(dom,               "internal logic error");
+    A(steps,             "internal logic error");
+    A(out,               "internal logic error");
+
+    int r = 0;
+    hvml_doms_t in = {0};
+
+    do {
+        r = hvml_doms_append_dom(&in, dom);
+        if (r) break;
+
+        hvml_doms_t tmp = {0};
+
+        for (size_t i=0; i<steps->nsteps; ++i) {
+            r = do_hvml_doms_eval_step(&in, steps->steps+i, &tmp);
+            if (r) break;
+            hvml_doms_cleanup(&in);
+            in = tmp;
+            tmp = null_doms;
+        }
+
+        hvml_doms_cleanup(&tmp);
+    } while (0);
+
+    if (r==0) {
+        if (out) {
+            *out = in;
+            in = null_doms;
+        }
+    }
+
+    hvml_doms_cleanup(&in);
+
+    return r;
+}
+
+int hvml_dom_query(hvml_dom_t *dom, const char *path, hvml_doms_t *doms) {
+    A(path,   "internal logic error");
+
+    int r = 0;
+
+    hvml_doms_t out = {0};
+
+    hvml_dom_xpath_steps_t steps = null_steps;
+
+    r = hvml_dom_xpath_parse(path, &steps);
+
+    do {
+        if (r) break;
+        r = do_hvml_dom_eval_location(dom, &steps, &out);
+    } while (0);
+
+    if (r==0) {
+        if (doms) {
+            *doms = out;
+            out = null_doms;
+        }
+    }
+
+    hvml_dom_xpath_steps_cleanup(&steps);
+    hvml_doms_cleanup(&out);
+
+    return r ? -1 : 0;
+}
 
 
 
@@ -1036,7 +2091,7 @@ static int do_hvml_dom_traverse(hvml_dom_t *dom, traverse_t *tvs) {
                     continue;
                 }
                 if (lvl == 0) return 0;// normal end up.
-                
+
                 hvml_dom_t *parent = DOM_OWNER(dom);
                 A(parent, "internal logic error");
                 A(parent->dt == MKDOT(D_TAG), "internal logic error");
@@ -1058,6 +2113,38 @@ static int do_hvml_dom_traverse(hvml_dom_t *dom, traverse_t *tvs) {
     return r ? -1 : 0;
 }
 
+static int do_hvml_dom_back_traverse(hvml_dom_t *dom, back_traverse_t *tvs) {
+    A(tvs, "internal logic error");
+    int lvl = 0;
+    int r = 0;
+    int pop = 0; // 1:pop from attr, 2:pop from child
+    while (r==0 && dom) {
+        switch (dom->dt) {
+            case MKDOT(D_TAG):
+            case MKDOT(D_TEXT):
+            case MKDOT(D_JSON):
+            {
+                r = apply_back_traverse_callback(dom, lvl, tvs);
+                dom = DOM_OWNER(dom);
+                --lvl;
+                continue;
+            } break;
+            case MKDOT(D_ATTR):
+            {
+                r = apply_back_traverse_callback(dom, lvl, tvs);
+                dom = DOM_ATTR_OWNER(dom);
+                --lvl;
+                continue;
+            } break;
+            default:
+            {
+                A(0, "internal logic error");
+            } break;
+        }
+    }
+    return r ? -1 : 0;
+}
+
 static int apply_traverse_callback(hvml_dom_t *dom, int lvl, int tag_open_close, traverse_t *tvs) {
     A(dom, "internal logic error");
     A(lvl>=0, "internal logic error");
@@ -1066,6 +2153,17 @@ static int apply_traverse_callback(hvml_dom_t *dom, int lvl, int tag_open_close,
 
     int breakout = 0;
     tvs->traverse_cb(dom, lvl, tag_open_close, tvs->arg, &breakout);
+    return breakout ? -1 : 0;
+}
+
+static int apply_back_traverse_callback(hvml_dom_t *dom, int lvl, back_traverse_t *tvs) {
+    A(dom, "internal logic error");
+    A(lvl<=0, "internal logic error");
+    A(tvs, "internal logic error");
+    if (!tvs->back_traverse_cb) return 0;
+
+    int breakout = 0;
+    tvs->back_traverse_cb(dom, lvl, tvs->arg, &breakout);
     return breakout ? -1 : 0;
 }
 

@@ -31,10 +31,11 @@
 static int with_clone = 0;
 
 static const char* file_ext(const char *file);
-static int process(FILE *in, const char *ext);
+static int process(FILE *in, const char *ext, hvml_dom_t *hvml);
 static int process_hvml(FILE *in);
 static int process_json(FILE *in);
 static int process_utf8(FILE *in);
+static int process_xpath(FILE *in, hvml_dom_t *hvml);
 
 int main(int argc, char *argv[]) {
     if (argc == 1) return 0;
@@ -43,12 +44,25 @@ int main(int argc, char *argv[]) {
         hvml_log_set_output_only(1);
     }
 
+    hvml_dom_t *hvml = NULL;
+
+
     hvml_log_set_thread_type("main");
 
-    for (int i=1; i<argc; ++i) {
+    int ok = 1;
+    for (int i=1; i<argc && ok; ++i) {
         const char *arg = argv[i];
         if (strcmp(arg, "-c")==0) {
             with_clone = 1;
+            continue;
+        }
+        if (strcmp(arg, "--hvml")==0) {
+            ++i;
+            if (i>=argc) {
+                E("expecting <hvml>, but got nothing");
+                ok = 0;
+                break;
+            }
             continue;
         }
         const char *file = argv[i];
@@ -57,18 +71,48 @@ int main(int argc, char *argv[]) {
         FILE *in = fopen(file, "rb");
         if (!in) {
             E("failed to open file: %s", file);
-            return 1;
+            ok = 0;
+            break;
         }
 
-        I("processing file: %s", file);
-        int ret = process(in, ext);
+        if (strcmp(ext, ".xpath")==0) {
+            char buf[4096];
+            snprintf(buf, sizeof(buf), "%s.hvml", argv[i]);
+            FILE *in = fopen(buf, "rb");
+            do {
+                if (!in) {
+                    E("failed to open file: %s", buf);
+                    ok = 0;
+                    break;
+                }
+                if (hvml) {
+                    hvml_dom_destroy(hvml);
+                    hvml = NULL;
+                }
+                hvml = hvml_dom_load_from_stream(in);
+                fclose(in); in = NULL;
+                if (!hvml) {
+                    E("failed to load hvml from file: %s", buf);
+                    ok = 0;
+                    break;
+                }
+            } while (0);
+        }
+
+        if (ok) {
+            I("processing file: %s", file);
+            int ret = process(in, ext, hvml);
+            ok = ret ? 0 : 1;
+        }
 
         if (in) fclose(in);
 
-        if (ret) return ret;
+        break;
     }
 
-    return 0;
+    if (hvml) hvml_dom_destroy(hvml);
+
+    return ok ? 0 : 1;
 }
 
 static const char* file_ext(const char *file) {
@@ -76,11 +120,13 @@ static const char* file_ext(const char *file) {
     return p ? p : "";
 }
 
-static int process(FILE *in, const char *ext) {
+static int process(FILE *in, const char *ext, hvml_dom_t *hvml) {
     if (strcmp(ext, ".utf8")==0) {
         return process_utf8(in);
     }else if (strcmp(ext, ".json")==0) {
         return process_json(in);
+    }else if (strcmp(ext, ".xpath")==0) {
+        return process_xpath(in, hvml);
     } else {
         return process_hvml(in);
     }
@@ -178,5 +224,31 @@ static int process_utf8(FILE *in) {
     decoder = NULL;
 
     return ret ? 1 : 0;
+}
+
+static int process_xpath(FILE *in, hvml_dom_t *hvml) {
+    char   *line     = NULL;
+    size_t  n        = 0;
+
+    int r = 0;
+    int i = 0;
+    while (!feof(in)) {
+        ssize_t len = getline(&line, &n, in);
+        if (len<0) break;
+        ++i;
+        if (len==0) continue;
+        if (line[len-1]=='\n') line[len-1] = '\0';
+        // fprintf(stderr, "[%" PRId64 "]%s\n", len, line);
+        fprintf(stderr, "parsing xpath @[%d]: [%s]\n", i, line);
+        r = hvml_dom_query(hvml, line, NULL);
+        if (r) {
+            fprintf(stderr, "parsing xpathi @[%d]: failed\n", i);
+            break;
+        }
+    }
+
+    if (line) free(line);
+
+    return r;
 }
 

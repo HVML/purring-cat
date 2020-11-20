@@ -41,6 +41,19 @@ const char *hvml_dom_type_str(HVML_DOM_TYPE t);
 
 typedef struct hvml_dom_s          hvml_dom_t;
 typedef struct hvml_dom_gen_s      hvml_dom_gen_t;
+typedef struct hvml_doms_s         hvml_doms_t;
+
+struct hvml_doms_s {
+    hvml_dom_t      **doms;
+    size_t            ndoms;
+};
+
+extern const hvml_doms_t null_doms;
+
+int  hvml_doms_append_dom(hvml_doms_t *doms, hvml_dom_t *dom);
+int  hvml_doms_append_doms(hvml_doms_t *doms, hvml_doms_t *in);
+void hvml_doms_cleanup(hvml_doms_t *doms);
+
 
 hvml_dom_t* hvml_dom_create();
 void        hvml_dom_destroy(hvml_dom_t *dom);
@@ -76,7 +89,10 @@ hvml_jo_value_t* hvml_dom_jo(hvml_dom_t *dom);         // elementJson
 
 
 // tag_open_close: 1-open, 2-single-close, 3-half-close, 4-close
-int         hvml_dom_traverse(hvml_dom_t *dom, void *arg, void (*traverse_cb)(hvml_dom_t *dom, int lvl, int tag_open_close, void *arg, int *breakout));
+typedef void (*hvml_dom_traverse_cb)(hvml_dom_t *dom, int lvl, int tag_open_close, void *arg, int *breakout);
+int         hvml_dom_traverse(hvml_dom_t *dom, void *arg, hvml_dom_traverse_cb traverse_cb);
+typedef void (*hvml_dom_back_traverse_cb)(hvml_dom_t *dom, int lvl, void *arg, int *breakout);
+int         hvml_dom_back_traverse(hvml_dom_t *dom, void *arg, hvml_dom_back_traverse_cb back_traverse_cb);
 
 hvml_dom_t* hvml_dom_clone(hvml_dom_t *dom);
 
@@ -89,6 +105,8 @@ int               hvml_dom_gen_parse_string(hvml_dom_gen_t *gen, const char *str
 hvml_dom_t*       hvml_dom_gen_parse_end(hvml_dom_gen_t *gen);
 
 hvml_dom_t*       hvml_dom_load_from_stream(FILE *in);
+
+int hvml_dom_query(hvml_dom_t *dom, const char *path, hvml_doms_t *doms);
 
 #ifdef __cplusplus
 }
