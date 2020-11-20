@@ -15,22 +15,22 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-#include "HttpEcho.h"
-#include "MyInfo.h"
+#ifndef _hvml_echo_h_
+#define _hvml_echo_h_
 
-MyInfo::MyInfo(int listen_port)
-    : IHttpInfo(listen_port)
+#include "HttpServer.h"
+
+#define INFO_MESSAGE_LEN    4096
+class HvmlEcho : public IHttpResponse
 {
-}
+public:
+    HvmlEcho(int listen_port, HvmlRuntime& runtime);
+    char* GetHttpResponse (int* info_len,
+                           const char* request);
 
-char* MyInfo::GetHttpInfo (int* info_len) {
+private:
+    char info_message_[INFO_MESSAGE_LEN];
+    HvmlRuntime& runtime_;
+};
 
-    char info_format[] = "[ INFO_1: %d  INFO_2: %d  INFO_3: %d ]";
-    snprintf(info_message_, INFO_MESSAGE_LEN, info_format,
-        info_1_,
-        info_2_,
-        info_3_);
-
-    *info_len = strlen(info_message_);
-    return info_message_;
-}
+#endif //_hvml_echo_h_

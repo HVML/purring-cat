@@ -31,6 +31,7 @@ extern "C" {
 #define MKDOS(type) "HVML_DOM_"#type
 
 typedef enum {
+    MKDOT(D_ROOT),
     MKDOT(D_TAG),
     MKDOT(D_ATTR),
     MKDOT(D_TEXT),
@@ -58,6 +59,8 @@ void hvml_doms_cleanup(hvml_doms_t *doms);
 hvml_dom_t* hvml_dom_create();
 void        hvml_dom_destroy(hvml_dom_t *dom);
 
+hvml_dom_t* hvml_dom_make_root(hvml_dom_t *dom);
+
 hvml_dom_t* hvml_dom_append_attr(hvml_dom_t *dom, const char *key, size_t key_len, const char *val, size_t val_len);
 hvml_dom_t* hvml_dom_set_val(hvml_dom_t *dom, const char *val, size_t val_len);
 hvml_dom_t* hvml_dom_append_content(hvml_dom_t *dom, const char *txt, size_t len);
@@ -65,6 +68,7 @@ hvml_dom_t* hvml_dom_add_tag(hvml_dom_t *dom, const char *tag, size_t len);
 hvml_dom_t* hvml_dom_append_json(hvml_dom_t *dom, hvml_jo_value_t *jo);
 
 hvml_dom_t* hvml_dom_root(hvml_dom_t *dom);
+hvml_dom_t* hvml_dom_doc(hvml_dom_t *dom);
 hvml_dom_t* hvml_dom_parent(hvml_dom_t *dom);
 hvml_dom_t* hvml_dom_next(hvml_dom_t *dom);
 hvml_dom_t* hvml_dom_prev(hvml_dom_t *dom);
@@ -78,7 +82,9 @@ hvml_dom_t* hvml_dom_select(hvml_dom_t *dom, const char *selector);
 
 void        hvml_dom_str_serialize(const char *str, size_t len, FILE *out);
 void        hvml_dom_attr_val_serialize(const char *str, size_t len, FILE *out);
-
+void        hvml_dom_attr_set_key(hvml_dom_t *dom, const char *key, size_t key_len);
+void        hvml_dom_attr_set_val(hvml_dom_t *dom, const char *val, size_t val_len);
+void        hvml_dom_set_text(hvml_dom_t *dom, const char *txt, size_t txt_len);
 
 HVML_DOM_TYPE hvml_dom_type(hvml_dom_t *dom);
 const char*   hvml_dom_tag_name(hvml_dom_t *dom);      // tag's name

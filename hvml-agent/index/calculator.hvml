@@ -3,7 +3,7 @@
     <head>
         <title>计算器</title>
 
-        <link rel="stylesheet" href="https://github.com/HVML/hvml-docs/raw/master/zh/calculator.css" />
+        <link rel="stylesheet" href="calculator.css" />
 
         <init as="buttons">
             [
@@ -48,7 +48,7 @@
 
             <div id="c_value">
                 <archetype id="button">
-                    <li class="$?.class">$?.letters</li></li>
+                    <li class="$?.class">$?.letters</li>
                 </archetype>
 
                 <ul>

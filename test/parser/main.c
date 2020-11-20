@@ -123,7 +123,7 @@ static const char* file_ext(const char *file) {
 static int process(FILE *in, const char *ext, hvml_dom_t *hvml) {
     if (strcmp(ext, ".utf8")==0) {
         return process_utf8(in);
-    }else if (strcmp(ext, ".json")==0) {
+    } else if (strcmp(ext, ".json")==0) {
         return process_json(in);
     }else if (strcmp(ext, ".xpath")==0) {
         return process_xpath(in, hvml);
@@ -138,9 +138,11 @@ static int process_hvml(FILE *in) {
     do {
         if (!dom) break;
 
+        A(hvml_dom_type(dom)==MKDOT(D_ROOT), "internal logic error");
         if (with_clone) {
             hvml_dom_t *v = hvml_dom_clone(dom);
             if (!v) break;
+            A(hvml_dom_type(v)==hvml_dom_type(dom), "internal logic error");
             hvml_dom_destroy(dom);
             dom = v;
         }

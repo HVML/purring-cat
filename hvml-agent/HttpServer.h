@@ -51,12 +51,14 @@
 #include "ace/OS_NS_unistd.h"
 #include "ace/streams.h"
 
-class IHttpInfo
+#define ECMO_MESSAGE_LEN_MAX 4096
+class IHttpResponse
 {
 public:
-    IHttpInfo (int port) { listen_port_ = port; };
+    IHttpResponse (int port) { listen_port_ = port; };
 
-    virtual char* GetHttpInfo (int* info_len) = 0;
+    virtual char* GetHttpResponse (int* info_len,
+                                   const char* request) = 0;
 
     int GetListenPort(void) { return listen_port_; };
 
@@ -71,7 +73,7 @@ private:
 class Http_Listener : public ACE_Event_Handler
 {
 public:
-    Http_Listener (IHttpInfo* ihi);
+    Http_Listener (IHttpResponse* ihr);
     virtual ~Http_Listener (void);
 
     ACE_HANDLE get_handle (void) const;
@@ -83,14 +85,14 @@ public:
     ACE_SOCK_Acceptor acceptor_;
 
 private:
-    IHttpInfo* ihi_;
+    IHttpResponse* ihr_;
 };
 
 class Http_Handler : public ACE_Event_Handler
 {
 public:
     /// Default constructor
-    Http_Handler (ACE_SOCK_Stream &s, IHttpInfo* ihi);
+    Http_Handler (ACE_SOCK_Stream &s, IHttpResponse* ihr);
 
     virtual ACE_HANDLE  get_handle (void) const;
     virtual int handle_input (ACE_HANDLE handle);
@@ -100,15 +102,15 @@ public:
     ACE_SOCK_Stream stream_;
 
 private:
-    IHttpInfo* ihi_;
+    IHttpResponse* ihr_;
 };
 
 
-class HttpEcho
+class HttpServer
 {
 public:
-    static void StartServer (IHttpInfo* ihi);
+    static void StartServer (IHttpResponse* ihr);
     static void StopServer (void);
 };
 
-endif //_http_echo_h_
+#endif //_http_echo_h_
