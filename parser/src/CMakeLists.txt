@@ -46,6 +46,7 @@ target_include_directories(hvml_parser_static PUBLIC
 target_include_directories(hvml_parser_static PRIVATE
                            "."
 )
+target_link_libraries(hvml_parser_static PRIVATE m)
 set_target_properties(hvml_parser_static PROPERTIES OUTPUT_NAME hvml_parser)
 
 # shared

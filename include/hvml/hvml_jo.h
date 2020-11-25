@@ -18,6 +18,8 @@
 #ifndef _hvml_jo_h_
 #define _hvml_jo_h_
 
+#include "hvml/hvml_string.h"
+
 #include <stdint.h>
 #include <stdio.h>
 

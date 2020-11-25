@@ -1,0 +1,582 @@
+==================
+parsing xpath: @[1]: [*] => # of nodes [1]
+0: [Element]
+<hvml target="html" script="python" lang="en">
+    <head>
+        <init as="global">{"locale":"zh_CN"}</init>
+
+        <init as="users">[{"id":"1","avatar":"/img/avatars/1.png","name":"Tom","region":"en_US"},{"id":"2","avatar":"/img/avatars/2.png","name":"Jerry","region":"zh_CN"},0,0,0,-0,-0.1,-0.12,-0.123,-1.23,-1.23e+11,1,12,12,12,12.01,12.012,0.12012]</init>
+
+        <listen on="hibus://system/status" as="systemStatus"/>
+    </head>
+
+    <body>
+        <archetype id="user-item">
+            <li class="user-item" id="user-$?.id" data-value="$?.id" data-region="$?.region">
+                <img class="avatar" src="$?.avatar"/>
+                <span>$?.name</span>
+            </li>
+        </archetype>
+
+        <archedata id="item-user">{"id":"$?.attr.data-value","avatar":"$?.content[0].attr.src","name":"$?.children[1].textContent","region":"$?.attr.data-region"}</archedata>
+
+        <header id="theStatusBar">
+            <img class="mobile-status" src=""/>
+            <span class="mobile-operator"/>
+            <img class="wifi-status" src=""/>
+            <span class="local-time">12:00</span>
+            <img class="battery-status"/>>
+        </header>
+
+        <ul class="user-list">
+            <iterate on="$users" with="#user-item" to="append" by="CLASS: IUser">
+                <nodata>
+                    <img src="wait.png"/>
+                </nodata>
+                <except on="StopIteration">
+                    <p>Bad user data!</p>
+                </except>
+            </iterate>
+        </ul>
+
+        <archetype id="footer-cn">
+            <p><a href="http://www.baidu.com">Baidu</a></p>
+        </archetype>
+
+        <archetype id="footer-tw">
+            <p><a href="http://www.bing.com">Bing</a></p>
+        </archetype>
+
+        <archetype id="footer-def">
+            <p><a href="http://www.google.com">Google</a></p>
+        </archetype>
+
+        <footer id="the-footer">
+            <test on="$global.locale" in="the-footer">
+                <match for="~zh_CN" to="displace" with="#footer-cn" exclusively>
+                </match>
+                <match for="~zh_TW" to="displace" with="#footer-tw" exclusively>
+                </match>
+                <match for="*" to="displace" with="#footer-def">
+                </match>
+                <error on="nodata">
+                    <p>You forget to define the $global variable!</p>
+                </error>
+                <except on="KeyError">
+                    <p>Bad global data!</p>
+                </except>
+                <except on="IdentifierError">
+                    <p>Bad archetype data!</p>
+                </except>
+            </test>
+        </footer>
+
+        <observe on="$systemStatus" for="battery" by="FUNC: on_battery_changed">
+        </observe>
+
+        <observe on=".avatar" for="clicked" by="FUNC: on_avatar_clicked">
+        </observe>
+    </body>
+</hvml>
+==================
+parsing xpath: @[2]: [child::para] => # of nodes [0]
+==================
+parsing xpath: @[3]: [child::*] => # of nodes [1]
+0: [Element]
+<hvml target="html" script="python" lang="en">
+    <head>
+        <init as="global">{"locale":"zh_CN"}</init>
+
+        <init as="users">[{"id":"1","avatar":"/img/avatars/1.png","name":"Tom","region":"en_US"},{"id":"2","avatar":"/img/avatars/2.png","name":"Jerry","region":"zh_CN"},0,0,0,-0,-0.1,-0.12,-0.123,-1.23,-1.23e+11,1,12,12,12,12.01,12.012,0.12012]</init>
+
+        <listen on="hibus://system/status" as="systemStatus"/>
+    </head>
+
+    <body>
+        <archetype id="user-item">
+            <li class="user-item" id="user-$?.id" data-value="$?.id" data-region="$?.region">
+                <img class="avatar" src="$?.avatar"/>
+                <span>$?.name</span>
+            </li>
+        </archetype>
+
+        <archedata id="item-user">{"id":"$?.attr.data-value","avatar":"$?.content[0].attr.src","name":"$?.children[1].textContent","region":"$?.attr.data-region"}</archedata>
+
+        <header id="theStatusBar">
+            <img class="mobile-status" src=""/>
+            <span class="mobile-operator"/>
+            <img class="wifi-status" src=""/>
+            <span class="local-time">12:00</span>
+            <img class="battery-status"/>>
+        </header>
+
+        <ul class="user-list">
+            <iterate on="$users" with="#user-item" to="append" by="CLASS: IUser">
+                <nodata>
+                    <img src="wait.png"/>
+                </nodata>
+                <except on="StopIteration">
+                    <p>Bad user data!</p>
+                </except>
+            </iterate>
+        </ul>
+
+        <archetype id="footer-cn">
+            <p><a href="http://www.baidu.com">Baidu</a></p>
+        </archetype>
+
+        <archetype id="footer-tw">
+            <p><a href="http://www.bing.com">Bing</a></p>
+        </archetype>
+
+        <archetype id="footer-def">
+            <p><a href="http://www.google.com">Google</a></p>
+        </archetype>
+
+        <footer id="the-footer">
+            <test on="$global.locale" in="the-footer">
+                <match for="~zh_CN" to="displace" with="#footer-cn" exclusively>
+                </match>
+                <match for="~zh_TW" to="displace" with="#footer-tw" exclusively>
+                </match>
+                <match for="*" to="displace" with="#footer-def">
+                </match>
+                <error on="nodata">
+                    <p>You forget to define the $global variable!</p>
+                </error>
+                <except on="KeyError">
+                    <p>Bad global data!</p>
+                </except>
+                <except on="IdentifierError">
+                    <p>Bad archetype data!</p>
+                </except>
+            </test>
+        </footer>
+
+        <observe on="$systemStatus" for="battery" by="FUNC: on_battery_changed">
+        </observe>
+
+        <observe on=".avatar" for="clicked" by="FUNC: on_avatar_clicked">
+        </observe>
+    </body>
+</hvml>
+==================
+parsing xpath: @[4]: [child::text()] => # of nodes [0]
+==================
+parsing xpath: @[5]: [child::node()] => # of nodes [1]
+0: [Element]
+<hvml target="html" script="python" lang="en">
+    <head>
+        <init as="global">{"locale":"zh_CN"}</init>
+
+        <init as="users">[{"id":"1","avatar":"/img/avatars/1.png","name":"Tom","region":"en_US"},{"id":"2","avatar":"/img/avatars/2.png","name":"Jerry","region":"zh_CN"},0,0,0,-0,-0.1,-0.12,-0.123,-1.23,-1.23e+11,1,12,12,12,12.01,12.012,0.12012]</init>
+
+        <listen on="hibus://system/status" as="systemStatus"/>
+    </head>
+
+    <body>
+        <archetype id="user-item">
+            <li class="user-item" id="user-$?.id" data-value="$?.id" data-region="$?.region">
+                <img class="avatar" src="$?.avatar"/>
+                <span>$?.name</span>
+            </li>
+        </archetype>
+
+        <archedata id="item-user">{"id":"$?.attr.data-value","avatar":"$?.content[0].attr.src","name":"$?.children[1].textContent","region":"$?.attr.data-region"}</archedata>
+
+        <header id="theStatusBar">
+            <img class="mobile-status" src=""/>
+            <span class="mobile-operator"/>
+            <img class="wifi-status" src=""/>
+            <span class="local-time">12:00</span>
+            <img class="battery-status"/>>
+        </header>
+
+        <ul class="user-list">
+            <iterate on="$users" with="#user-item" to="append" by="CLASS: IUser">
+                <nodata>
+                    <img src="wait.png"/>
+                </nodata>
+                <except on="StopIteration">
+                    <p>Bad user data!</p>
+                </except>
+            </iterate>
+        </ul>
+
+        <archetype id="footer-cn">
+            <p><a href="http://www.baidu.com">Baidu</a></p>
+        </archetype>
+
+        <archetype id="footer-tw">
+            <p><a href="http://www.bing.com">Bing</a></p>
+        </archetype>
+
+        <archetype id="footer-def">
+            <p><a href="http://www.google.com">Google</a></p>
+        </archetype>
+
+        <footer id="the-footer">
+            <test on="$global.locale" in="the-footer">
+                <match for="~zh_CN" to="displace" with="#footer-cn" exclusively>
+                </match>
+                <match for="~zh_TW" to="displace" with="#footer-tw" exclusively>
+                </match>
+                <match for="*" to="displace" with="#footer-def">
+                </match>
+                <error on="nodata">
+                    <p>You forget to define the $global variable!</p>
+                </error>
+                <except on="KeyError">
+                    <p>Bad global data!</p>
+                </except>
+                <except on="IdentifierError">
+                    <p>Bad archetype data!</p>
+                </except>
+            </test>
+        </footer>
+
+        <observe on="$systemStatus" for="battery" by="FUNC: on_battery_changed">
+        </observe>
+
+        <observe on=".avatar" for="clicked" by="FUNC: on_avatar_clicked">
+        </observe>
+    </body>
+</hvml>
+==================
+parsing xpath: @[6]: [attribute::name] => # of nodes [0]
+==================
+parsing xpath: @[7]: [attribute::*] => # of nodes [0]
+==================
+parsing xpath: @[8]: [descendant::para] => # of nodes [0]
+==================
+parsing xpath: @[9]: [ancestor::div] => # of nodes [0]
+==================
+parsing xpath: @[10]: [ancestor::mod] => # of nodes [0]
+==================
+parsing xpath: @[11]: [ancestor-or-self::div] => # of nodes [0]
+==================
+parsing xpath: @[12]: [descendant-or-self::para] => # of nodes [0]
+==================
+parsing xpath: @[13]: [self::para] => # of nodes [0]
+==================
+parsing xpath: @[14]: [child::chapter/descendant::para] => # of nodes [0]
+==================
+parsing xpath: @[15]: [child::*/child::para] => # of nodes [0]
+==================
+parsing xpath: @[16]: [/] => # of nodes [1]
+0: [Document]
+<hvml target="html" script="python" lang="en">
+    <head>
+        <init as="global">{"locale":"zh_CN"}</init>
+
+        <init as="users">[{"id":"1","avatar":"/img/avatars/1.png","name":"Tom","region":"en_US"},{"id":"2","avatar":"/img/avatars/2.png","name":"Jerry","region":"zh_CN"},0,0,0,-0,-0.1,-0.12,-0.123,-1.23,-1.23e+11,1,12,12,12,12.01,12.012,0.12012]</init>
+
+        <listen on="hibus://system/status" as="systemStatus"/>
+    </head>
+
+    <body>
+        <archetype id="user-item">
+            <li class="user-item" id="user-$?.id" data-value="$?.id" data-region="$?.region">
+                <img class="avatar" src="$?.avatar"/>
+                <span>$?.name</span>
+            </li>
+        </archetype>
+
+        <archedata id="item-user">{"id":"$?.attr.data-value","avatar":"$?.content[0].attr.src","name":"$?.children[1].textContent","region":"$?.attr.data-region"}</archedata>
+
+        <header id="theStatusBar">
+            <img class="mobile-status" src=""/>
+            <span class="mobile-operator"/>
+            <img class="wifi-status" src=""/>
+            <span class="local-time">12:00</span>
+            <img class="battery-status"/>>
+        </header>
+
+        <ul class="user-list">
+            <iterate on="$users" with="#user-item" to="append" by="CLASS: IUser">
+                <nodata>
+                    <img src="wait.png"/>
+                </nodata>
+                <except on="StopIteration">
+                    <p>Bad user data!</p>
+                </except>
+            </iterate>
+        </ul>
+
+        <archetype id="footer-cn">
+            <p><a href="http://www.baidu.com">Baidu</a></p>
+        </archetype>
+
+        <archetype id="footer-tw">
+            <p><a href="http://www.bing.com">Bing</a></p>
+        </archetype>
+
+        <archetype id="footer-def">
+            <p><a href="http://www.google.com">Google</a></p>
+        </archetype>
+
+        <footer id="the-footer">
+            <test on="$global.locale" in="the-footer">
+                <match for="~zh_CN" to="displace" with="#footer-cn" exclusively>
+                </match>
+                <match for="~zh_TW" to="displace" with="#footer-tw" exclusively>
+                </match>
+                <match for="*" to="displace" with="#footer-def">
+                </match>
+                <error on="nodata">
+                    <p>You forget to define the $global variable!</p>
+                </error>
+                <except on="KeyError">
+                    <p>Bad global data!</p>
+                </except>
+                <except on="IdentifierError">
+                    <p>Bad archetype data!</p>
+                </except>
+            </test>
+        </footer>
+
+        <observe on="$systemStatus" for="battery" by="FUNC: on_battery_changed">
+        </observe>
+
+        <observe on=".avatar" for="clicked" by="FUNC: on_avatar_clicked">
+        </observe>
+    </body>
+</hvml>
+==================
+parsing xpath: @[17]: [/descendant::para] => # of nodes [0]
+==================
+parsing xpath: @[18]: [/descendant::olist/child::item] => # of nodes [0]
+==================
+parsing xpath: @[19]: [child::para[position()=1]] => # of nodes [0]
+==================
+parsing xpath: @[20]: [child::para[position()=last()]] => # of nodes [0]
+==================
+parsing xpath: @[21]: [child::para[position()=last()-1]] => # of nodes [0]
+==================
+parsing xpath: @[22]: [child::para[position()>1]] => # of nodes [0]
+==================
+parsing xpath: @[23]: [following-sibling::chapter[position()=1]] => # of nodes [0]
+==================
+parsing xpath: @[24]: [preceding-sibling::chapter[position()=1]] => # of nodes [0]
+==================
+parsing xpath: @[25]: [/descendant::figure[position()=42]] => # of nodes [0]
+==================
+parsing xpath: @[26]: [/child::doc/child::chapter[position()=5]/child::section[position()=2]] => # of nodes [0]
+==================
+parsing xpath: @[27]: [child::para[attribute::type="warning"]] => # of nodes [0]
+==================
+parsing xpath: @[28]: [child::para[attribute::type='warning'][position()=5]] => # of nodes [0]
+==================
+parsing xpath: @[29]: [child::para[position()=5][attribute::type="warning"]] => # of nodes [0]
+==================
+parsing xpath: @[30]: [child::chapter[child::title='Introduction']] => # of nodes [0]
+==================
+parsing xpath: @[31]: [child::chapter[child::title]] => # of nodes [0]
+==================
+parsing xpath: @[32]: [self::chapter] => # of nodes [0]
+==================
+parsing xpath: @[33]: [self::appendix] => # of nodes [0]
+==================
+parsing xpath: @[34]: [child::*[self::chapter or self::appendix]] => # of nodes [0]
+==================
+parsing xpath: @[35]: [child::*[self::chapter or self::appendix][position()=last()]] => # of nodes [0]
+==================
+parsing xpath: @[37]: [para] => # of nodes [0]
+==================
+parsing xpath: @[38]: [*] => # of nodes [1]
+0: [Element]
+<hvml target="html" script="python" lang="en">
+    <head>
+        <init as="global">{"locale":"zh_CN"}</init>
+
+        <init as="users">[{"id":"1","avatar":"/img/avatars/1.png","name":"Tom","region":"en_US"},{"id":"2","avatar":"/img/avatars/2.png","name":"Jerry","region":"zh_CN"},0,0,0,-0,-0.1,-0.12,-0.123,-1.23,-1.23e+11,1,12,12,12,12.01,12.012,0.12012]</init>
+
+        <listen on="hibus://system/status" as="systemStatus"/>
+    </head>
+
+    <body>
+        <archetype id="user-item">
+            <li class="user-item" id="user-$?.id" data-value="$?.id" data-region="$?.region">
+                <img class="avatar" src="$?.avatar"/>
+                <span>$?.name</span>
+            </li>
+        </archetype>
+
+        <archedata id="item-user">{"id":"$?.attr.data-value","avatar":"$?.content[0].attr.src","name":"$?.children[1].textContent","region":"$?.attr.data-region"}</archedata>
+
+        <header id="theStatusBar">
+            <img class="mobile-status" src=""/>
+            <span class="mobile-operator"/>
+            <img class="wifi-status" src=""/>
+            <span class="local-time">12:00</span>
+            <img class="battery-status"/>>
+        </header>
+
+        <ul class="user-list">
+            <iterate on="$users" with="#user-item" to="append" by="CLASS: IUser">
+                <nodata>
+                    <img src="wait.png"/>
+                </nodata>
+                <except on="StopIteration">
+                    <p>Bad user data!</p>
+                </except>
+            </iterate>
+        </ul>
+
+        <archetype id="footer-cn">
+            <p><a href="http://www.baidu.com">Baidu</a></p>
+        </archetype>
+
+        <archetype id="footer-tw">
+            <p><a href="http://www.bing.com">Bing</a></p>
+        </archetype>
+
+        <archetype id="footer-def">
+            <p><a href="http://www.google.com">Google</a></p>
+        </archetype>
+
+        <footer id="the-footer">
+            <test on="$global.locale" in="the-footer">
+                <match for="~zh_CN" to="displace" with="#footer-cn" exclusively>
+                </match>
+                <match for="~zh_TW" to="displace" with="#footer-tw" exclusively>
+                </match>
+                <match for="*" to="displace" with="#footer-def">
+                </match>
+                <error on="nodata">
+                    <p>You forget to define the $global variable!</p>
+                </error>
+                <except on="KeyError">
+                    <p>Bad global data!</p>
+                </except>
+                <except on="IdentifierError">
+                    <p>Bad archetype data!</p>
+                </except>
+            </test>
+        </footer>
+
+        <observe on="$systemStatus" for="battery" by="FUNC: on_battery_changed">
+        </observe>
+
+        <observe on=".avatar" for="clicked" by="FUNC: on_avatar_clicked">
+        </observe>
+    </body>
+</hvml>
+==================
+parsing xpath: @[39]: [text()] => # of nodes [0]
+==================
+parsing xpath: @[40]: [@name] => # of nodes [0]
+==================
+parsing xpath: @[41]: [@*] => # of nodes [0]
+==================
+parsing xpath: @[42]: [para[1]] => # of nodes [0]
+==================
+parsing xpath: @[43]: [para[last()]] => # of nodes [0]
+==================
+parsing xpath: @[44]: [*/para] => # of nodes [0]
+==================
+parsing xpath: @[45]: [/doc/chapter[5]/section[2]] => # of nodes [0]
+==================
+parsing xpath: @[46]: [chapter//para] => # of nodes [0]
+==================
+parsing xpath: @[47]: [//para] => # of nodes [0]
+==================
+parsing xpath: @[48]: [//olist/item] => # of nodes [0]
+==================
+parsing xpath: @[49]: [.] => # of nodes [1]
+0: [Document]
+<hvml target="html" script="python" lang="en">
+    <head>
+        <init as="global">{"locale":"zh_CN"}</init>
+
+        <init as="users">[{"id":"1","avatar":"/img/avatars/1.png","name":"Tom","region":"en_US"},{"id":"2","avatar":"/img/avatars/2.png","name":"Jerry","region":"zh_CN"},0,0,0,-0,-0.1,-0.12,-0.123,-1.23,-1.23e+11,1,12,12,12,12.01,12.012,0.12012]</init>
+
+        <listen on="hibus://system/status" as="systemStatus"/>
+    </head>
+
+    <body>
+        <archetype id="user-item">
+            <li class="user-item" id="user-$?.id" data-value="$?.id" data-region="$?.region">
+                <img class="avatar" src="$?.avatar"/>
+                <span>$?.name</span>
+            </li>
+        </archetype>
+
+        <archedata id="item-user">{"id":"$?.attr.data-value","avatar":"$?.content[0].attr.src","name":"$?.children[1].textContent","region":"$?.attr.data-region"}</archedata>
+
+        <header id="theStatusBar">
+            <img class="mobile-status" src=""/>
+            <span class="mobile-operator"/>
+            <img class="wifi-status" src=""/>
+            <span class="local-time">12:00</span>
+            <img class="battery-status"/>>
+        </header>
+
+        <ul class="user-list">
+            <iterate on="$users" with="#user-item" to="append" by="CLASS: IUser">
+                <nodata>
+                    <img src="wait.png"/>
+                </nodata>
+                <except on="StopIteration">
+                    <p>Bad user data!</p>
+                </except>
+            </iterate>
+        </ul>
+
+        <archetype id="footer-cn">
+            <p><a href="http://www.baidu.com">Baidu</a></p>
+        </archetype>
+
+        <archetype id="footer-tw">
+            <p><a href="http://www.bing.com">Bing</a></p>
+        </archetype>
+
+        <archetype id="footer-def">
+            <p><a href="http://www.google.com">Google</a></p>
+        </archetype>
+
+        <footer id="the-footer">
+            <test on="$global.locale" in="the-footer">
+                <match for="~zh_CN" to="displace" with="#footer-cn" exclusively>
+                </match>
+                <match for="~zh_TW" to="displace" with="#footer-tw" exclusively>
+                </match>
+                <match for="*" to="displace" with="#footer-def">
+                </match>
+                <error on="nodata">
+                    <p>You forget to define the $global variable!</p>
+                </error>
+                <except on="KeyError">
+                    <p>Bad global data!</p>
+                </except>
+                <except on="IdentifierError">
+                    <p>Bad archetype data!</p>
+                </except>
+            </test>
+        </footer>
+
+        <observe on="$systemStatus" for="battery" by="FUNC: on_battery_changed">
+        </observe>
+
+        <observe on=".avatar" for="clicked" by="FUNC: on_avatar_clicked">
+        </observe>
+    </body>
+</hvml>
+==================
+parsing xpath: @[50]: [.//para] => # of nodes [0]
+==================
+parsing xpath: @[51]: [..] => # of nodes [0]
+==================
+parsing xpath: @[52]: [../@lang] => # of nodes [0]
+==================
+parsing xpath: @[53]: [para[@type="warning"]] => # of nodes [0]
+==================
+parsing xpath: @[54]: [para[@type="warning"][5]] => # of nodes [0]
+==================
+parsing xpath: @[55]: [para[5][@type="warning"]] => # of nodes [0]
+==================
+parsing xpath: @[56]: [chapter[title="Introduction"]] => # of nodes [0]
+==================
+parsing xpath: @[57]: [chapter[title]] => # of nodes [0]
+==================
+parsing xpath: @[58]: [employee[@secretary and @assistant]] => # of nodes [0]

@@ -29,9 +29,9 @@
 
     #include <stdint.h>
     #include <stdio.h>
-    }
+}
 
-    %code provides {
+%code provides {
     #define YYSTYPE       HVML_DOM_XPATH_YYSTYPE
     #define YYLTYPE       HVML_DOM_XPATH_YYLTYPE
 }
@@ -86,6 +86,7 @@
         }
         *expr->left  = *left;
         *expr->right = *right;
+        expr->op = op;
         return 0;
     }
 
@@ -94,7 +95,8 @@
         size_t                 n = steps->nsteps;
         e = (hvml_dom_xpath_step_t*)realloc(e, (n+1)*sizeof(*e));
         if (!e) return -1;
-        e[n] = *step;
+        e[n]    = *step;
+        *step   = null_step;
         steps->steps      = e;
         steps->nsteps    += 1;
         return 0;
@@ -121,16 +123,19 @@
     }
 
     int hvml_dom_xpath_steps_append_slash(hvml_dom_xpath_steps_t *steps) {
-        hvml_dom_xpath_step_t slash = null_step;
-        slash.is_axis = 1;
-        slash.axis.axis = HVML_DOM_XPATH_AXIS_SLASH;
+        hvml_dom_xpath_step_t slash  = null_step;
+        slash.axis                   = HVML_DOM_XPATH_AXIS_SLASH;
+        slash.node_test.is_name_test = 0;
+        slash.node_test.node_type    = HVML_DOM_XPATH_NT_NODE;
         return hvml_dom_xpath_steps_append_step(steps, &slash);
     }
 
     int hvml_dom_xpath_steps_append_slash2(hvml_dom_xpath_steps_t *steps) {
-        hvml_dom_xpath_step_t slash2 = null_step;
-        slash2.is_axis = 1;
-        slash2.axis.axis = HVML_DOM_XPATH_AXIS_SLASH2;
+        hvml_dom_xpath_step_t slash2  = null_step;
+        slash2.axis                   = HVML_DOM_XPATH_AXIS_DESCENDANT_OR_SELF;
+        slash2.node_test              = null_node_test;
+        slash2.node_test.is_name_test = 0;
+        slash2.node_test.node_type    = HVML_DOM_XPATH_NT_NODE;
         return hvml_dom_xpath_steps_append_step(steps, &slash2);
     }
 }
@@ -148,10 +153,6 @@
 %param { void *arg }
 // %parse-param { yyscan_t arg }
 // %lex-param { yyscan_t arg }
-
-// %union {
-//     const char      *cstr;
-// }
 
 %token COLON2 DOT2
 %union { const char *cstr; }
@@ -189,12 +190,12 @@
 %token GTE
 
 %union { char *str; }
-%nterm <str> ncname
-%destructor { D("######################################"); free($$); } <str>
+%nterm <str> ncname literal
+%destructor { free($$); } <str>
 
 %union { hvml_dom_xpath_qname_t qname; }
 %nterm <qname> qname
-%destructor { D("######################################"); hvml_dom_xpath_qname_cleanup(&($$)); } <qname>
+%destructor { hvml_dom_xpath_qname_cleanup(&($$)); } <qname>
 
 %union { HVML_DOM_XPATH_AXIS_TYPE axis; }
 %nterm <axis> axis_name
@@ -211,7 +212,7 @@
 %destructor { hvml_dom_xpath_step_cleanup(&($$)); } <step>
 
 %union { hvml_dom_xpath_steps_t steps; }
-%nterm <steps> location_path relative_location_path absolute_location_path abbreviated_absolute_location_path abbreviated_relative_location_path
+%nterm <steps> location_path relative_location_path absolute_location_path abbreviated_relative_location_path
 %destructor { hvml_dom_xpath_steps_cleanup(&($$)); } <steps>
 
 %union { hvml_dom_xpath_expr_t expr; }
@@ -245,11 +246,8 @@
 %nterm <union_expr> union_expr unary_expr
 %destructor { hvml_dom_xpath_union_expr_cleanup(&($$)); } <union_expr>
 
-// 
-// %union { HVML_DOM_XPATH_ABBREVIATED_STEP_TYPE abbreviated_step; }
-// %nterm <abbreviated_step> abbreviated_step
-
 %left '/' SLASH2
+%left '|'
 %left OR AND
 %left '=' NEQ
 %left '<' '>' LTE GTE
@@ -271,21 +269,38 @@ location_path:
 
 absolute_location_path:
   '/'                                   { $$ = null_steps;
-                                          if (hvml_dom_xpath_steps_append_slash(&($$))) {
+                                          int r = 0;
+                                          do {
+                                              r = hvml_dom_xpath_steps_append_slash(&($$));
+                                          } while (0);
+                                          if (r) {
+                                            hvml_dom_xpath_steps_cleanup(&($$));
                                             YYABORT;
                                           } }
 | '/' relative_location_path            { $$ = null_steps;
-                                          if (hvml_dom_xpath_steps_append_slash(&($$))) {
-                                            hvml_dom_xpath_steps_cleanup(&($2));
-                                            YYABORT;
-                                          }
-                                          if (hvml_dom_xpath_steps_append_steps(&($$), &($2))) {
+                                          int r = 0;
+                                          do {
+                                              r = hvml_dom_xpath_steps_append_slash(&($$));
+                                              if (r) break;
+                                              r = hvml_dom_xpath_steps_append_steps(&($$), &($2));
+                                          } while (0);
+                                          if (r) {
+                                            hvml_dom_xpath_steps_cleanup(&($$));
                                             hvml_dom_xpath_steps_cleanup(&($2));
                                             YYABORT;
                                           } }
-| abbreviated_absolute_location_path    { $$ = null_steps;
-                                          if (hvml_dom_xpath_steps_append_steps(&($$), &($1))) {
-                                            hvml_dom_xpath_steps_cleanup(&($1));
+| SLASH2 relative_location_path         { $$ = null_steps;
+                                          int r = 0;
+                                          do {
+                                              r = hvml_dom_xpath_steps_append_slash(&($$));
+                                              if (r) break;
+                                              r = hvml_dom_xpath_steps_append_slash2(&($$));
+                                              if (r) break;
+                                              r = hvml_dom_xpath_steps_append_steps(&($$), &($2));
+                                          } while (0);
+                                          if (r) {
+                                            hvml_dom_xpath_steps_cleanup(&($$));
+                                            hvml_dom_xpath_steps_cleanup(&($2));
                                             YYABORT;
                                           } }
 ;
@@ -306,18 +321,6 @@ relative_location_path:
 | abbreviated_relative_location_path    { $$ = $1; }
 ;
 
-abbreviated_absolute_location_path:
-  SLASH2 relative_location_path         { $$ = null_steps;
-                                          if (hvml_dom_xpath_steps_append_slash2(&($$))) {
-                                            hvml_dom_xpath_steps_cleanup(&($2));
-                                            YYABORT;
-                                          }
-                                          if (hvml_dom_xpath_steps_append_steps(&($$), &($2))) {
-                                            hvml_dom_xpath_steps_cleanup(&($2));
-                                            YYABORT;
-                                          } }
-;
-
 abbreviated_relative_location_path:
   relative_location_path SLASH2 step    { $$ = null_steps;
                                           if (hvml_dom_xpath_steps_append_slash2(&($1))) {
@@ -334,28 +337,28 @@ abbreviated_relative_location_path:
 ;
 
 step:
-  node_test                             { $$ = null_step; $$.is_axis = 1; $$.axis.axis = HVML_DOM_XPATH_AXIS_UNSPECIFIED; $$.axis.node_test = $1; }
-| node_test predicates                  { $$ = null_step; $$.is_axis = 1;
-                                          $$.axis.axis = HVML_DOM_XPATH_AXIS_UNSPECIFIED; $$.axis.node_test = $1;
-                                          $$.axis.exprs = $2; }
-| axis_name COLON2 node_test            { $$ = null_step; $$.is_axis = 1; $$.axis.axis = $1; $$.axis.node_test = $3; }
-| axis_name COLON2 node_test predicates { $$ = null_step; $$.is_axis = 1; $$.axis.axis = $1; $$.axis.node_test = $3;
-                                          $$.axis.exprs = $4; }
+  node_test                             { $$ = null_step; $$.axis = HVML_DOM_XPATH_AXIS_CHILD; $$.node_test = $1; }
+| node_test predicates                  { $$ = null_step; 
+                                          $$.axis = HVML_DOM_XPATH_AXIS_CHILD; $$.node_test = $1;
+                                          $$.exprs = $2; }
+| axis_name COLON2 node_test            { $$ = null_step; $$.axis = $1; $$.node_test = $3; }
+| axis_name COLON2 node_test predicates { $$ = null_step; $$.axis = $1; $$.node_test = $3;
+                                          $$.exprs = $4; }
 | '@' node_test                         { $$ = null_step;
-                                          if ($2.is_name_test == 0) {
-                                            hvml_dom_xpath_node_test_cleanup(&($2)); YYABORT;
-                                          }
-                                          $$.is_axis = 1; $$.axis.axis = HVML_DOM_XPATH_AXIS_ATTRIBUTE;
-                                          $$.axis.node_test = $2; }
+                                          $$.axis = HVML_DOM_XPATH_AXIS_ATTRIBUTE;
+                                          $$.node_test = $2; }
 | '@' node_test predicates              { $$ = null_step;
-                                          if ($2.is_name_test == 0) {
-                                            hvml_dom_xpath_node_test_cleanup(&($2)); YYABORT;
-                                          }
-                                          $$.is_axis = 1; $$.axis.axis = HVML_DOM_XPATH_AXIS_ATTRIBUTE;
-                                          $$.axis.node_test = $2;
-                                          $$.axis.exprs = $3; }
-| '.'                                   { $$ = null_step; $$.is_axis = 0; $$.abbre = HVML_DOM_XPATH_AS_PARENT; }
-| DOT2                                  { $$ = null_step; $$.is_axis = 0; $$.abbre = HVML_DOM_XPATH_AS_GRANDPARENT; }
+                                          $$.axis = HVML_DOM_XPATH_AXIS_ATTRIBUTE;
+                                          $$.node_test = $2;
+                                          $$.exprs = $3; }
+| '.'                                   { $$ = null_step;
+                                          $$.axis = HVML_DOM_XPATH_AXIS_SELF;
+                                          $$.node_test.is_name_test = 0;
+                                          $$.node_test.node_type = HVML_DOM_XPATH_NT_NODE; }
+| DOT2                                  { $$ = null_step;
+                                          $$.axis = HVML_DOM_XPATH_AXIS_PARENT;
+                                          $$.node_test.is_name_test = 0;
+                                          $$.node_test.node_type = HVML_DOM_XPATH_NT_NODE; }
 ;
 
 axis_name:
@@ -553,23 +556,23 @@ path_expr:
   location_path                             { $$ = null_path_expr; $$.is_location = 1; $$.location = $1; }
 | filter_expr                               { $$ = null_path_expr; $$.filter_expr = $1; }
 | filter_expr '/' relative_location_path    { $$ = null_path_expr; $$.filter_expr = $1;
-                                              if (hvml_dom_xpath_steps_append_slash(&($$.steps))) {
+                                              if (hvml_dom_xpath_steps_append_slash(&($$.location))) {
                                                 hvml_dom_xpath_path_expr_cleanup(&($$));
                                                 hvml_dom_xpath_steps_cleanup(&($3));
                                                 YYABORT;
                                               }
-                                              if (hvml_dom_xpath_steps_append_steps(&($$.steps), &($3))) {
+                                              if (hvml_dom_xpath_steps_append_steps(&($$.location), &($3))) {
                                                 hvml_dom_xpath_path_expr_cleanup(&($$));
                                                 hvml_dom_xpath_steps_cleanup(&($3));
                                                 YYABORT;
                                               } }
 | filter_expr SLASH2 relative_location_path { $$ = null_path_expr; $$.filter_expr = $1;
-                                              if (hvml_dom_xpath_steps_append_slash2(&($$.steps))) {
+                                              if (hvml_dom_xpath_steps_append_slash2(&($$.location))) {
                                                 hvml_dom_xpath_path_expr_cleanup(&($$));
                                                 hvml_dom_xpath_steps_cleanup(&($3));
                                                 YYABORT;
                                               }
-                                              if (hvml_dom_xpath_steps_append_steps(&($$.steps), &($3))) {
+                                              if (hvml_dom_xpath_steps_append_steps(&($$.location), &($3))) {
                                                 hvml_dom_xpath_path_expr_cleanup(&($$));
                                                 hvml_dom_xpath_steps_cleanup(&($3));
                                                 YYABORT;
@@ -587,6 +590,7 @@ filter_expr:
                             exprs[$1.exprs.nexprs] = $2;
                             $$.exprs.exprs   = exprs;
                             $$.exprs.nexprs  = $1.exprs.nexprs + 1;
+                            $$.primary = $1.primary;
                             ok = 1;
                           } while (0);
                           if (!ok) {
@@ -596,17 +600,21 @@ filter_expr:
                           } }
 ;
 
+literal:
+  LITERAL           { $$ = strdup($1); if (!$$) YYABORT; }
+| LITERAL2          { $$ = strdup($1); if (!$$) YYABORT; }
+
 primary_expr:
   '$' qname         { $$ = null_primary; $$.primary_type = HVML_DOM_XPATH_PRIMARY_VARIABLE; $$.variable = $2; }
 | '(' expr ')'      { $$ = null_primary; $$.primary_type = HVML_DOM_XPATH_PRIMARY_EXPR; $$.expr = $2; }
-| '"' LITERAL '"'   { $$ = null_primary; $$.primary_type = HVML_DOM_XPATH_PRIMARY_LITERAL; $$.literal = strdup($2);
-                      if (!($$.literal)) { hvml_dom_xpath_primary_cleanup(&($$)); YYABORT; } }
-| SQ LITERAL2 SQ    { $$ = null_primary; $$.primary_type = HVML_DOM_XPATH_PRIMARY_LITERAL; $$.literal = strdup($2);
-                      if (!($$.literal)) { hvml_dom_xpath_primary_cleanup(&($$)); YYABORT; } }
+| '"' literal '"'   { $$ = null_primary; $$.primary_type = HVML_DOM_XPATH_PRIMARY_LITERAL; $$.literal = $2;
+                      if (!($$.literal)) { hvml_dom_xpath_primary_cleanup(&($$)); free($2); YYABORT; } }
+| SQ literal SQ     { $$ = null_primary; $$.primary_type = HVML_DOM_XPATH_PRIMARY_LITERAL; $$.literal = $2;
+                      if (!($$.literal)) { hvml_dom_xpath_primary_cleanup(&($$)); free($2); YYABORT; } }
 | INTEGER           { $$ = null_primary; int64_t v; sscanf($1, "%" PRId64 "", &v);
-                      $$.primary_type = HVML_DOM_XPATH_PRIMARY_INTEGER; $$.integer = v; }
-| DOUBLE            { $$ = null_primary; double v; sscanf($1, "%lf", &v);
-                      $$.primary_type = HVML_DOM_XPATH_PRIMARY_DOUBLE; $$.dbl = v; }
+                      $$.primary_type = HVML_DOM_XPATH_PRIMARY_NUMBER; $$.ldbl = v; }
+| DOUBLE            { $$ = null_primary; long double v; sscanf($1, "%Lf", &v);
+                      $$.primary_type = HVML_DOM_XPATH_PRIMARY_NUMBER; $$.ldbl = v; }
 | function_call     { $$ = null_primary;
                       $$.primary_type = HVML_DOM_XPATH_PRIMARY_FUNC; $$.func_call = $1; }
 ;

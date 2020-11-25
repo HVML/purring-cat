@@ -25,6 +25,8 @@ void hvml_string_clear(hvml_string_t *str);
 int  hvml_string_push(hvml_string_t *str, const char c);
 int  hvml_string_pop(hvml_string_t *str, char *c);
 
+int  hvml_string_append(hvml_string_t *str, const char *s);
+
 int  hvml_string_get(hvml_string_t *str, char **buf, size_t *len);
 int  hvml_string_set(hvml_string_t *str, const char *buf, size_t len);
 

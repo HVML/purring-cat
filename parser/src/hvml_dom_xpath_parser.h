@@ -34,15 +34,18 @@ typedef enum {
     HVML_DOM_XPATH_OP_AND,
     HVML_DOM_XPATH_OP_EQ,
     HVML_DOM_XPATH_OP_NEQ,
-    HVML_DOM_XPATH_OP_LT,
-    HVML_DOM_XPATH_OP_GT,
-    HVML_DOM_XPATH_OP_LTE,
-    HVML_DOM_XPATH_OP_GTE,
     HVML_DOM_XPATH_OP_PLUS,
     HVML_DOM_XPATH_OP_MINUS,
     HVML_DOM_XPATH_OP_MULTI,
     HVML_DOM_XPATH_OP_DIV,
     HVML_DOM_XPATH_OP_MOD,
+
+    // tricky: left < right  === right > left
+    //         left <= right === right >= left
+    HVML_DOM_XPATH_OP_LT      = 100,
+    HVML_DOM_XPATH_OP_GT      = -HVML_DOM_XPATH_OP_LT,
+    HVML_DOM_XPATH_OP_LTE     = 101,
+    HVML_DOM_XPATH_OP_GTE     = -HVML_DOM_XPATH_OP_LTE
 } HVML_DOM_XPATH_OP_TYPE;
 
 typedef enum {
@@ -62,7 +65,6 @@ typedef enum {
     HVML_DOM_XPATH_AXIS_SELF,
     // extension
     HVML_DOM_XPATH_AXIS_SLASH,  /* "/" */
-    HVML_DOM_XPATH_AXIS_SLASH2  /* "//" */
 } HVML_DOM_XPATH_AXIS_TYPE;
 
 typedef enum {
@@ -75,17 +77,10 @@ typedef enum {
 } HVML_DOM_XPATH_NT_TYPE;
 
 typedef enum {
-    HVML_DOM_XPATH_AS_UNSPECIFIED,
-    HVML_DOM_XPATH_AS_PARENT,
-    HVML_DOM_XPATH_AS_GRANDPARENT
-} HVML_DOM_XPATH_AS_TYPE;
-
-typedef enum {
     HVML_DOM_XPATH_PRIMARY_UNSPECIFIED,
     HVML_DOM_XPATH_PRIMARY_VARIABLE,
     HVML_DOM_XPATH_PRIMARY_EXPR,
-    HVML_DOM_XPATH_PRIMARY_INTEGER,
-    HVML_DOM_XPATH_PRIMARY_DOUBLE,
+    HVML_DOM_XPATH_PRIMARY_NUMBER,
     HVML_DOM_XPATH_PRIMARY_LITERAL,
     HVML_DOM_XPATH_PRIMARY_FUNC
 } HVML_DOM_XPATH_PRIMARY_TYPE;
@@ -98,7 +93,6 @@ typedef enum {
 
 typedef struct hvml_dom_xpath_qname_s          hvml_dom_xpath_qname_t;
 typedef struct hvml_dom_xpath_node_test_s      hvml_dom_xpath_node_test_t;
-typedef struct hvml_dom_xpath_step_axis_s      hvml_dom_xpath_step_axis_t;
 typedef struct hvml_dom_xpath_step_s           hvml_dom_xpath_step_t;
 typedef struct hvml_dom_xpath_steps_s          hvml_dom_xpath_steps_t;
 typedef struct hvml_dom_xpath_func_s           hvml_dom_xpath_func_t;
@@ -128,20 +122,11 @@ struct hvml_dom_xpath_exprs_s {
     size_t                          nexprs;
 };
 
-struct hvml_dom_xpath_step_axis_s {
+struct hvml_dom_xpath_step_s {
     unsigned int is_cleanedup:1;
     HVML_DOM_XPATH_AXIS_TYPE          axis;
     hvml_dom_xpath_node_test_t        node_test;
     hvml_dom_xpath_exprs_t            exprs;
-};
-
-struct hvml_dom_xpath_step_s {
-    unsigned int is_cleanedup:1;
-    unsigned int is_axis:1;
-    union {
-        hvml_dom_xpath_step_axis_t                 axis;
-        HVML_DOM_XPATH_AS_TYPE                     abbre;
-    };
 };
 
 struct hvml_dom_xpath_steps_s {
@@ -160,7 +145,7 @@ struct hvml_dom_xpath_expr_s {
 
     hvml_dom_xpath_union_expr_t    *unary;
 
-    HVML_DOM_XPATH_OP_TYPE         op_type;
+    HVML_DOM_XPATH_OP_TYPE         op;
     hvml_dom_xpath_expr_t          *left;
     hvml_dom_xpath_expr_t          *right;
 };
@@ -171,8 +156,7 @@ struct hvml_dom_xpath_primary_s {
     union {
         hvml_dom_xpath_qname_t  variable;
         hvml_dom_xpath_expr_t   expr;
-        int64_t                 integer;
-        double                  dbl;
+        long double             ldbl;
         char                   *literal;
         hvml_dom_xpath_func_t   func_call;
     };
@@ -212,7 +196,6 @@ extern const hvml_dom_xpath_exprs_t           null_exprs;
 
 void hvml_dom_xpath_qname_cleanup(hvml_dom_xpath_qname_t *qname);
 void hvml_dom_xpath_node_test_cleanup(hvml_dom_xpath_node_test_t *node_test);
-void hvml_dom_xpath_step_axis_cleanup(hvml_dom_xpath_step_axis_t *step);
 void hvml_dom_xpath_step_cleanup(hvml_dom_xpath_step_t *step);
 void hvml_dom_xpath_steps_cleanup(hvml_dom_xpath_steps_t *steps);
 void hvml_dom_xpath_func_cleanup(hvml_dom_xpath_func_t *func);
@@ -225,7 +208,6 @@ void hvml_dom_xpath_exprs_cleanup(hvml_dom_xpath_exprs_t *exprs);
 
 void hvml_dom_xpath_qname_destroy(hvml_dom_xpath_qname_t *qname);
 void hvml_dom_xpath_node_test_destroy(hvml_dom_xpath_node_test_t *node_test);
-void hvml_dom_xpath_step_axis_destroy(hvml_dom_xpath_step_axis_t *step);
 void hvml_dom_xpath_step_destroy(hvml_dom_xpath_step_t *step);
 void hvml_dom_xpath_steps_destroy(hvml_dom_xpath_steps_t *steps);
 void hvml_dom_xpath_func_destroy(hvml_dom_xpath_func_t *func);

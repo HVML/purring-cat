@@ -57,23 +57,12 @@ void hvml_dom_xpath_node_test_cleanup(hvml_dom_xpath_node_test_t *node_test) {
     node_test->is_cleanedup = 1;
 }
 
-void hvml_dom_xpath_step_axis_cleanup(hvml_dom_xpath_step_axis_t *step) {
+void hvml_dom_xpath_step_cleanup(hvml_dom_xpath_step_t *step) {
     if (!step) return;
     if (step->is_cleanedup) return;
 
     hvml_dom_xpath_node_test_cleanup(&step->node_test);
     hvml_dom_xpath_exprs_cleanup(&step->exprs);
-
-    step->is_cleanedup = 1;
-}
-
-void hvml_dom_xpath_step_cleanup(hvml_dom_xpath_step_t *step) {
-    if (!step) return;
-    if (step->is_cleanedup) return;
-
-    if (step->is_axis) {
-        hvml_dom_xpath_step_axis_cleanup(&step->axis);
-    }
 
     step->is_cleanedup = 1;
 }
@@ -122,8 +111,7 @@ void hvml_dom_xpath_primary_cleanup(hvml_dom_xpath_primary_t *primary) {
         case HVML_DOM_XPATH_PRIMARY_EXPR: {
             hvml_dom_xpath_expr_cleanup(&primary->expr);
         } break;
-        case HVML_DOM_XPATH_PRIMARY_INTEGER: break;
-        case HVML_DOM_XPATH_PRIMARY_DOUBLE:  break;
+        case HVML_DOM_XPATH_PRIMARY_NUMBER:  break;
         case HVML_DOM_XPATH_PRIMARY_LITERAL: {
             free(primary->literal);
             primary->literal = NULL;
@@ -154,7 +142,7 @@ void hvml_dom_xpath_path_expr_cleanup(hvml_dom_xpath_path_expr_t *path_expr) {
     if (path_expr->is_cleanedup) return;
 
     hvml_dom_xpath_filter_expr_cleanup(&path_expr->filter_expr);
-    hvml_dom_xpath_steps_cleanup(&path_expr->steps);
+    hvml_dom_xpath_steps_cleanup(&path_expr->location);
 
     path_expr->is_cleanedup = 1;
 }
@@ -199,14 +187,6 @@ void hvml_dom_xpath_node_test_destroy(hvml_dom_xpath_node_test_t *node_test) {
     hvml_dom_xpath_node_test_cleanup(node_test);
 
     free(node_test);
-}
-
-void hvml_dom_xpath_step_axis_destroy(hvml_dom_xpath_step_axis_t *step) {
-    if (!step) return;
-
-    hvml_dom_xpath_step_axis_cleanup(step);
-
-    free(step);
 }
 
 void hvml_dom_xpath_step_destroy(hvml_dom_xpath_step_t *step) {

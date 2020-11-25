@@ -1,0 +1,89 @@
+//title[@foo="bar"]
+*
+child::para
+child::*
+child::text()
+child::node()
+attribute::name
+attribute::*
+descendant::para
+ancestor::div
+ancestor::mod
+ancestor-or-self::div
+descendant-or-self::para
+self::para
+child::chapter/descendant::para
+child::*/child::para
+/
+/descendant::para
+/descendant::olist/child::item
+child::para[position()=1]
+child::para[position()=last()]
+child::para[position()=last()-1]
+child::para[position()>1]
+following-sibling::chapter[position()=1]
+preceding-sibling::chapter[position()=1]
+/descendant::figure[position()=42]
+/child::doc/child::chapter[position()=5]/child::section[position()=2]
+child::para[attribute::type="warning"]
+child::para[attribute::type='warning'][position()=5]
+child::para[position()=5][attribute::type="warning"]
+child::chapter[child::title='Introduction']
+child::chapter[child::title]
+self::chapter
+self::appendix
+child::*[self::chapter or self::appendix]
+child::*[self::chapter or self::appendix][position()=last()]
+
+para
+*
+text()
+@name
+@*
+para[1]
+para[last()]
+*/para
+/doc/chapter[5]/section[2]
+chapter//para
+//para
+//olist/item
+.
+.//para
+..
+../@lang
+para[@type="warning"]
+para[@type="warning"][5]
+para[5][@type="warning"]
+chapter[title="Introduction"]
+chapter[title]
+employee[@secretary and @assistant]
+
+bookstore/book
+/bookstore/book[1]
+/bookstore/book[1 [9]]
+/bookstore/book[author [9]]
+//book
+//author
+/bookstore/book[* [@foo]]
+/bookstore/book[title]
+//book[title [2]|author [2]]
+//book[@foo="bar"]
+//title[@foo="bar"]
+//title[@*]
+//book[3]/title
+//book[3]/title/ancestor-or-self::node()
+//book[position()=3]
+//book[position()=last()]
+//book[position()>2]
+//book[position()<3]
+/bookstore/book[3]/following::*
+/bookstore/book[3]/preceding::*
+/bookstore/book[3]/preceding-sibling::*
+/bookstore/book[3]/following-sibling::*
+/bookstore/book[3]/following-sibling::node()
+/bookstore/book[3]/preceding-sibling::node()
+//node()
+/bookstore/book[@id and @category]
+//title[(@foo="bar") [1]]
+//author[position()>2]
+//author[position()=last()]

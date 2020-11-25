@@ -53,6 +53,7 @@ extern const hvml_doms_t null_doms;
 
 int  hvml_doms_append_dom(hvml_doms_t *doms, hvml_dom_t *dom);
 int  hvml_doms_append_doms(hvml_doms_t *doms, hvml_doms_t *in);
+int  hvml_doms_sort(hvml_doms_t *doms, hvml_doms_t *in);
 void hvml_doms_cleanup(hvml_doms_t *doms);
 
 
@@ -80,8 +81,8 @@ void        hvml_dom_detach(hvml_dom_t *dom);
 
 hvml_dom_t* hvml_dom_select(hvml_dom_t *dom, const char *selector);
 
-void        hvml_dom_str_serialize(const char *str, size_t len, FILE *out);
-void        hvml_dom_attr_val_serialize(const char *str, size_t len, FILE *out);
+void        hvml_dom_str_serialize_stream(const char *str, size_t len, FILE *out);
+void        hvml_dom_attr_val_serialize_stream(const char *str, size_t len, FILE *out);
 void        hvml_dom_attr_set_key(hvml_dom_t *dom, const char *key, size_t key_len);
 void        hvml_dom_attr_set_val(hvml_dom_t *dom, const char *val, size_t val_len);
 void        hvml_dom_set_text(hvml_dom_t *dom, const char *txt, size_t txt_len);
@@ -93,6 +94,7 @@ const char*   hvml_dom_attr_val(hvml_dom_t *dom);      // attr's val
 const char*   hvml_dom_text(hvml_dom_t *dom);          // elementText
 hvml_jo_value_t* hvml_dom_jo(hvml_dom_t *dom);         // elementJson
 
+int hvml_dom_position(hvml_dom_t *dom);
 
 // tag_open_close: 1-open, 2-single-close, 3-half-close, 4-close
 typedef void (*hvml_dom_traverse_cb)(hvml_dom_t *dom, int lvl, int tag_open_close, void *arg, int *breakout);
@@ -112,6 +114,9 @@ hvml_dom_t*       hvml_dom_gen_parse_end(hvml_dom_gen_t *gen);
 
 hvml_dom_t*       hvml_dom_load_from_stream(FILE *in);
 
+// https://www.w3.org/TR/1999/REC-xpath-19991116/
+// https://www.freeformatter.com/xpath-tester.html#ad-output
+// xpath'y query
 int hvml_dom_query(hvml_dom_t *dom, const char *path, hvml_doms_t *doms);
 
 #ifdef __cplusplus

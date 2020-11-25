@@ -24,6 +24,7 @@
 #include "hvml/hvml_printf.h"
 #include "hvml/hvml_utf8.h"
 
+#include <ctype.h>
 #include <inttypes.h>
 #include <stdio.h>
 #include <string.h>
@@ -239,14 +240,38 @@ static int process_xpath(FILE *in, hvml_dom_t *hvml) {
         if (len<0) break;
         ++i;
         if (len==0) continue;
+        if (line[0]=='#') continue;
         if (line[len-1]=='\n') line[len-1] = '\0';
-        // fprintf(stderr, "[%" PRId64 "]%s\n", len, line);
-        fprintf(stderr, "parsing xpath @[%d]: [%s]\n", i, line);
-        r = hvml_dom_query(hvml, line, NULL);
+        const char *p = line;
+        while (*p && isspace(*p)) ++p;
+        if (strlen(p)==0) continue;
+        fprintf(stderr, "parsing xpath @[%d]: [%s]\n", i, p);
+        hvml_doms_t doms = {0};
+        r = hvml_dom_query(hvml, p, &doms);
         if (r) {
-            fprintf(stderr, "parsing xpathi @[%d]: failed\n", i);
+            fprintf(stderr, "parsing xpath: failed\n");
             break;
         }
+        fprintf(stdout, "==================\n");
+        fprintf(stdout, "parsing xpath: @[%d]: [%s] => # of nodes [%" PRId64 "]\n", i, p, doms.ndoms);
+        for (size_t i=0; i<doms.ndoms; ++i) {
+            hvml_dom_t *d = doms.doms[i];
+            const char *title = 0;
+            switch (hvml_dom_type(d)) {
+                case MKDOT(D_ROOT): title = "Document";   break;
+                case MKDOT(D_TAG):  title = "Element";    break;
+                case MKDOT(D_ATTR): title = "Attribute";  break;
+                case MKDOT(D_TEXT): title = "Text";       break;
+                case MKDOT(D_JSON): title = "Json";       break;
+                default: {
+                    A(0, "internal logic error");
+                } break;
+            }
+            fprintf(stdout, "%" PRId64 ": [%s]\n", i, title);
+            hvml_dom_printf(d, stdout);
+            fprintf(stdout, "\n");
+        }
+        hvml_doms_cleanup(&doms);
     }
 
     if (line) free(line);

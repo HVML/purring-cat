@@ -48,6 +48,21 @@ int hvml_string_pop(hvml_string_t *str, char *c) {
     return 0;
 }
 
+int hvml_string_append(hvml_string_t *str, const char *s) {
+    size_t slen = strlen(s);
+    size_t len  = str->len + slen;
+    if (len<str->len) return -1;
+
+    char *ss    = (char*)realloc(str->str, len+1);
+    if (!ss) return -1;
+
+    strcpy(ss+str->len, s);
+    str->str    = ss;
+    str->len    = len;
+
+    return 0;
+}
+
 int hvml_string_get(hvml_string_t *str, char **buf, size_t *len) {
     if (buf) *buf = str->str;
     if (len) *len = str->len;
@@ -184,3 +199,4 @@ int  hvml_string_is_empty(hvml_string_t *str) {
     if (!str) return -1;
     return (0 == str->len);
 }
+

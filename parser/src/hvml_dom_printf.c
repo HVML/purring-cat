@@ -42,8 +42,10 @@ void hvml_dom_printf(hvml_dom_t *dom, FILE *out) {
 static void traverse_for_printf(hvml_dom_t *dom, int lvl, int tag_open_close, void *arg, int *breakout) {
     dom_printf_t *parg = (dom_printf_t*)arg;
     A(parg, "internal logic error");
+    A(lvl>=0, "internal logic error");
 
     *breakout = 0;
+    parg->lvl = lvl;
 
     switch (hvml_dom_type(dom)) {
         case MKDOT(D_ROOT):
@@ -70,7 +72,6 @@ static void traverse_for_printf(hvml_dom_t *dom, int lvl, int tag_open_close, vo
                     A(0, "internal logic error");
                 } break;
             }
-            parg->lvl = lvl;
         } break;
         case MKDOT(D_ATTR):
         {
@@ -81,20 +82,18 @@ static void traverse_for_printf(hvml_dom_t *dom, int lvl, int tag_open_close, vo
             fprintf(parg->out, "%s", key);
             if (val) {
                 fprintf(parg->out, "=\"");
-                hvml_dom_attr_val_serialize(val, strlen(val), parg->out);
+                hvml_dom_attr_val_serialize_stream(val, strlen(val), parg->out);
                 fprintf(parg->out, "\"");
             }
         } break;
         case MKDOT(D_TEXT):
         {
             const char *text = hvml_dom_text(dom);
-            hvml_dom_str_serialize(text, strlen(text), parg->out);
-            parg->lvl = lvl;
+            hvml_dom_str_serialize_stream(text, strlen(text), parg->out);
         } break;
         case MKDOT(D_JSON):
         {
             hvml_jo_value_printf(hvml_dom_jo(dom), parg->out);
-            parg->lvl = lvl;
         } break;
         default: {
             A(0, "internal logic error");

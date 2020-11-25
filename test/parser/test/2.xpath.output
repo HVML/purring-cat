@@ -1,0 +1,1101 @@
+==================
+parsing xpath: @[1]: [//title[@foo="bar"]] => # of nodes [1]
+0: [Element]
+<title foo="bar" hello="world" lang="en">Everyday Italian</title>
+==================
+parsing xpath: @[2]: [*] => # of nodes [1]
+0: [Element]
+<bookstore>
+<book/>
+<book id="book" category="cooking">
+  <title foo="bar" hello="world" lang="en">Everyday Italian</title>
+  <author>Giada De Laurentiis</author>
+  <year>2005</year>
+  <price>30.00</price>
+  <hello><world/></hello>
+</book>
+
+<book category="children">
+  <title lang="en">Harry Potter</title>
+  <author>J K. Rowling</author>
+  <year>2006</year>
+  <price>29.99</price>
+</book>
+
+<book category="web">
+  <title lang="en">XQuery Kick Start</title>
+  <author>James McGovern</author>
+  <author>Per Bothner</author>
+  <author>Kurt Cagle</author>
+  <author>James Linn</author>
+  <author>Vaidyanathan Nagarajan</author>
+  <year>2003</year>
+  <price>49.99</price>
+</book>
+
+<book category="web">
+  <title lang="en">Learning XML</title>
+  <author>Erik T. Ray</author>
+  <year>2003</year>
+  <price>39.95</price>
+</book>
+
+</bookstore>
+==================
+parsing xpath: @[3]: [child::para] => # of nodes [0]
+==================
+parsing xpath: @[4]: [child::*] => # of nodes [1]
+0: [Element]
+<bookstore>
+<book/>
+<book id="book" category="cooking">
+  <title foo="bar" hello="world" lang="en">Everyday Italian</title>
+  <author>Giada De Laurentiis</author>
+  <year>2005</year>
+  <price>30.00</price>
+  <hello><world/></hello>
+</book>
+
+<book category="children">
+  <title lang="en">Harry Potter</title>
+  <author>J K. Rowling</author>
+  <year>2006</year>
+  <price>29.99</price>
+</book>
+
+<book category="web">
+  <title lang="en">XQuery Kick Start</title>
+  <author>James McGovern</author>
+  <author>Per Bothner</author>
+  <author>Kurt Cagle</author>
+  <author>James Linn</author>
+  <author>Vaidyanathan Nagarajan</author>
+  <year>2003</year>
+  <price>49.99</price>
+</book>
+
+<book category="web">
+  <title lang="en">Learning XML</title>
+  <author>Erik T. Ray</author>
+  <year>2003</year>
+  <price>39.95</price>
+</book>
+
+</bookstore>
+==================
+parsing xpath: @[5]: [child::text()] => # of nodes [0]
+==================
+parsing xpath: @[6]: [child::node()] => # of nodes [1]
+0: [Element]
+<bookstore>
+<book/>
+<book id="book" category="cooking">
+  <title foo="bar" hello="world" lang="en">Everyday Italian</title>
+  <author>Giada De Laurentiis</author>
+  <year>2005</year>
+  <price>30.00</price>
+  <hello><world/></hello>
+</book>
+
+<book category="children">
+  <title lang="en">Harry Potter</title>
+  <author>J K. Rowling</author>
+  <year>2006</year>
+  <price>29.99</price>
+</book>
+
+<book category="web">
+  <title lang="en">XQuery Kick Start</title>
+  <author>James McGovern</author>
+  <author>Per Bothner</author>
+  <author>Kurt Cagle</author>
+  <author>James Linn</author>
+  <author>Vaidyanathan Nagarajan</author>
+  <year>2003</year>
+  <price>49.99</price>
+</book>
+
+<book category="web">
+  <title lang="en">Learning XML</title>
+  <author>Erik T. Ray</author>
+  <year>2003</year>
+  <price>39.95</price>
+</book>
+
+</bookstore>
+==================
+parsing xpath: @[7]: [attribute::name] => # of nodes [0]
+==================
+parsing xpath: @[8]: [attribute::*] => # of nodes [0]
+==================
+parsing xpath: @[9]: [descendant::para] => # of nodes [0]
+==================
+parsing xpath: @[10]: [ancestor::div] => # of nodes [0]
+==================
+parsing xpath: @[11]: [ancestor::mod] => # of nodes [0]
+==================
+parsing xpath: @[12]: [ancestor-or-self::div] => # of nodes [0]
+==================
+parsing xpath: @[13]: [descendant-or-self::para] => # of nodes [0]
+==================
+parsing xpath: @[14]: [self::para] => # of nodes [0]
+==================
+parsing xpath: @[15]: [child::chapter/descendant::para] => # of nodes [0]
+==================
+parsing xpath: @[16]: [child::*/child::para] => # of nodes [0]
+==================
+parsing xpath: @[17]: [/] => # of nodes [1]
+0: [Document]
+<bookstore>
+<book/>
+<book id="book" category="cooking">
+  <title foo="bar" hello="world" lang="en">Everyday Italian</title>
+  <author>Giada De Laurentiis</author>
+  <year>2005</year>
+  <price>30.00</price>
+  <hello><world/></hello>
+</book>
+
+<book category="children">
+  <title lang="en">Harry Potter</title>
+  <author>J K. Rowling</author>
+  <year>2006</year>
+  <price>29.99</price>
+</book>
+
+<book category="web">
+  <title lang="en">XQuery Kick Start</title>
+  <author>James McGovern</author>
+  <author>Per Bothner</author>
+  <author>Kurt Cagle</author>
+  <author>James Linn</author>
+  <author>Vaidyanathan Nagarajan</author>
+  <year>2003</year>
+  <price>49.99</price>
+</book>
+
+<book category="web">
+  <title lang="en">Learning XML</title>
+  <author>Erik T. Ray</author>
+  <year>2003</year>
+  <price>39.95</price>
+</book>
+
+</bookstore>
+==================
+parsing xpath: @[18]: [/descendant::para] => # of nodes [0]
+==================
+parsing xpath: @[19]: [/descendant::olist/child::item] => # of nodes [0]
+==================
+parsing xpath: @[20]: [child::para[position()=1]] => # of nodes [0]
+==================
+parsing xpath: @[21]: [child::para[position()=last()]] => # of nodes [0]
+==================
+parsing xpath: @[22]: [child::para[position()=last()-1]] => # of nodes [0]
+==================
+parsing xpath: @[23]: [child::para[position()>1]] => # of nodes [0]
+==================
+parsing xpath: @[24]: [following-sibling::chapter[position()=1]] => # of nodes [0]
+==================
+parsing xpath: @[25]: [preceding-sibling::chapter[position()=1]] => # of nodes [0]
+==================
+parsing xpath: @[26]: [/descendant::figure[position()=42]] => # of nodes [0]
+==================
+parsing xpath: @[27]: [/child::doc/child::chapter[position()=5]/child::section[position()=2]] => # of nodes [0]
+==================
+parsing xpath: @[28]: [child::para[attribute::type="warning"]] => # of nodes [0]
+==================
+parsing xpath: @[29]: [child::para[attribute::type='warning'][position()=5]] => # of nodes [0]
+==================
+parsing xpath: @[30]: [child::para[position()=5][attribute::type="warning"]] => # of nodes [0]
+==================
+parsing xpath: @[31]: [child::chapter[child::title='Introduction']] => # of nodes [0]
+==================
+parsing xpath: @[32]: [child::chapter[child::title]] => # of nodes [0]
+==================
+parsing xpath: @[33]: [self::chapter] => # of nodes [0]
+==================
+parsing xpath: @[34]: [self::appendix] => # of nodes [0]
+==================
+parsing xpath: @[35]: [child::*[self::chapter or self::appendix]] => # of nodes [0]
+==================
+parsing xpath: @[36]: [child::*[self::chapter or self::appendix][position()=last()]] => # of nodes [0]
+==================
+parsing xpath: @[38]: [para] => # of nodes [0]
+==================
+parsing xpath: @[39]: [*] => # of nodes [1]
+0: [Element]
+<bookstore>
+<book/>
+<book id="book" category="cooking">
+  <title foo="bar" hello="world" lang="en">Everyday Italian</title>
+  <author>Giada De Laurentiis</author>
+  <year>2005</year>
+  <price>30.00</price>
+  <hello><world/></hello>
+</book>
+
+<book category="children">
+  <title lang="en">Harry Potter</title>
+  <author>J K. Rowling</author>
+  <year>2006</year>
+  <price>29.99</price>
+</book>
+
+<book category="web">
+  <title lang="en">XQuery Kick Start</title>
+  <author>James McGovern</author>
+  <author>Per Bothner</author>
+  <author>Kurt Cagle</author>
+  <author>James Linn</author>
+  <author>Vaidyanathan Nagarajan</author>
+  <year>2003</year>
+  <price>49.99</price>
+</book>
+
+<book category="web">
+  <title lang="en">Learning XML</title>
+  <author>Erik T. Ray</author>
+  <year>2003</year>
+  <price>39.95</price>
+</book>
+
+</bookstore>
+==================
+parsing xpath: @[40]: [text()] => # of nodes [0]
+==================
+parsing xpath: @[41]: [@name] => # of nodes [0]
+==================
+parsing xpath: @[42]: [@*] => # of nodes [0]
+==================
+parsing xpath: @[43]: [para[1]] => # of nodes [0]
+==================
+parsing xpath: @[44]: [para[last()]] => # of nodes [0]
+==================
+parsing xpath: @[45]: [*/para] => # of nodes [0]
+==================
+parsing xpath: @[46]: [/doc/chapter[5]/section[2]] => # of nodes [0]
+==================
+parsing xpath: @[47]: [chapter//para] => # of nodes [0]
+==================
+parsing xpath: @[48]: [//para] => # of nodes [0]
+==================
+parsing xpath: @[49]: [//olist/item] => # of nodes [0]
+==================
+parsing xpath: @[50]: [.] => # of nodes [1]
+0: [Document]
+<bookstore>
+<book/>
+<book id="book" category="cooking">
+  <title foo="bar" hello="world" lang="en">Everyday Italian</title>
+  <author>Giada De Laurentiis</author>
+  <year>2005</year>
+  <price>30.00</price>
+  <hello><world/></hello>
+</book>
+
+<book category="children">
+  <title lang="en">Harry Potter</title>
+  <author>J K. Rowling</author>
+  <year>2006</year>
+  <price>29.99</price>
+</book>
+
+<book category="web">
+  <title lang="en">XQuery Kick Start</title>
+  <author>James McGovern</author>
+  <author>Per Bothner</author>
+  <author>Kurt Cagle</author>
+  <author>James Linn</author>
+  <author>Vaidyanathan Nagarajan</author>
+  <year>2003</year>
+  <price>49.99</price>
+</book>
+
+<book category="web">
+  <title lang="en">Learning XML</title>
+  <author>Erik T. Ray</author>
+  <year>2003</year>
+  <price>39.95</price>
+</book>
+
+</bookstore>
+==================
+parsing xpath: @[51]: [.//para] => # of nodes [0]
+==================
+parsing xpath: @[52]: [..] => # of nodes [0]
+==================
+parsing xpath: @[53]: [../@lang] => # of nodes [0]
+==================
+parsing xpath: @[54]: [para[@type="warning"]] => # of nodes [0]
+==================
+parsing xpath: @[55]: [para[@type="warning"][5]] => # of nodes [0]
+==================
+parsing xpath: @[56]: [para[5][@type="warning"]] => # of nodes [0]
+==================
+parsing xpath: @[57]: [chapter[title="Introduction"]] => # of nodes [0]
+==================
+parsing xpath: @[58]: [chapter[title]] => # of nodes [0]
+==================
+parsing xpath: @[59]: [employee[@secretary and @assistant]] => # of nodes [0]
+==================
+parsing xpath: @[61]: [bookstore/book] => # of nodes [5]
+0: [Element]
+<book/>
+1: [Element]
+<book id="book" category="cooking">
+  <title foo="bar" hello="world" lang="en">Everyday Italian</title>
+  <author>Giada De Laurentiis</author>
+  <year>2005</year>
+  <price>30.00</price>
+  <hello><world/></hello>
+</book>
+2: [Element]
+<book category="children">
+  <title lang="en">Harry Potter</title>
+  <author>J K. Rowling</author>
+  <year>2006</year>
+  <price>29.99</price>
+</book>
+3: [Element]
+<book category="web">
+  <title lang="en">XQuery Kick Start</title>
+  <author>James McGovern</author>
+  <author>Per Bothner</author>
+  <author>Kurt Cagle</author>
+  <author>James Linn</author>
+  <author>Vaidyanathan Nagarajan</author>
+  <year>2003</year>
+  <price>49.99</price>
+</book>
+4: [Element]
+<book category="web">
+  <title lang="en">Learning XML</title>
+  <author>Erik T. Ray</author>
+  <year>2003</year>
+  <price>39.95</price>
+</book>
+==================
+parsing xpath: @[62]: [/bookstore/book[1]] => # of nodes [1]
+0: [Element]
+<book/>
+==================
+parsing xpath: @[63]: [/bookstore/book[1 [9]]] => # of nodes [0]
+==================
+parsing xpath: @[64]: [/bookstore/book[author [9]]] => # of nodes [0]
+==================
+parsing xpath: @[65]: [//book] => # of nodes [5]
+0: [Element]
+<book/>
+1: [Element]
+<book id="book" category="cooking">
+  <title foo="bar" hello="world" lang="en">Everyday Italian</title>
+  <author>Giada De Laurentiis</author>
+  <year>2005</year>
+  <price>30.00</price>
+  <hello><world/></hello>
+</book>
+2: [Element]
+<book category="children">
+  <title lang="en">Harry Potter</title>
+  <author>J K. Rowling</author>
+  <year>2006</year>
+  <price>29.99</price>
+</book>
+3: [Element]
+<book category="web">
+  <title lang="en">XQuery Kick Start</title>
+  <author>James McGovern</author>
+  <author>Per Bothner</author>
+  <author>Kurt Cagle</author>
+  <author>James Linn</author>
+  <author>Vaidyanathan Nagarajan</author>
+  <year>2003</year>
+  <price>49.99</price>
+</book>
+4: [Element]
+<book category="web">
+  <title lang="en">Learning XML</title>
+  <author>Erik T. Ray</author>
+  <year>2003</year>
+  <price>39.95</price>
+</book>
+==================
+parsing xpath: @[66]: [//author] => # of nodes [8]
+0: [Element]
+<author>Giada De Laurentiis</author>
+1: [Element]
+<author>J K. Rowling</author>
+2: [Element]
+<author>James McGovern</author>
+3: [Element]
+<author>Per Bothner</author>
+4: [Element]
+<author>Kurt Cagle</author>
+5: [Element]
+<author>James Linn</author>
+6: [Element]
+<author>Vaidyanathan Nagarajan</author>
+7: [Element]
+<author>Erik T. Ray</author>
+==================
+parsing xpath: @[67]: [/bookstore/book[* [@foo]]] => # of nodes [1]
+0: [Element]
+<book id="book" category="cooking">
+  <title foo="bar" hello="world" lang="en">Everyday Italian</title>
+  <author>Giada De Laurentiis</author>
+  <year>2005</year>
+  <price>30.00</price>
+  <hello><world/></hello>
+</book>
+==================
+parsing xpath: @[68]: [/bookstore/book[title]] => # of nodes [4]
+0: [Element]
+<book id="book" category="cooking">
+  <title foo="bar" hello="world" lang="en">Everyday Italian</title>
+  <author>Giada De Laurentiis</author>
+  <year>2005</year>
+  <price>30.00</price>
+  <hello><world/></hello>
+</book>
+1: [Element]
+<book category="children">
+  <title lang="en">Harry Potter</title>
+  <author>J K. Rowling</author>
+  <year>2006</year>
+  <price>29.99</price>
+</book>
+2: [Element]
+<book category="web">
+  <title lang="en">XQuery Kick Start</title>
+  <author>James McGovern</author>
+  <author>Per Bothner</author>
+  <author>Kurt Cagle</author>
+  <author>James Linn</author>
+  <author>Vaidyanathan Nagarajan</author>
+  <year>2003</year>
+  <price>49.99</price>
+</book>
+3: [Element]
+<book category="web">
+  <title lang="en">Learning XML</title>
+  <author>Erik T. Ray</author>
+  <year>2003</year>
+  <price>39.95</price>
+</book>
+==================
+parsing xpath: @[69]: [//book[title [2]|author [2]]] => # of nodes [1]
+0: [Element]
+<book category="web">
+  <title lang="en">XQuery Kick Start</title>
+  <author>James McGovern</author>
+  <author>Per Bothner</author>
+  <author>Kurt Cagle</author>
+  <author>James Linn</author>
+  <author>Vaidyanathan Nagarajan</author>
+  <year>2003</year>
+  <price>49.99</price>
+</book>
+==================
+parsing xpath: @[70]: [//book[@foo="bar"]] => # of nodes [0]
+==================
+parsing xpath: @[71]: [//title[@foo="bar"]] => # of nodes [1]
+0: [Element]
+<title foo="bar" hello="world" lang="en">Everyday Italian</title>
+==================
+parsing xpath: @[72]: [//title[@*]] => # of nodes [4]
+0: [Element]
+<title foo="bar" hello="world" lang="en">Everyday Italian</title>
+1: [Element]
+<title lang="en">Harry Potter</title>
+2: [Element]
+<title lang="en">XQuery Kick Start</title>
+3: [Element]
+<title lang="en">Learning XML</title>
+==================
+parsing xpath: @[73]: [//book[3]/title] => # of nodes [1]
+0: [Element]
+<title lang="en">Harry Potter</title>
+==================
+parsing xpath: @[74]: [//book[3]/title/ancestor-or-self::node()] => # of nodes [4]
+0: [Document]
+<bookstore>
+<book/>
+<book id="book" category="cooking">
+  <title foo="bar" hello="world" lang="en">Everyday Italian</title>
+  <author>Giada De Laurentiis</author>
+  <year>2005</year>
+  <price>30.00</price>
+  <hello><world/></hello>
+</book>
+
+<book category="children">
+  <title lang="en">Harry Potter</title>
+  <author>J K. Rowling</author>
+  <year>2006</year>
+  <price>29.99</price>
+</book>
+
+<book category="web">
+  <title lang="en">XQuery Kick Start</title>
+  <author>James McGovern</author>
+  <author>Per Bothner</author>
+  <author>Kurt Cagle</author>
+  <author>James Linn</author>
+  <author>Vaidyanathan Nagarajan</author>
+  <year>2003</year>
+  <price>49.99</price>
+</book>
+
+<book category="web">
+  <title lang="en">Learning XML</title>
+  <author>Erik T. Ray</author>
+  <year>2003</year>
+  <price>39.95</price>
+</book>
+
+</bookstore>
+1: [Element]
+<bookstore>
+<book/>
+<book id="book" category="cooking">
+  <title foo="bar" hello="world" lang="en">Everyday Italian</title>
+  <author>Giada De Laurentiis</author>
+  <year>2005</year>
+  <price>30.00</price>
+  <hello><world/></hello>
+</book>
+
+<book category="children">
+  <title lang="en">Harry Potter</title>
+  <author>J K. Rowling</author>
+  <year>2006</year>
+  <price>29.99</price>
+</book>
+
+<book category="web">
+  <title lang="en">XQuery Kick Start</title>
+  <author>James McGovern</author>
+  <author>Per Bothner</author>
+  <author>Kurt Cagle</author>
+  <author>James Linn</author>
+  <author>Vaidyanathan Nagarajan</author>
+  <year>2003</year>
+  <price>49.99</price>
+</book>
+
+<book category="web">
+  <title lang="en">Learning XML</title>
+  <author>Erik T. Ray</author>
+  <year>2003</year>
+  <price>39.95</price>
+</book>
+
+</bookstore>
+2: [Element]
+<book category="children">
+  <title lang="en">Harry Potter</title>
+  <author>J K. Rowling</author>
+  <year>2006</year>
+  <price>29.99</price>
+</book>
+3: [Element]
+<title lang="en">Harry Potter</title>
+==================
+parsing xpath: @[75]: [//book[position()=3]] => # of nodes [1]
+0: [Element]
+<book category="children">
+  <title lang="en">Harry Potter</title>
+  <author>J K. Rowling</author>
+  <year>2006</year>
+  <price>29.99</price>
+</book>
+==================
+parsing xpath: @[76]: [//book[position()=last()]] => # of nodes [1]
+0: [Element]
+<book category="web">
+  <title lang="en">Learning XML</title>
+  <author>Erik T. Ray</author>
+  <year>2003</year>
+  <price>39.95</price>
+</book>
+==================
+parsing xpath: @[77]: [//book[position()>2]] => # of nodes [3]
+0: [Element]
+<book category="children">
+  <title lang="en">Harry Potter</title>
+  <author>J K. Rowling</author>
+  <year>2006</year>
+  <price>29.99</price>
+</book>
+1: [Element]
+<book category="web">
+  <title lang="en">XQuery Kick Start</title>
+  <author>James McGovern</author>
+  <author>Per Bothner</author>
+  <author>Kurt Cagle</author>
+  <author>James Linn</author>
+  <author>Vaidyanathan Nagarajan</author>
+  <year>2003</year>
+  <price>49.99</price>
+</book>
+2: [Element]
+<book category="web">
+  <title lang="en">Learning XML</title>
+  <author>Erik T. Ray</author>
+  <year>2003</year>
+  <price>39.95</price>
+</book>
+==================
+parsing xpath: @[78]: [//book[position()<3]] => # of nodes [2]
+0: [Element]
+<book/>
+1: [Element]
+<book id="book" category="cooking">
+  <title foo="bar" hello="world" lang="en">Everyday Italian</title>
+  <author>Giada De Laurentiis</author>
+  <year>2005</year>
+  <price>30.00</price>
+  <hello><world/></hello>
+</book>
+==================
+parsing xpath: @[79]: [/bookstore/book[3]/following::*] => # of nodes [14]
+0: [Element]
+<book category="web">
+  <title lang="en">XQuery Kick Start</title>
+  <author>James McGovern</author>
+  <author>Per Bothner</author>
+  <author>Kurt Cagle</author>
+  <author>James Linn</author>
+  <author>Vaidyanathan Nagarajan</author>
+  <year>2003</year>
+  <price>49.99</price>
+</book>
+1: [Element]
+<title lang="en">XQuery Kick Start</title>
+2: [Element]
+<author>James McGovern</author>
+3: [Element]
+<author>Per Bothner</author>
+4: [Element]
+<author>Kurt Cagle</author>
+5: [Element]
+<author>James Linn</author>
+6: [Element]
+<author>Vaidyanathan Nagarajan</author>
+7: [Element]
+<year>2003</year>
+8: [Element]
+<price>49.99</price>
+9: [Element]
+<book category="web">
+  <title lang="en">Learning XML</title>
+  <author>Erik T. Ray</author>
+  <year>2003</year>
+  <price>39.95</price>
+</book>
+10: [Element]
+<title lang="en">Learning XML</title>
+11: [Element]
+<author>Erik T. Ray</author>
+12: [Element]
+<year>2003</year>
+13: [Element]
+<price>39.95</price>
+==================
+parsing xpath: @[80]: [/bookstore/book[3]/preceding::*] => # of nodes [8]
+0: [Element]
+<book/>
+1: [Element]
+<book id="book" category="cooking">
+  <title foo="bar" hello="world" lang="en">Everyday Italian</title>
+  <author>Giada De Laurentiis</author>
+  <year>2005</year>
+  <price>30.00</price>
+  <hello><world/></hello>
+</book>
+2: [Element]
+<title foo="bar" hello="world" lang="en">Everyday Italian</title>
+3: [Element]
+<author>Giada De Laurentiis</author>
+4: [Element]
+<year>2005</year>
+5: [Element]
+<price>30.00</price>
+6: [Element]
+<hello><world/></hello>
+7: [Element]
+<world/>
+==================
+parsing xpath: @[81]: [/bookstore/book[3]/preceding-sibling::*] => # of nodes [2]
+0: [Element]
+<book/>
+1: [Element]
+<book id="book" category="cooking">
+  <title foo="bar" hello="world" lang="en">Everyday Italian</title>
+  <author>Giada De Laurentiis</author>
+  <year>2005</year>
+  <price>30.00</price>
+  <hello><world/></hello>
+</book>
+==================
+parsing xpath: @[82]: [/bookstore/book[3]/following-sibling::*] => # of nodes [2]
+0: [Element]
+<book category="web">
+  <title lang="en">XQuery Kick Start</title>
+  <author>James McGovern</author>
+  <author>Per Bothner</author>
+  <author>Kurt Cagle</author>
+  <author>James Linn</author>
+  <author>Vaidyanathan Nagarajan</author>
+  <year>2003</year>
+  <price>49.99</price>
+</book>
+1: [Element]
+<book category="web">
+  <title lang="en">Learning XML</title>
+  <author>Erik T. Ray</author>
+  <year>2003</year>
+  <price>39.95</price>
+</book>
+==================
+parsing xpath: @[83]: [/bookstore/book[3]/following-sibling::node()] => # of nodes [5]
+0: [Text]
+
+
+
+1: [Element]
+<book category="web">
+  <title lang="en">XQuery Kick Start</title>
+  <author>James McGovern</author>
+  <author>Per Bothner</author>
+  <author>Kurt Cagle</author>
+  <author>James Linn</author>
+  <author>Vaidyanathan Nagarajan</author>
+  <year>2003</year>
+  <price>49.99</price>
+</book>
+2: [Text]
+
+
+
+3: [Element]
+<book category="web">
+  <title lang="en">Learning XML</title>
+  <author>Erik T. Ray</author>
+  <year>2003</year>
+  <price>39.95</price>
+</book>
+4: [Text]
+
+
+
+==================
+parsing xpath: @[84]: [/bookstore/book[3]/preceding-sibling::node()] => # of nodes [5]
+0: [Text]
+
+
+1: [Element]
+<book/>
+2: [Text]
+
+
+3: [Element]
+<book id="book" category="cooking">
+  <title foo="bar" hello="world" lang="en">Everyday Italian</title>
+  <author>Giada De Laurentiis</author>
+  <year>2005</year>
+  <price>30.00</price>
+  <hello><world/></hello>
+</book>
+4: [Text]
+
+
+
+==================
+parsing xpath: @[85]: [//node()] => # of nodes [79]
+0: [Element]
+<bookstore>
+<book/>
+<book id="book" category="cooking">
+  <title foo="bar" hello="world" lang="en">Everyday Italian</title>
+  <author>Giada De Laurentiis</author>
+  <year>2005</year>
+  <price>30.00</price>
+  <hello><world/></hello>
+</book>
+
+<book category="children">
+  <title lang="en">Harry Potter</title>
+  <author>J K. Rowling</author>
+  <year>2006</year>
+  <price>29.99</price>
+</book>
+
+<book category="web">
+  <title lang="en">XQuery Kick Start</title>
+  <author>James McGovern</author>
+  <author>Per Bothner</author>
+  <author>Kurt Cagle</author>
+  <author>James Linn</author>
+  <author>Vaidyanathan Nagarajan</author>
+  <year>2003</year>
+  <price>49.99</price>
+</book>
+
+<book category="web">
+  <title lang="en">Learning XML</title>
+  <author>Erik T. Ray</author>
+  <year>2003</year>
+  <price>39.95</price>
+</book>
+
+</bookstore>
+1: [Text]
+
+
+2: [Element]
+<book/>
+3: [Text]
+
+
+4: [Element]
+<book id="book" category="cooking">
+  <title foo="bar" hello="world" lang="en">Everyday Italian</title>
+  <author>Giada De Laurentiis</author>
+  <year>2005</year>
+  <price>30.00</price>
+  <hello><world/></hello>
+</book>
+5: [Text]
+
+  
+6: [Element]
+<title foo="bar" hello="world" lang="en">Everyday Italian</title>
+7: [Text]
+Everyday Italian
+8: [Text]
+
+  
+9: [Element]
+<author>Giada De Laurentiis</author>
+10: [Text]
+Giada De Laurentiis
+11: [Text]
+
+  
+12: [Element]
+<year>2005</year>
+13: [Text]
+2005
+14: [Text]
+
+  
+15: [Element]
+<price>30.00</price>
+16: [Text]
+30.00
+17: [Text]
+
+  
+18: [Element]
+<hello><world/></hello>
+19: [Element]
+<world/>
+20: [Text]
+
+
+21: [Text]
+
+
+
+22: [Element]
+<book category="children">
+  <title lang="en">Harry Potter</title>
+  <author>J K. Rowling</author>
+  <year>2006</year>
+  <price>29.99</price>
+</book>
+23: [Text]
+
+  
+24: [Element]
+<title lang="en">Harry Potter</title>
+25: [Text]
+Harry Potter
+26: [Text]
+
+  
+27: [Element]
+<author>J K. Rowling</author>
+28: [Text]
+J K. Rowling
+29: [Text]
+
+  
+30: [Element]
+<year>2006</year>
+31: [Text]
+2006
+32: [Text]
+
+  
+33: [Element]
+<price>29.99</price>
+34: [Text]
+29.99
+35: [Text]
+
+
+36: [Text]
+
+
+
+37: [Element]
+<book category="web">
+  <title lang="en">XQuery Kick Start</title>
+  <author>James McGovern</author>
+  <author>Per Bothner</author>
+  <author>Kurt Cagle</author>
+  <author>James Linn</author>
+  <author>Vaidyanathan Nagarajan</author>
+  <year>2003</year>
+  <price>49.99</price>
+</book>
+38: [Text]
+
+  
+39: [Element]
+<title lang="en">XQuery Kick Start</title>
+40: [Text]
+XQuery Kick Start
+41: [Text]
+
+  
+42: [Element]
+<author>James McGovern</author>
+43: [Text]
+James McGovern
+44: [Text]
+
+  
+45: [Element]
+<author>Per Bothner</author>
+46: [Text]
+Per Bothner
+47: [Text]
+
+  
+48: [Element]
+<author>Kurt Cagle</author>
+49: [Text]
+Kurt Cagle
+50: [Text]
+
+  
+51: [Element]
+<author>James Linn</author>
+52: [Text]
+James Linn
+53: [Text]
+
+  
+54: [Element]
+<author>Vaidyanathan Nagarajan</author>
+55: [Text]
+Vaidyanathan Nagarajan
+56: [Text]
+
+  
+57: [Element]
+<year>2003</year>
+58: [Text]
+2003
+59: [Text]
+
+  
+60: [Element]
+<price>49.99</price>
+61: [Text]
+49.99
+62: [Text]
+
+
+63: [Text]
+
+
+
+64: [Element]
+<book category="web">
+  <title lang="en">Learning XML</title>
+  <author>Erik T. Ray</author>
+  <year>2003</year>
+  <price>39.95</price>
+</book>
+65: [Text]
+
+  
+66: [Element]
+<title lang="en">Learning XML</title>
+67: [Text]
+Learning XML
+68: [Text]
+
+  
+69: [Element]
+<author>Erik T. Ray</author>
+70: [Text]
+Erik T. Ray
+71: [Text]
+
+  
+72: [Element]
+<year>2003</year>
+73: [Text]
+2003
+74: [Text]
+
+  
+75: [Element]
+<price>39.95</price>
+76: [Text]
+39.95
+77: [Text]
+
+
+78: [Text]
+
+
+
+==================
+parsing xpath: @[86]: [/bookstore/book[@id and @category]] => # of nodes [1]
+0: [Element]
+<book id="book" category="cooking">
+  <title foo="bar" hello="world" lang="en">Everyday Italian</title>
+  <author>Giada De Laurentiis</author>
+  <year>2005</year>
+  <price>30.00</price>
+  <hello><world/></hello>
+</book>
+==================
+parsing xpath: @[87]: [//title[(@foo="bar") [1]]] => # of nodes [1]
+0: [Element]
+<title foo="bar" hello="world" lang="en">Everyday Italian</title>
+==================
+parsing xpath: @[88]: [//author[position()>2]] => # of nodes [3]
+0: [Element]
+<author>Kurt Cagle</author>
+1: [Element]
+<author>James Linn</author>
+2: [Element]
+<author>Vaidyanathan Nagarajan</author>
+==================
+parsing xpath: @[89]: [//author[position()=last()]] => # of nodes [4]
+0: [Element]
+<author>Giada De Laurentiis</author>
+1: [Element]
+<author>J K. Rowling</author>
+2: [Element]
+<author>Vaidyanathan Nagarajan</author>
+3: [Element]
+<author>Erik T. Ray</author>

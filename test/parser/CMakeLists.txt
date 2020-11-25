@@ -33,5 +33,6 @@ foreach(xpath ${xpaths})
     if ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
         add_test(NAME ${xpath}_v, COMMAND sh -c "valgrind --leak-check=full --show-leak-kinds=all -s ${PROJECT_BINARY_DIR}${relative}/hp ${xpath}")
     endif ()
+    add_test(NAME ${xpath}_diff, COMMAND sh -c "${PROJECT_BINARY_DIR}${relative}/hp ${xpath} | diff - ${xpath}.output")
 endforeach()
 
