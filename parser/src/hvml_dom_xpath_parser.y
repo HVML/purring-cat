@@ -141,7 +141,7 @@
 }
 
 /* Bison declarations. */
-%require "3.4"
+%require "3.0.4"
 %define api.prefix {hvml_dom_xpath_yy}
 %define api.pure full
 %define api.token.prefix {TOK_HVML_DOM_XPATH_}
