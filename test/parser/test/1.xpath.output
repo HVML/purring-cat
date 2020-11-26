@@ -1,7 +1,6 @@
 ==================
 parsing xpath: @[1]: [*] => # of nodes [1]
-0: [Element]
-<hvml target="html" script="python" lang="en">
+0:[Element]=<hvml target="html" script="python" lang="en">
     <head>
         <init as="global">{"locale":"zh_CN"}</init>
 
@@ -82,8 +81,7 @@ parsing xpath: @[1]: [*] => # of nodes [1]
 parsing xpath: @[2]: [child::para] => # of nodes [0]
 ==================
 parsing xpath: @[3]: [child::*] => # of nodes [1]
-0: [Element]
-<hvml target="html" script="python" lang="en">
+0:[Element]=<hvml target="html" script="python" lang="en">
     <head>
         <init as="global">{"locale":"zh_CN"}</init>
 
@@ -164,8 +162,7 @@ parsing xpath: @[3]: [child::*] => # of nodes [1]
 parsing xpath: @[4]: [child::text()] => # of nodes [0]
 ==================
 parsing xpath: @[5]: [child::node()] => # of nodes [1]
-0: [Element]
-<hvml target="html" script="python" lang="en">
+0:[Element]=<hvml target="html" script="python" lang="en">
     <head>
         <init as="global">{"locale":"zh_CN"}</init>
 
@@ -264,8 +261,7 @@ parsing xpath: @[14]: [child::chapter/descendant::para] => # of nodes [0]
 parsing xpath: @[15]: [child::*/child::para] => # of nodes [0]
 ==================
 parsing xpath: @[16]: [/] => # of nodes [1]
-0: [Document]
-<hvml target="html" script="python" lang="en">
+0:[Document]=<hvml target="html" script="python" lang="en">
     <head>
         <init as="global">{"locale":"zh_CN"}</init>
 
@@ -384,8 +380,7 @@ parsing xpath: @[35]: [child::*[self::chapter or self::appendix][position()=last
 parsing xpath: @[37]: [para] => # of nodes [0]
 ==================
 parsing xpath: @[38]: [*] => # of nodes [1]
-0: [Element]
-<hvml target="html" script="python" lang="en">
+0:[Element]=<hvml target="html" script="python" lang="en">
     <head>
         <init as="global">{"locale":"zh_CN"}</init>
 
@@ -484,8 +479,7 @@ parsing xpath: @[47]: [//para] => # of nodes [0]
 parsing xpath: @[48]: [//olist/item] => # of nodes [0]
 ==================
 parsing xpath: @[49]: [.] => # of nodes [1]
-0: [Document]
-<hvml target="html" script="python" lang="en">
+0:[Document]=<hvml target="html" script="python" lang="en">
     <head>
         <init as="global">{"locale":"zh_CN"}</init>
 

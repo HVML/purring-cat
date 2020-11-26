@@ -267,7 +267,7 @@ static int process_xpath(FILE *in, hvml_dom_t *hvml) {
                     A(0, "internal logic error");
                 } break;
             }
-            fprintf(stdout, "%" PRId64 ": [%s]\n", i, title);
+            fprintf(stdout, "%" PRId64 ":[%s]=", i, title);
             hvml_dom_printf(d, stdout);
             fprintf(stdout, "\n");
         }

@@ -53,6 +53,7 @@ extern const hvml_doms_t null_doms;
 
 int  hvml_doms_append_dom(hvml_doms_t *doms, hvml_dom_t *dom);
 int  hvml_doms_append_doms(hvml_doms_t *doms, hvml_doms_t *in);
+int  hvml_doms_reverse(hvml_doms_t *doms);
 int  hvml_doms_sort(hvml_doms_t *doms, hvml_doms_t *in);
 void hvml_doms_cleanup(hvml_doms_t *doms);
 

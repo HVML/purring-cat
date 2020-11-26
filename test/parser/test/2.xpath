@@ -87,3 +87,9 @@ bookstore/book
 //title[(@foo="bar") [1]]
 //author[position()>2]
 //author[position()=last()]
+//author[position()>1][4]
+//book[position()=4]/author[position()=last()]/preceding-sibling::*
+//book[position()=4]/author[position()=last()]/preceding-sibling::*[2]
+//book[position()=4]/author[position()=last()]/preceding::*
+//book[position()=4]/author[position()=last()]/preceding::*[6]
+*
