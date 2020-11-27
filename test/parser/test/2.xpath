@@ -92,3 +92,4 @@ bookstore/book
 //book[position()=4]/author[position()=last()]/preceding-sibling::*[2]
 //book[position()=4]/author[position()=last()]/preceding::*
 //book[position()=4]/author[position()=last()]/preceding::*[6]
+//title[@foo="bar" [1]]

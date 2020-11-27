@@ -973,3 +973,6 @@ parsing xpath: @[93]: [//book[position()=4]/author[position()=last()]/preceding:
 ==================
 parsing xpath: @[94]: [//book[position()=4]/author[position()=last()]/preceding::*[6]] => # of nodes [1]
 0:[Element]=<price>29.99</price>
+==================
+parsing xpath: @[95]: [//title[@foo="bar" [1]]] => # of nodes [1]
+0:[Element]=<title foo="bar" hello="world" lang="en">Everyday Italian</title>
