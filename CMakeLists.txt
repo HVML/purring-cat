@@ -4,7 +4,7 @@ project(hvml)
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED TRUE)
 
-add_custom_target(git-submodules ALL COMMAND git submodule update)
+add_custom_target(git-submodules ALL COMMAND git submodule update --init)
 
 add_subdirectory(third-party)
 add_subdirectory(parser)
