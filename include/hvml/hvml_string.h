@@ -36,8 +36,7 @@ int  hvml_string_append_printf(hvml_string_t *str, const char *fmt, ...)
 __attribute__ ((format (printf, 2, 3)));
 
 
-int  hvml_string_to_int64(const char *s, int64_t *v);
-int  hvml_string_to_double(const char *s, double *v);
+int  hvml_string_to_number(const char *s, long double *v);
 
 int  hvml_string_is_empty(hvml_string_t *str);
 

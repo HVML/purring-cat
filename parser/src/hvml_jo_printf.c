@@ -70,17 +70,11 @@ static int traverse_for_printf(hvml_jo_value_t *jo, int lvl, int action, void *a
             } else if (prev) {
                 fprintf(parg->out, ",");
             }
-            int is_integer;
-            int64_t i;
-            double d;
+            long double d;
             const char *s;
-            A(0==hvml_jo_number_get(jo, &is_integer, &i, &d, &s), "internal logic error");
-            if (is_integer) {
-                fprintf(parg->out, "%" PRId64 "", i);
-            } else {
-                int prec = strlen(s);
-                fprintf(parg->out, "%.*g", prec, d);
-            }
+            A(0==hvml_jo_number_get(jo, &d, &s), "internal logic error");
+            int prec = strlen(s);
+            fprintf(parg->out, "%.*Lg", prec, d);
         } break;
         case MKJOT(J_STRING): {
             A(action==0, "internal logic error");
