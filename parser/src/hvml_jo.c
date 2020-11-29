@@ -63,11 +63,7 @@ struct hvml_jo_false_s { };
 struct hvml_jo_null_s { };
 
 struct hvml_jo_number_s {
-    unsigned int   integer:1;
-    union {
-        int64_t    v_i;
-        double     v_d;
-    };
+    long double    ldbl;
     char          *origin;
 };
 
@@ -151,30 +147,12 @@ hvml_jo_value_t* hvml_jo_null() {
     return jo;
 }
 
-hvml_jo_value_t* hvml_jo_integer(const int64_t v, const char *origin) {
+hvml_jo_value_t* hvml_jo_number(const long double v, const char *origin) {
     hvml_jo_value_t *jo = (hvml_jo_value_t*)calloc(1, sizeof(*jo));
     if (!jo) return NULL;
 
     jo->jot           = MKJOT(J_NUMBER);
-    jo->jnum.integer  = 1;
-    jo->jnum.v_i      = v;
-    jo->jnum.origin   = strdup(origin);
-
-    if (!jo->jnum.origin) {
-        hvml_jo_value_free(jo);
-        return NULL;
-    }
-
-    return jo;
-}
-
-hvml_jo_value_t* hvml_jo_double(const double v, const char *origin) {
-    hvml_jo_value_t *jo = (hvml_jo_value_t*)calloc(1, sizeof(*jo));
-    if (!jo) return NULL;
-
-    jo->jot           = MKJOT(J_NUMBER);
-    jo->jnum.integer  = 0;
-    jo->jnum.v_d      = v;
+    jo->jnum.ldbl     = v;
     jo->jnum.origin   = strdup(origin);
 
     if (!jo->jnum.origin) {
@@ -456,18 +434,13 @@ hvml_jo_value_t* hvml_jo_value_sibling_prev(hvml_jo_value_t *jo) {
     return VAL_PREV(jo);
 }
 
-int hvml_jo_number_get(hvml_jo_value_t *jo, int *is_integer, int64_t *v, double *d, const char **s) {
+int hvml_jo_number_get(hvml_jo_value_t *jo, long double *d, const char **s) {
     if (jo == NULL) return -1;
 
     if (jo->jot!=MKJOT(J_NUMBER)) return -1;
 
-    if (jo->jnum.integer) {
-        if (is_integer) *is_integer = jo->jnum.integer;
-        if (v) *v = jo->jnum.v_i;
-    } else {
-        if (is_integer) *is_integer = jo->jnum.integer;
-        if (d) *d = jo->jnum.v_d;
-    }
+    if (d) *d = jo->jnum.ldbl;
+
     if (s) *s = jo->jnum.origin;
 
     return 0;
@@ -676,16 +649,10 @@ static int traverse_for_clone(hvml_jo_value_t *jo, int lvl, int action, void *ar
         case MKJOT(J_NUMBER): {
             A(action==0, "internal logic error");
 
-            int is_integer;
-            int64_t i;
-            double d;
+            long double d;
             const char *s;
-            A(0==hvml_jo_number_get(jo, &is_integer, &i, &d, &s), "internal logic error");
-            if (is_integer) {
-                v = hvml_jo_integer(i, s);
-            } else {
-                v = hvml_jo_double(d, s);
-            }
+            A(0==hvml_jo_number_get(jo, &d, &s), "internal logic error");
+            v = hvml_jo_number(d, s);
             if (!v) return -1; // out of memory
         } break;
         case MKJOT(J_STRING): {
@@ -811,8 +778,7 @@ static int on_true(void *arg);
 static int on_false(void *arg);
 static int on_null(void *arg);
 static int on_string(void *arg, const char *val, size_t len);
-static int on_integer(void *arg, const char *origin, int64_t val);
-static int on_double(void *arg, const char *origin, double val);
+static int on_number(void *arg, const char *origin, long double val);
 static int on_item_done(void *arg);
 static int on_val_done(void *arg);
 static int on_end(void *arg);
@@ -832,8 +798,7 @@ hvml_jo_gen_t* hvml_jo_gen_create() {
     conf.on_false               = on_false;
     conf.on_null                = on_null;
     conf.on_string              = on_string;
-    conf.on_integer             = on_integer;
-    conf.on_double              = on_double;
+    conf.on_number              = on_number;
     conf.on_item_done           = on_item_done;
     conf.on_val_done            = on_val_done;
     conf.on_end                 = on_end;
@@ -1061,24 +1026,8 @@ static int on_string(void *arg, const char *val, size_t len) {
     return 0;
 }
 
-static int on_integer(void *arg, const char *origin, int64_t val) {
-    hvml_jo_value_t *jo = hvml_jo_integer(val, origin);
-    if (!jo) return -1;
-
-    hvml_jo_gen_t *gen = (hvml_jo_gen_t*)arg;
-
-    if (hvml_jo_value_push(gen->jo, jo)) {
-        hvml_jo_value_free(jo);
-        return -1;
-    }
-
-    gen->jo = jo;
-
-    return 0;
-}
-
-static int on_double(void *arg, const char *origin, double val) {
-    hvml_jo_value_t *jo = hvml_jo_double(val, origin);
+static int on_number(void *arg, const char *origin, long double val) {
+    hvml_jo_value_t *jo = hvml_jo_number(val, origin);
     if (!jo) return -1;
 
     hvml_jo_gen_t *gen = (hvml_jo_gen_t*)arg;

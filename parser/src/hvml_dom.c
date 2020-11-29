@@ -732,8 +732,7 @@ static int on_true(void *arg);
 static int on_false(void *arg);
 static int on_null(void *arg);
 static int on_string(void *arg, const char *val, size_t len);
-static int on_integer(void *arg, const char *origin, int64_t val);
-static int on_double(void *arg, const char *origin, double val);
+static int on_number(void *arg, const char *origin, long double val);
 static int on_end(void *arg);
 
 hvml_dom_gen_t* hvml_dom_gen_create() {
@@ -758,8 +757,7 @@ hvml_dom_gen_t* hvml_dom_gen_create() {
     conf.on_false         = on_false;
     conf.on_null          = on_null;
     conf.on_string        = on_string;
-    conf.on_integer       = on_integer;
-    conf.on_double        = on_double;
+    conf.on_number        = on_number;
     conf.on_end           = on_end;
 
     conf.arg                    = gen;
@@ -1322,7 +1320,7 @@ static int do_hvml_dom_eval_primary(hvml_dom_context_node_t *node, hvml_dom_xpat
         hvml_dom_xpath_qname_t  variable;
         hvml_dom_xpath_expr_t   expr;
         int64_t                 i32;
-        double                  dbl;
+        long double             ldbl;
         char                   *literal;
         hvml_dom_xpath_func_t   func_call;
     };
@@ -1889,7 +1887,6 @@ static int do_hvml_dom_eval_location(hvml_dom_t *dom, hvml_dom_xpath_steps_t *st
 }
 
 static int hvml_dom_string_value(hvml_dom_t *dom, const char **v, int *allocated);
-static void hvml_string_to_number(const char *s, long double *ldbl);
 static int hvml_dom_xpath_eval_to_bool(hvml_dom_xpath_eval_t *ev, int *v);
 static int hvml_dom_xpath_eval_to_number(hvml_dom_xpath_eval_t *ev, long double *v);
 static int hvml_dom_xpath_eval_to_string(hvml_dom_xpath_eval_t *ev, const char **v, int *allocated);
@@ -1960,18 +1957,6 @@ static int hvml_dom_string_value(hvml_dom_t *dom, const char **v, int *allocated
         }
     }
     return collect.failed ? -1 : 0;
-}
-
-static void hvml_string_to_number(const char *s, long double *ldbl) {
-    A(ldbl, "internal logic error");
-    *ldbl = NAN;
-    if (!s) return;
-    int bytes = 0;
-    long double v = 0.;
-    int n = sscanf(s, "%Lf%n", &v, &bytes);
-    if (n!=1) return;
-    if (bytes!=strlen(s) && !isspace(s[bytes])) return;
-    *ldbl = v;
 }
 
 static int hvml_dom_xpath_eval_to_bool(hvml_dom_xpath_eval_t *ev, int *v) {
@@ -2764,29 +2749,8 @@ static int on_string(void *arg, const char *val, size_t len) {
     return 0;
 }
 
-static int on_integer(void *arg, const char *origin, int64_t val) {
-    hvml_jo_value_t *jo = hvml_jo_integer(val, origin);
-    if (!jo) return -1;
-
-    hvml_dom_gen_t *gen = (hvml_dom_gen_t*)arg;
-
-    if (hvml_jo_value_push(gen->jo, jo)) {
-        hvml_jo_value_free(jo);
-        return -1;
-    }
-
-    gen->jo = jo;
-
-    hvml_jo_value_t *parent = hvml_jo_value_parent(gen->jo);
-    if (!parent) return 0;
-
-    gen->jo = parent;
-
-    return 0;
-}
-
-static int on_double(void *arg, const char *origin, double val) {
-    hvml_jo_value_t *jo = hvml_jo_double(val, origin);
+static int on_number(void *arg, const char *origin, long double val) {
+    hvml_jo_value_t *jo = hvml_jo_number(val, origin);
     if (!jo) return -1;
 
     hvml_dom_gen_t *gen = (hvml_dom_gen_t*)arg;

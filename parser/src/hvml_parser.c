@@ -138,8 +138,7 @@ static int on_true(void *arg);
 static int on_false(void *arg);
 static int on_null(void *arg);
 static int on_string(void *arg, const char *val, size_t len);
-static int on_integer(void *arg, const char *origin, int64_t val);
-static int on_double(void *arg, const char *origin, double val);
+static int on_number(void *arg, const char *origin, long double val);
 static int on_end(void *arg);
 
 hvml_parser_t* hvml_parser_create(hvml_parser_conf_t conf) {
@@ -159,8 +158,7 @@ hvml_parser_t* hvml_parser_create(hvml_parser_conf_t conf) {
     jp_conf.on_false            = on_false;
     jp_conf.on_null             = on_null;
     jp_conf.on_string           = on_string;
-    jp_conf.on_integer          = on_integer;
-    jp_conf.on_double           = on_double;
+    jp_conf.on_number           = on_number;
     jp_conf.on_end              = on_end;
 
     parser->jp   = hvml_json_parser_create(jp_conf);
@@ -1180,20 +1178,11 @@ static int on_string(void *arg, const char *val, size_t len) {
     return ret;
 }
 
-static int on_integer(void *arg, const char *origin, int64_t val) {
+static int on_number(void *arg, const char *origin, long double val) {
     hvml_parser_t *parser = (hvml_parser_t*)arg;
     int ret = 0;
-    if (parser->conf.on_integer) {
-        ret = parser->conf.on_integer(parser->conf.arg, origin, val);
-    }
-    return ret;
-}
-
-static int on_double(void *arg, const char *origin, double val) {
-    hvml_parser_t *parser = (hvml_parser_t*)arg;
-    int ret = 0;
-    if (parser->conf.on_double) {
-        ret = parser->conf.on_double(parser->conf.arg, origin, val);
+    if (parser->conf.on_number) {
+        ret = parser->conf.on_number(parser->conf.arg, origin, val);
     }
     return ret;
 }

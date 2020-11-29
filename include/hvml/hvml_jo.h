@@ -50,8 +50,7 @@ typedef struct hvml_jo_gen_s           hvml_jo_gen_t;
 hvml_jo_value_t* hvml_jo_true();
 hvml_jo_value_t* hvml_jo_false();
 hvml_jo_value_t* hvml_jo_null();
-hvml_jo_value_t* hvml_jo_integer(const int64_t v, const char *origin);
-hvml_jo_value_t* hvml_jo_double(const double v, const char *orgin);
+hvml_jo_value_t* hvml_jo_number(const long double v, const char *orgin);
 hvml_jo_value_t* hvml_jo_string(const char *v, size_t len);
 hvml_jo_value_t* hvml_jo_object();
 hvml_jo_value_t* hvml_jo_array();
@@ -86,7 +85,7 @@ hvml_jo_value_t* hvml_jo_value_child(hvml_jo_value_t *jo);
 hvml_jo_value_t* hvml_jo_value_sibling_next(hvml_jo_value_t *jo);
 hvml_jo_value_t* hvml_jo_value_sibling_prev(hvml_jo_value_t *jo);
 
-int hvml_jo_number_get(hvml_jo_value_t *jo, int *is_integer, int64_t *v, double *d, const char **s);
+int hvml_jo_number_get(hvml_jo_value_t *jo, long double *d, const char **s);
 int hvml_jo_string_get(hvml_jo_value_t *jo, const char **s);
 int hvml_jo_kv_get(hvml_jo_value_t *jo, const char **key, hvml_jo_value_t **val);
 
