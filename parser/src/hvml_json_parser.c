@@ -90,29 +90,28 @@ static void                   dump_states(hvml_json_parser_t *parser);
       get_line(parser), get_col(parser),                                    \
       str_state)
 
-#define number_found()                                                                            \
-do {                                                                                              \
-    if ((parser->cache.len==0) ||                                                                 \
-        (parser->cache.str[parser->cache.len-1]=='+') ||                                          \
-        (parser->cache.str[parser->cache.len-1]=='-'))                                            \
-    {                                                                                             \
-        EPARSE();                                                                                 \
-        ret = -1;                                                                                 \
-        break;                                                                                    \
-    }                                                                                             \
-    const char *s = hvml_string_str(&parser->cache);                                              \
-    size_t      l = hvml_string_len(&parser->cache);                                              \
-    long double d = 0;                                                                            \
-        ret = hvml_string_to_number(s, &d);                                                       \
-        if (ret) {                                                                                \
-            EPARSE();                                                                             \
-            ret = -1;                                                                             \
-            break;                                                                                \
-        }                                                                                         \
-        if (parser->conf.on_number) {                                                             \
-            ret = parser->conf.on_number(parser->conf.arg, s, d);                                 \
-        }                                                                                         \
-    hvml_string_reset(&parser->cache);                                                            \
+#define number_found()                                                                        \
+do {                                                                                          \
+    if ((parser->cache.len==0) ||                                                             \
+        (parser->cache.str[parser->cache.len-1]=='+') ||                                      \
+        (parser->cache.str[parser->cache.len-1]=='-'))                                        \
+    {                                                                                         \
+        EPARSE();                                                                             \
+        ret = -1;                                                                             \
+        break;                                                                                \
+    }                                                                                         \
+    const char *s = hvml_string_str(&parser->cache);                                          \
+    long double d = 0;                                                                        \
+    ret = hvml_string_to_number(s, &d);                                                       \
+    if (ret) {                                                                                \
+        EPARSE();                                                                             \
+        ret = -1;                                                                             \
+        break;                                                                                \
+    }                                                                                         \
+    if (parser->conf.on_number) {                                                             \
+        ret = parser->conf.on_number(parser->conf.arg, s, d);                                 \
+    }                                                                                         \
+    hvml_string_reset(&parser->cache);                                                        \
 } while (0)
 
 hvml_json_parser_t* hvml_json_parser_create(hvml_json_parser_conf_t conf) {
