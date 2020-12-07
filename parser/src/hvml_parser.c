@@ -553,6 +553,11 @@ static int hvml_parser_at_str(hvml_parser_t *parser, const char c, const char *s
         {
             hvml_parser_push_state(parser, MKSTATE(ESCAPE));
         } break;
+        case '<':
+        {
+            EPARSE();
+            return -1;
+        } break;
         default:
         {
             string_append(&parser->cache, c);
@@ -576,6 +581,11 @@ static int hvml_parser_at_str1(hvml_parser_t *parser, const char c, const char *
         case '\\':
         {
             hvml_parser_push_state(parser, MKSTATE(ESCAPE));
+        } break;
+        case '<':
+        {
+            EPARSE();
+            return -1;
         } break;
         default:
         {
