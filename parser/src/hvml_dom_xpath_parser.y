@@ -63,17 +63,6 @@
         return 1;
     }
 
-    int hvml_dom_xpath_exprs_append_expr(hvml_dom_xpath_exprs_t *exprs, hvml_dom_xpath_expr_t *expr) {
-        hvml_dom_xpath_expr_t *e = (hvml_dom_xpath_expr_t*)exprs->exprs;
-        size_t                 n = exprs->nexprs;
-        e = (hvml_dom_xpath_expr_t*)realloc(e, (n+1)*sizeof(*e));
-        if (!e) return -1;
-        e[n] = *expr;
-        exprs->exprs   = e;
-        exprs->nexprs += 1;
-        return 0;
-    }
-
     int hvml_dom_xpath_expr_gen(hvml_dom_xpath_expr_t *expr, HVML_DOM_XPATH_OP_TYPE op, hvml_dom_xpath_expr_t *left, hvml_dom_xpath_expr_t *right) {
         A(memcmp(expr, &null_expr, sizeof(null_expr))==0, "internal logic error");
         expr->is_binary_op = 1;

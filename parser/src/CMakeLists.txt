@@ -25,10 +25,39 @@ set(hvml_dom_xpath_src
     ${BISON_hvmlDomXPathParser_OUTPUTS}
 )
 
+set(xpath_src "${CMAKE_CURRENT_SOURCE_DIR}/xpath.g4")
+set(xpath_cpp "${CMAKE_CURRENT_BINARY_DIR}/xpathBaseListener.cpp"
+              "${CMAKE_CURRENT_BINARY_DIR}/xpathBaseVisitor.cpp"
+              "${CMAKE_CURRENT_BINARY_DIR}/xpathLexer.cpp"
+              "${CMAKE_CURRENT_BINARY_DIR}/xpathListener.cpp"
+              "${CMAKE_CURRENT_BINARY_DIR}/xpathParser.cpp"
+              "${CMAKE_CURRENT_BINARY_DIR}/xpathVisitor.cpp")
+set(xpath_h "${CMAKE_CURRENT_BINARY_DIR}/xpathBaseListener.h"
+            "${CMAKE_CURRENT_BINARY_DIR}/xpathBaseVisitor.h"
+            "${CMAKE_CURRENT_BINARY_DIR}/xpathLexer.h"
+            "${CMAKE_CURRENT_BINARY_DIR}/xpathListener.h"
+            "${CMAKE_CURRENT_BINARY_DIR}/xpathParser.h"
+            "${CMAKE_CURRENT_BINARY_DIR}/xpathVisitor.h")
+set(xpath_misc  "${CMAKE_CURRENT_BINARY_DIR}/xpath.interp"
+                "${CMAKE_CURRENT_BINARY_DIR}/xpathLexer.interp"
+                "${CMAKE_CURRENT_BINARY_DIR}/xpathLexer.tokens"
+                "${CMAKE_CURRENT_BINARY_DIR}/xpath.tokens")
+
+set(antlr4_install "${PROJECT_SOURCE_DIR}/third-party/antlr4/runtime/Cpp/build/install")
+set(antlr4_jar "${PROJECT_SOURCE_DIR}/third-party/antlr4/tool/target/antlr4-4.9.1-SNAPSHOT-complete.jar")
+
+add_custom_target(xpath DEPENDS ${xpath_cpp} ${xpath_h} ${xpath_misc})
+add_custom_command(OUTPUT ${xpath_cpp} ${xpath_h} ${xpath_misc}
+    COMMAND java -jar ${antlr4_jar} -Werror -Dlanguage=Cpp -listener -visitor
+            -o ${CMAKE_CURRENT_BINARY_DIR} ${xpath_src}
+    DEPENDS ${xpath_src})
+
+
 set(hvml_parser_src
     hvml_dom.c
     hvml_dom_printf.c
     hvml_dom_xpath_parser.c
+    hvml_dom_xpath_qry.cpp
     hvml_jo.c
     hvml_jo_printf.c
     hvml_json_parser.c
@@ -36,25 +65,27 @@ set(hvml_parser_src
     hvml_parser.c
     hvml_string.c
     hvml_utf8.c
+    ${xpath_cpp}
+    xpathDomVisitor.cpp
 )
 
 # static
 add_library(hvml_parser_static STATIC ${hvml_parser_src} ${hvml_dom_xpath_src})
-target_include_directories(hvml_parser_static PUBLIC
-                           "${PROJECT_SOURCE_DIR}/include"
-)
-target_include_directories(hvml_parser_static PRIVATE
-                           "."
-)
-target_link_libraries(hvml_parser_static PRIVATE m)
+target_include_directories(hvml_parser_static PUBLIC "${PROJECT_SOURCE_DIR}/include")
+target_include_directories(hvml_parser_static PRIVATE ".")
+target_include_directories(hvml_parser_static PRIVATE "${antlr4_install}/include/antlr4-runtime")
+target_include_directories(hvml_parser_static PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
+target_link_libraries(hvml_parser_static "${antlr4_install}/lib/libantlr4-runtime.a")
 set_target_properties(hvml_parser_static PROPERTIES OUTPUT_NAME hvml_parser)
+add_dependencies(hvml_parser_static xpath)
 
 # shared
 add_library(hvml_parser SHARED ${hvml_parser_src} ${hvml_dom_xpath_src})
-target_include_directories(hvml_parser PUBLIC
-                           "${PROJECT_SOURCE_DIR}/include"
-)
-target_include_directories(hvml_parser PRIVATE
-                           "."
-)
+target_include_directories(hvml_parser PUBLIC "${PROJECT_SOURCE_DIR}/include")
+target_include_directories(hvml_parser PRIVATE ".")
+target_include_directories(hvml_parser PRIVATE "${antlr4_install}/include/antlr4-runtime")
+target_include_directories(hvml_parser PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
+target_link_directories(hvml_parser PRIVATE "${antlr4_install}/lib")
+target_link_libraries(hvml_parser PRIVATE antlr4-runtime)
+add_dependencies(hvml_parser xpath)
 

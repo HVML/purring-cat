@@ -976,3 +976,27 @@ parsing xpath: @[94]: [//book[position()=4]/author[position()=last()]/preceding:
 ==================
 parsing xpath: @[95]: [//title[@foo="bar" [1]]] => # of nodes [1]
 0:[Element]=<title foo="bar" hello="world" lang="en">Everyday Italian</title>
+==================
+parsing xpath: @[96]: [//attribute::*] => # of nodes [11]
+0:[Attribute]= id="book"
+1:[Attribute]= category="cooking"
+2:[Attribute]= foo="bar"
+3:[Attribute]= hello="world"
+4:[Attribute]= lang="en"
+5:[Attribute]= category="children"
+6:[Attribute]= lang="en"
+7:[Attribute]= category="web"
+8:[Attribute]= lang="en"
+9:[Attribute]= category="web"
+10:[Attribute]= lang="en"
+==================
+parsing xpath: @[97]: [//book[5]/preceding::node()[position()>=5 and position()<=8]] => # of nodes [4]
+0:[Text]=
+  
+1:[Element]=<year>2003</year>
+2:[Text]=2003
+3:[Text]=
+  
+==================
+parsing xpath: @[98]: [//book[5]/preceding::node()[position()>=5 and position()<=8][2]] => # of nodes [1]
+0:[Text]=2003

@@ -1,8 +1,9 @@
-cmake_minimum_required(VERSION 3.14)
+cmake_minimum_required(VERSION 3.16)
 project(hvml)
 
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED TRUE)
+set(CMAKE_CXX_STANDARD 11)
 
 option(UPDATE_SUBMODULES
        "if you don't wanna update submodules, set -DUPDATE_SUBMODULES=OFF"
@@ -11,7 +12,6 @@ option(UPDATE_SUBMODULES
 if(UPDATE_SUBMODULES)
     add_custom_target(git-submodules ALL
         COMMAND git submodule update --init)
-
 endif()
 
 add_subdirectory(third-party)

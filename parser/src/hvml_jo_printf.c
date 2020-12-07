@@ -19,6 +19,7 @@
 
 #include "hvml/hvml_log.h"
 #include "hvml/hvml_json_parser.h"
+#include "hvml/hvml_string.h"
 
 #include <inttypes.h>
 #include <stdio.h>
@@ -26,81 +27,90 @@
 
 typedef struct jo_value_printf_s        jo_value_printf_t;
 struct jo_value_printf_s {
+    unsigned int    failed:1;
     int             lvl;
-    FILE           *out;
+    hvml_stream_t  *stream;
 };
 
 static int traverse_for_printf(hvml_jo_value_t *jo, int lvl, int action, void *arg) {
     jo_value_printf_t *parg = (jo_value_printf_t*)arg;
-    int breakout = 0;
+    if (parg->failed) return -1;
+
     hvml_jo_value_t *parent = hvml_jo_value_owner(jo);
     hvml_jo_value_t *prev   = hvml_jo_value_sibling_prev(jo);
+    int r = 0;
     switch (hvml_jo_value_type(jo)) {
         case MKJOT(J_TRUE): {
             A(action==0, "internal logic error");
             if (parent && hvml_jo_value_type(parent)==MKJOT(J_OBJECT_KV)) {
-                fprintf(parg->out, ":");
+                r = hvml_stream_printf(parg->stream, ":");
             } else if (prev) {
-                fprintf(parg->out, ",");
+                r = hvml_stream_printf(parg->stream, ",");
             }
-            fprintf(parg->out, "true");
+            if (r<0) break;
+            r = hvml_stream_printf(parg->stream, "true");
         } break;
         case MKJOT(J_FALSE): {
             A(action==0, "internal logic error");
             if (parent && hvml_jo_value_type(parent)==MKJOT(J_OBJECT_KV)) {
-                fprintf(parg->out, ":");
+                r = hvml_stream_printf(parg->stream, ":");
             } else if (prev) {
-                fprintf(parg->out, ",");
+                r = hvml_stream_printf(parg->stream, ",");
             }
-            fprintf(parg->out, "false");
+            if (r<0) break;
+            r = hvml_stream_printf(parg->stream, "false");
         } break;
         case MKJOT(J_NULL): {
             A(action==0, "internal logic error");
             if (parent && hvml_jo_value_type(parent)==MKJOT(J_OBJECT_KV)) {
-                fprintf(parg->out, ":");
+                r = hvml_stream_printf(parg->stream, ":");
             } else if (prev) {
-                fprintf(parg->out, ",");
+                r = hvml_stream_printf(parg->stream, ",");
             }
-            fprintf(parg->out, "null");
+            if (r<0) break;
+            r = hvml_stream_printf(parg->stream, "null");
         } break;
         case MKJOT(J_NUMBER): {
             A(action==0, "internal logic error");
             if (parent && hvml_jo_value_type(parent)==MKJOT(J_OBJECT_KV)) {
-                fprintf(parg->out, ":");
+                r = hvml_stream_printf(parg->stream, ":");
             } else if (prev) {
-                fprintf(parg->out, ",");
+                r = hvml_stream_printf(parg->stream, ",");
             }
+            if (r<0) break;
             long double d;
             const char *s;
             A(0==hvml_jo_number_get(jo, &d, &s), "internal logic error");
             int prec = strlen(s);
-            fprintf(parg->out, "%.*Lg", prec, d);
+            r = hvml_stream_printf(parg->stream, "%.*Lg", prec, d);
         } break;
         case MKJOT(J_STRING): {
             A(action==0, "internal logic error");
             if (parent && hvml_jo_value_type(parent)==MKJOT(J_OBJECT_KV)) {
-                fprintf(parg->out, ":");
+                r = hvml_stream_printf(parg->stream, ":");
             } else if (prev) {
-                fprintf(parg->out, ",");
+                r = hvml_stream_printf(parg->stream, ",");
             }
+            if (r<0) break;
             const char *s;
             if (!hvml_jo_string_get(jo, &s)) {
-                hvml_json_str_printf(parg->out, s, s ? strlen(s) : 0);
+                hvml_json_str_serialize(parg->stream, s, s ? strlen(s) : 0);
             }
         } break;
         case MKJOT(J_OBJECT): {
             switch (action) {
                 case 1: {
                     if (parent && hvml_jo_value_type(parent)==MKJOT(J_OBJECT_KV)) {
-                        fprintf(parg->out, ":");
+                        r = hvml_stream_printf(parg->stream, ":");
                     } else if (prev) {
-                        fprintf(parg->out, ",");
+                        r = hvml_stream_printf(parg->stream, ",");
                     }
-                    fprintf(parg->out, "{"); // "}"
+                    if (r<0) break;
+                    r = hvml_stream_printf(parg->stream, "{"); // "}"
                 } break;
                 case -1: {
                     // "{"
-                    fprintf(parg->out, "}");
+                    r = hvml_stream_printf(parg->stream, "}");
                 } break;
                 default: {
                     A(0, "internal logic error");
@@ -111,13 +121,14 @@ static int traverse_for_printf(hvml_jo_value_t *jo, int lvl, int action, void *a
             switch (action) {
                 case 1: {
                     if (prev) {
-                        fprintf(parg->out, ",");
+                        r = hvml_stream_printf(parg->stream, ",");
+                        if (r<0) break;
                     }
                     const char      *key;
                     A(0==hvml_jo_kv_get(jo, &key, NULL), "internal logic error");
                     A(key, "internal logic error");
                     A(parent && hvml_jo_value_type(parent)==MKJOT(J_OBJECT), "internal logic error");
-                    hvml_json_str_printf(parg->out, key, strlen(key));
+                    r = hvml_json_str_serialize(parg->stream, key, strlen(key));
                 } break;
                 case -1: {
                 } break;
@@ -130,15 +141,16 @@ static int traverse_for_printf(hvml_jo_value_t *jo, int lvl, int action, void *a
             switch (action) {
                 case 1: {
                     if (parent && hvml_jo_value_type(parent)==MKJOT(J_OBJECT_KV)) {
-                        fprintf(parg->out, ":");
+                        r = hvml_stream_printf(parg->stream, ":");
                     } else if (prev) {
-                        fprintf(parg->out, ",");
+                        r = hvml_stream_printf(parg->stream, ",");
                     }
-                    fprintf(parg->out, "["); // "]";
+                    if (r<0) break;
+                    r = hvml_stream_printf(parg->stream, "["); // "]";
                 } break;
                 case -1: {
                     // "["
-                    fprintf(parg->out, "]");
+                    r = hvml_stream_printf(parg->stream, "]");
                 } break;
                 default: {
                     A(0, "internal logic error");
@@ -149,14 +161,44 @@ static int traverse_for_printf(hvml_jo_value_t *jo, int lvl, int action, void *a
             A(0, "print json type [%d]: not implemented yet", hvml_jo_value_type(jo));
         } break;
     }
-    return 0;
+    if (r<0) parg->failed = 1;
+    return r<0 ? -1 : 0;
 }
 
-void hvml_jo_value_printf(hvml_jo_value_t *jo, FILE *out) {
+int hvml_jo_value_serialize(hvml_jo_value_t *jo, hvml_stream_t *stream) {
     jo_value_printf_t parg;
-    parg.lvl = -1;
-    parg.out = out;
+    parg.failed    = 0;
+    parg.lvl       = -1;
+    parg.stream    = stream;
+    if (!parg.stream) return -1;
+
     hvml_jo_value_traverse(jo, &parg, traverse_for_printf);
+
+    return parg.failed ? -1 : 0;
 }
 
+int hvml_jo_value_printf(hvml_jo_value_t *jo, FILE *out) {
+    hvml_stream_t *stream = hvml_stream_bind_file(out, 0);
+    if (!stream) return -1;
+
+    int r = hvml_jo_value_serialize(jo, stream);
+
+    hvml_stream_destroy(stream);
+
+    return r;
+}
+
+int hvml_jo_value_serialize_string(hvml_jo_value_t *jo, hvml_string_t *str) {
+    jo_value_printf_t parg;
+    parg.failed    = 0;
+    parg.lvl       = -1;
+    parg.stream    = hvml_stream_bind_string(str);
+    if (!parg.stream) return -1;
+
+    hvml_jo_value_traverse(jo, &parg, traverse_for_printf);
+
+    hvml_stream_destroy(parg.stream);
+
+    return parg.failed ? -1 : 0;
+}
 

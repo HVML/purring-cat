@@ -18,6 +18,7 @@
 #include "hvml/hvml_printf.h"
 
 #include "hvml/hvml_log.h"
+#include "hvml/hvml_string.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -25,18 +26,35 @@
 typedef struct dom_printf_s        dom_printf_t;
 struct dom_printf_s {
     unsigned int    rooted:1;
+    unsigned int    failed:1;
     int             lvl;
-    FILE           *out;
+    hvml_stream_t  *stream;
 };
 
 static void traverse_for_printf(hvml_dom_t *dom, int lvl, int tag_open_close, void *arg, int *breakout);
 
-void hvml_dom_printf(hvml_dom_t *dom, FILE *out) {
+int hvml_dom_serialize(hvml_dom_t *dom, hvml_stream_t *stream) {
     dom_printf_t parg;
-    parg.rooted = 0;
-    parg.lvl = -1;
-    parg.out = out;
+    parg.rooted     = 0;
+    parg.failed     = 0;
+    parg.lvl        = -1;
+    parg.stream     = stream;
+    if (!parg.stream) return -1;
+
     hvml_dom_traverse(dom, &parg, traverse_for_printf);
+
+    return parg.failed ? -1 : 0;
+}
+
+int hvml_dom_printf(hvml_dom_t *dom, FILE *out) {
+    hvml_stream_t *stream = hvml_stream_bind_file(out, 0);
+    if (!stream) return -1;
+
+    int r = hvml_dom_serialize(dom, stream);
+
+    hvml_stream_destroy(stream);
+
+    return r;
 }
 
 static void traverse_for_printf(hvml_dom_t *dom, int lvl, int tag_open_close, void *arg, int *breakout) {
@@ -47,6 +65,7 @@ static void traverse_for_printf(hvml_dom_t *dom, int lvl, int tag_open_close, vo
     *breakout = 0;
     parg->lvl = lvl;
 
+    int r = 0;
     switch (hvml_dom_type(dom)) {
         case MKDOT(D_ROOT):
         {
@@ -57,16 +76,16 @@ static void traverse_for_printf(hvml_dom_t *dom, int lvl, int tag_open_close, vo
         {
             switch (tag_open_close) {
                 case 1: {
-                    fprintf(parg->out, "<%s", hvml_dom_tag_name(dom));
+                    r = hvml_stream_printf(parg->stream, "<%s", hvml_dom_tag_name(dom));
                 } break;
                 case 2: {
-                    fprintf(parg->out, "/>");
+                    r = hvml_stream_printf(parg->stream, "/>");
                 } break;
                 case 3: {
-                    fprintf(parg->out, ">");
+                    r = hvml_stream_printf(parg->stream, ">");
                 } break;
                 case 4: {
-                    fprintf(parg->out, "</%s>", hvml_dom_tag_name(dom));
+                    r = hvml_stream_printf(parg->stream, "</%s>", hvml_dom_tag_name(dom));
                 } break;
                 default: {
                     A(0, "internal logic error");
@@ -78,26 +97,35 @@ static void traverse_for_printf(hvml_dom_t *dom, int lvl, int tag_open_close, vo
             A(parg->lvl >= parg->rooted ? 1 : 0, "internal logic error");
             const char *key = hvml_dom_attr_key(dom);
             const char *val = hvml_dom_attr_val(dom);
-            fprintf(parg->out, " ");
-            fprintf(parg->out, "%s", key);
+            r = hvml_stream_printf(parg->stream, " ");
+            if (r<0) break;
+            r = hvml_stream_printf(parg->stream, "%s", key);
+            if (r<0) break;
             if (val) {
-                fprintf(parg->out, "=\"");
-                hvml_dom_attr_val_serialize_stream(val, strlen(val), parg->out);
-                fprintf(parg->out, "\"");
+                r = hvml_stream_printf(parg->stream, "=\"");
+                if (r<0) break;
+                r = hvml_dom_attr_val_serialize(val, strlen(val), parg->stream);
+                if (r<0) break;
+                r = hvml_stream_printf(parg->stream, "\"");
             }
         } break;
         case MKDOT(D_TEXT):
         {
             const char *text = hvml_dom_text(dom);
-            hvml_dom_str_serialize_stream(text, strlen(text), parg->out);
+            r = hvml_dom_str_serialize(text, strlen(text), parg->stream);
         } break;
         case MKDOT(D_JSON):
         {
-            hvml_jo_value_printf(hvml_dom_jo(dom), parg->out);
+            r = hvml_jo_value_serialize(hvml_dom_jo(dom), parg->stream);
         } break;
         default: {
             A(0, "internal logic error");
         } break;
+    }
+
+    if (r<0) {
+        parg->failed = 1;
+        *breakout = 1;
     }
 }
 

@@ -1,3 +1,20 @@
+// This file is a part of Purring Cat, a reference implementation of HVML.
+//
+// Copyright (C) 2020, <freemine@yeah.net>.
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 #include "hvml/hvml_string.h"
 
 #include "hvml/hvml_log.h"
@@ -149,5 +166,126 @@ int hvml_string_to_number(const char *s, long double *v) {
 int  hvml_string_is_empty(hvml_string_t *str) {
     if (!str) return -1;
     return (0 == str->len);
+}
+
+
+
+
+
+
+
+static int hvml_string_append_vprintf(hvml_string_t *str, size_t total, const char *fmt, va_list ap) {
+    A(str, "internal logic error");
+    A(total>0, "internal logic error");
+
+    char *s = (char*)realloc(str->str, str->len + total + 1);
+    if (!s) return -1;
+
+    int n = vsnprintf(s+str->len, total+1, fmt, ap);
+
+    A(n==total, "internal logic error");
+
+    str->str  = s;
+    str->len += total + 1;
+
+    return str->len;
+}
+
+typedef int (*hvml_stream_vprintf_func)(void *target, size_t total, const char *fmt, va_list ap);
+typedef int (*hvml_stream_destroy_func)(void *target);
+
+struct hvml_stream_s {
+    unsigned int                   sc:1;             // safe check
+    void                          *arg;
+    hvml_stream_vprintf_func       vprintf_func;
+    hvml_stream_destroy_func       destroy_func;
+};
+
+static int call_vfprintf(void *arg, size_t total, const char *fmt, va_list ap) {
+    A(arg, "internal logic error");
+    A(total==0, "internal logic error");
+    FILE *out = (FILE*)arg;
+    return vfprintf(out, fmt, ap);
+}
+
+static int call_hvml_string_append_vprintf(void *arg, size_t total, const char *fmt, va_list ap) {
+    A(arg, "internal logic error");
+    A(total>0, "internal logic error");
+
+    hvml_string_t *str = (hvml_string_t*)arg;
+
+    return hvml_string_append_vprintf(str, total, fmt, ap);
+}
+
+static int call_fclose(void *arg) {
+    A(arg, "internal logic error");
+    FILE *out = (FILE*)arg;
+    return fclose(out);
+}
+
+hvml_stream_t* hvml_stream_bind_file(FILE *out, int take_ownership) {
+    A(out, "internal logic error");
+
+    hvml_stream_t *stream = (hvml_stream_t*)calloc(1, sizeof(*stream));
+    if (!stream) return NULL;
+
+    stream->sc               = 0;
+    stream->arg              = out;
+    stream->vprintf_func     = call_vfprintf;
+    if (!take_ownership) return stream;
+    stream->destroy_func     = call_fclose;
+
+    return stream;
+}
+
+hvml_stream_t* hvml_stream_bind_string(hvml_string_t *str) {
+    A(str, "internal logic error");
+
+    hvml_stream_t *stream = (hvml_stream_t*)calloc(1, sizeof(*stream));
+    if (!stream) return NULL;
+
+    stream->sc               = 1;
+    stream->arg              = str;
+    stream->vprintf_func     = call_hvml_string_append_vprintf;
+
+    return stream;
+}
+
+void hvml_stream_destroy(hvml_stream_t *stream) {
+    if (!stream) return;
+    if (!stream->arg) return;
+
+    if (stream->destroy_func) {
+        stream->destroy_func(stream->arg);
+    }
+    stream->arg           = NULL;
+    stream->vprintf_func  = NULL;
+    stream->destroy_func  = NULL;
+
+    free(stream);
+}
+
+int hvml_stream_printf(hvml_stream_t *stream, const char *fmt, ...) {
+    A(stream, "internal logic error");
+    A(stream->arg, "internal logic error");
+    A(stream->vprintf_func, "internal logic error");
+
+    int n = 0;
+
+    if (stream->sc) {
+        va_list arg;
+        va_start(arg, fmt);
+        n = vsnprintf(NULL, 0, fmt, arg);
+        va_end(arg);
+
+        if (n<=0) return n;
+    }
+
+    va_list arg;
+    va_start(arg, fmt);
+    int r = stream->vprintf_func(stream->arg, n, fmt, arg);
+    va_end(arg);
+
+    return r;
 }
 

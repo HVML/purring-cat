@@ -15,32 +15,41 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-#ifndef _hvml_printf_h_
-#define _hvml_printf_h_
-
 #include "hvml/hvml_dom.h"
-#include "hvml/hvml_jo.h"
-#include "hvml/hvml_string.h"
+#include "hvml/hvml_log.h"
 
-#include <stddef.h>
-#include <stdio.h>
+#include "antlr4-runtime.h"
+#include "xpathLexer.h"
+#include "xpathParser.h"
+#include "xpathDomVisitor.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+using namespace antlr4;
 
-int hvml_dom_serialize(hvml_dom_t *dom, hvml_stream_t *stream);
-int hvml_jo_value_serialize(hvml_jo_value_t *jo, hvml_stream_t *stream);
+int hvml_dom_qry(hvml_dom_t *dom, const char *path, hvml_doms_t *doms) {
+    ANTLRInputStream input(path);
+    xpathLexer lexer(&input);
+    CommonTokenStream tokens(&lexer);
 
-int hvml_dom_printf(hvml_dom_t *dom, FILE *out);
-int hvml_jo_value_printf(hvml_jo_value_t *jo, FILE *out);
+    tokens.fill();
 
-int hvml_dom_serialize_string(hvml_dom_t *dom, hvml_string_t *str);
-int hvml_jo_value_serialize_string(hvml_jo_value_t *jo, hvml_string_t *str);
+    xpathParser parser(&tokens);
+    tree::ParseTree* tree = parser.main();
 
-#ifdef __cplusplus
+    int r = 0;
+    try {
+        do {
+            xpathDomVisitor visitor(dom, 0, 1);
+            xpathNodeset ns = visitor.visit(tree);
+            if (doms) {
+                r = hvml_doms_append_doms(doms, ns.get());
+            }
+        } while (0);
+    } catch (std::exception &e) {
+        D("exception: [%s]", e.what());
+        r = -1;
+        throw;
+    }
+
+    return r ? -1 : 0;
 }
-#endif
-
-#endif // _hvml_printf_h_
 
