@@ -71,7 +71,8 @@
         <observe on="$systemStatus" for="battery" by="FUNC: on_battery_changed">
         </observe>
 
-        <observe on=".avatar" for="clicked" by="FUNC: on_avatar_clicked">
+        <observe on=".avatar" for="clicked" foo="hello&amp;&quot;'&lt;>world" by="FUNC: on_avatar_clicked">
         </observe>
+        &amp;"'&lt;>
     </body>
-</hvml>
+&lt;</hvml>
