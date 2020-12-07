@@ -23,6 +23,7 @@
 #include "hvml/hvml_json_parser.h"
 #include "hvml/hvml_list.h"
 #include "hvml/hvml_parser.h"
+#include "hvml/hvml_printf.h"
 #include "hvml/hvml_string.h"
 
 #include <ctype.h>
@@ -60,15 +61,7 @@
 #define DOM_ATTR_APPEND(ov,v)     HLIST_APPEND(hvml_dom_t, hvml_dom_t, _attr_, ov, v)
 #define DOM_ATTR_REMOVE(v)        HLIST_REMOVE(hvml_dom_t, hvml_dom_t, _attr_, v)
 
-typedef enum {
-    HVML_DOM_XPATH_EVAL_UNKNOWN,
-    HVML_DOM_XPATH_EVAL_BOOL,
-    HVML_DOM_XPATH_EVAL_NUMBER,
-    HVML_DOM_XPATH_EVAL_STRING,
-    HVML_DOM_XPATH_EVAL_DOMS
-} HVML_DOM_XPATH_EVAL_TYPE;
-
-static const char *hvml_dom_xpath_eval_type_str(HVML_DOM_TYPE t) {
+const char *hvml_dom_xpath_eval_type_str(HVML_DOM_XPATH_EVAL_TYPE t) {
     switch (t) {
         case HVML_DOM_XPATH_EVAL_UNKNOWN:    return "HVML_DOM_XPATH_EVAL_UNKNOWN";
         case HVML_DOM_XPATH_EVAL_BOOL:       return "HVML_DOM_XPATH_EVAL_BOOL";
@@ -130,26 +123,7 @@ const char *hvml_dom_type_str(HVML_DOM_TYPE t) {
     }
 }
 
-typedef struct hvml_dom_xpath_eval_s           hvml_dom_xpath_eval_t;
-typedef struct hvml_dom_context_node_s         hvml_dom_context_node_t;
-
-struct hvml_dom_xpath_eval_s {
-    HVML_DOM_XPATH_EVAL_TYPE     et;
-    union {
-        unsigned char    b:1;
-        long double      ldbl;
-        char            *str;
-        hvml_doms_t      doms;
-    };
-};
-
-struct hvml_dom_context_node_s {
-    hvml_doms_t             *doms;
-    hvml_dom_t              *dom;
-    size_t                   idx;
-};
-
-static const hvml_dom_xpath_eval_t      null_eval;
+const hvml_dom_xpath_eval_t      null_eval;
 
 static void hvml_dom_xpath_eval_cleanup(hvml_dom_xpath_eval_t *ev) {
     if (!ev) return;
@@ -214,6 +188,13 @@ void hvml_doms_cleanup(hvml_doms_t *doms) {
     free(doms->doms);
     doms->doms     = NULL;
     doms->ndoms    = 0;
+}
+
+void hvml_doms_destroy(hvml_doms_t *doms) {
+    if (!doms) return;
+
+    hvml_doms_cleanup(doms);
+    free(doms);
 }
 
 hvml_dom_t* hvml_dom_create() {
@@ -448,7 +429,13 @@ hvml_dom_t* hvml_dom_doc(hvml_dom_t *dom) {
 }
 
 hvml_dom_t* hvml_dom_parent(hvml_dom_t *dom) {
-    return DOM_OWNER(dom);
+    if (dom->dt==MKDOT(D_ATTR)) {
+        dom = DOM_ATTR_OWNER(dom);
+        A(dom->dt == MKDOT(D_TAG), "internal logic error");
+    } else {
+        dom = DOM_OWNER(dom);
+    }
+    return dom;
 }
 
 hvml_dom_t* hvml_dom_next(hvml_dom_t *dom) {
@@ -484,34 +471,64 @@ hvml_dom_t* hvml_dom_select(hvml_dom_t *dom, const char *selector) {
     A(0, "not implemented yet");
 }
 
-void hvml_dom_str_serialize_stream(const char *str, size_t len, FILE *out) {
-    const char *p = str;
-    for (size_t i=0; i<len; ++i, ++p) {
-        const char c = *p;
-        switch (c) {
-            case '&':  { fprintf(out, "&amp;");   break; }
-            case '<':  {
-                if (i<len-1 && !isspace(p[1])) {
-                    fprintf(out, "&lt;");
-                } else {
-                    fprintf(out, "%c", c);
-                }
-            } break;
-            default:   { fprintf(out, "%c", c);   break; }
-        }
-    }
+void hvml_dom_str_serialize_file(const char *str, size_t len, FILE *out) {
+    hvml_stream_t *stream = hvml_stream_bind_file(out, 0);
+    if (!stream) return;
+    hvml_dom_str_serialize(str, len, stream);
+    hvml_stream_destroy(stream);
 }
 
-void hvml_dom_attr_val_serialize_stream(const char *str, size_t len, FILE *out) {
+void hvml_dom_attr_val_serialize_file(const char *str, size_t len, FILE *out) {
+    hvml_stream_t *stream = hvml_stream_bind_file(out, 0);
+    if (!stream) return;
+    hvml_dom_attr_val_serialize(str, len, stream);
+    hvml_stream_destroy(stream);
+}
+
+int hvml_dom_str_serialize(const char *str, size_t len, hvml_stream_t *stream) {
     const char *p = str;
+    int r = 0;
     for (size_t i=0; i<len; ++i, ++p) {
         const char c = *p;
         switch (c) {
-            case '&':  { fprintf(out, "&amp;");   break; }
-            case '"':  { fprintf(out, "&quot;");  break; }
-            default:   { fprintf(out, "%c", c);   break; }
+            case '&': {
+                r = hvml_stream_printf(stream, "&amp;");
+            } break;
+            case '<': {
+                if (i<len-1 && !isspace(p[1])) {
+                    r = hvml_stream_printf(stream, "&lt;");
+                } else {
+                    r = hvml_stream_printf(stream, "%c", c);
+                }
+            } break;
+            default: {
+                r = hvml_stream_printf(stream, "%c", c);
+            } break;
         }
+        if (r<0) break;
     }
+    return r<0 ? -1 : 0;
+}
+
+int hvml_dom_attr_val_serialize(const char *str, size_t len, hvml_stream_t *stream) {
+    const char *p = str;
+    int r = 0;
+    for (size_t i=0; i<len; ++i, ++p) {
+        const char c = *p;
+        switch (c) {
+            case '&': {
+                r = hvml_stream_printf(stream, "&amp;");
+            } break;
+            case '"': {
+                r = hvml_stream_printf(stream, "&quot;");
+            } break;
+            default: {
+                r = hvml_stream_printf(stream, "%c", c);
+            } break;
+        }
+        if (r<0) break;
+    }
+    return r<0 ? -1 : 0;
 }
 
 void hvml_dom_attr_set_key(hvml_dom_t *dom, const char *key, size_t key_len) {
@@ -1886,7 +1903,6 @@ static int do_hvml_dom_eval_location(hvml_dom_t *dom, hvml_dom_xpath_steps_t *st
     return r;
 }
 
-static int hvml_dom_string_value(hvml_dom_t *dom, const char **v, int *allocated);
 static int hvml_dom_xpath_eval_to_bool(hvml_dom_xpath_eval_t *ev, int *v);
 static int hvml_dom_xpath_eval_to_number(hvml_dom_xpath_eval_t *ev, long double *v);
 static int hvml_dom_xpath_eval_to_string(hvml_dom_xpath_eval_t *ev, const char **v, int *allocated);
@@ -1927,36 +1943,52 @@ static void collect_string_value_cb(hvml_dom_t *dom, int lvl, int tag_open_close
     }
 }
 
-static int hvml_dom_string_value(hvml_dom_t *dom, const char **v, int *allocated) {
+int hvml_dom_string_for_xpath(hvml_dom_t *dom, const char **v, int *allocated) {
     A(dom,         "internal logic error");
     A(v,           "internal logic error");
     A(allocated,   "internal logic error");
-    A(dom->dt == MKDOT(D_TAG) || dom->dt == MKDOT(D_ATTR) || dom->dt == MKDOT(D_ROOT), "internal logic error, [%d]", dom->dt);
 
     *v = NULL;
     *allocated = 0;
 
-    if (dom->dt == MKDOT(D_ATTR)) {
-        *v = hvml_dom_attr_val(dom);
-        return 0;
-    }
-
-    collect_string_value_t      collect = {0};
-    collect.dom    = dom;
-    collect.failed = 0;
-    hvml_dom_traverse(dom, &collect, collect_string_value_cb);
-    if (collect.failed) {
-        hvml_string_clear(&collect.string_value);
-    } else {
-        *v = hvml_string_str(&collect.string_value);
-        if (*v) {
-            *allocated = 1;
-            hvml_string_reset(&collect.string_value);
-        } else {
+    switch (dom->dt) {
+        case MKDOT(D_ROOT):
+        case MKDOT(D_TAG): {
+            collect_string_value_t      collect = {0};
+            collect.dom    = dom;
+            collect.failed = 0;
+            hvml_dom_traverse(dom, &collect, collect_string_value_cb);
+            if (collect.failed) {
+                hvml_string_clear(&collect.string_value);
+            } else {
+                *v = hvml_string_str(&collect.string_value);
+                if (*v) {
+                    *allocated = 1;
+                    hvml_string_reset(&collect.string_value);
+                } else {
+                    *v = "";
+                }
+            }
+            return collect.failed ? -1 : 0;
+        } break;
+        case MKDOT(D_ATTR): {
+            *v = hvml_dom_attr_val(dom);
+            return 0;
+        } break;
+        case MKDOT(D_TEXT): {
+            *v = hvml_dom_text(dom);
+            return 0;
+        } break;
+        case MKDOT(D_JSON): {
+            W("not implemented yet");    // what to compare? serialized form or not?
             *v = "";
-        }
+        } break;
+        default: {
+            A(0, "internal logic error");
+            // never reached here
+            return -1;
+        } break;
     }
-    return collect.failed ? -1 : 0;
 }
 
 static int hvml_dom_xpath_eval_to_bool(hvml_dom_xpath_eval_t *ev, int *v) {
@@ -2038,8 +2070,8 @@ static int hvml_dom_xpath_eval_to_string(hvml_dom_xpath_eval_t *ev, const char *
             A(0, "internal logic error");
         } break;
         case HVML_DOM_XPATH_EVAL_BOOL: {
-            if (ev->b) *v = "1";
-            else       *v = "0";
+            if (ev->b) *v = "true";
+            else       *v = "false";
             return 0;
         } break;
         case HVML_DOM_XPATH_EVAL_NUMBER: {
@@ -2070,7 +2102,7 @@ static int hvml_dom_xpath_eval_to_string(hvml_dom_xpath_eval_t *ev, const char *
                 } break;
                 case MKDOT(D_ROOT):
                 case MKDOT(D_TAG): {
-                    int r = hvml_dom_string_value(dom, v, allocated);
+                    int r = hvml_dom_string_for_xpath(dom, v, allocated);
                     if (r) return -1;
                 } break;
                 case MKDOT(D_TEXT): {
@@ -2333,7 +2365,7 @@ static int hvml_dom_xpath_eval_compare(hvml_dom_xpath_eval_t *left, hvml_dom_xpa
                     case HVML_DOM_XPATH_EVAL_NUMBER: {
                         long double rv = right->ldbl;
                         if (!lvs) {
-                            r = hvml_dom_string_value(ldom, &lvs, &allocated);
+                            r = hvml_dom_string_for_xpath(ldom, &lvs, &allocated);
                             if (r) break;
                         }
                         long double lv = 0.;
@@ -2350,7 +2382,7 @@ static int hvml_dom_xpath_eval_compare(hvml_dom_xpath_eval_t *left, hvml_dom_xpa
                     case HVML_DOM_XPATH_EVAL_STRING: {
                         const char *rv = right->str;
                         if (!lvs) {
-                            r = hvml_dom_string_value(ldom, &lvs, &allocated);
+                            r = hvml_dom_string_for_xpath(ldom, &lvs, &allocated);
                             if (r) break;
                         }
                         delta = strcmp(lvs, rv);
@@ -2368,7 +2400,7 @@ static int hvml_dom_xpath_eval_compare(hvml_dom_xpath_eval_t *left, hvml_dom_xpa
                                 break;
                             }
                             if (!lvs) {
-                                r = hvml_dom_string_value(ldom, &lvs, &allocated);
+                                r = hvml_dom_string_for_xpath(ldom, &lvs, &allocated);
                                 if (r) break;
                             }
                             if (!rvs) {
@@ -2379,7 +2411,7 @@ static int hvml_dom_xpath_eval_compare(hvml_dom_xpath_eval_t *left, hvml_dom_xpa
                             if (!rvs[i]) {
                                 const char *s = NULL;
                                 int allocated = 0;
-                                r = hvml_dom_string_value(rdom, &s, &allocated);
+                                r = hvml_dom_string_for_xpath(rdom, &s, &allocated);
                                 if (r) break;
                                 A(s, "internal logic error");
                                 rvs[i] = (char*)s;

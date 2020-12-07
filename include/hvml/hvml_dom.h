@@ -40,13 +40,20 @@ typedef enum {
 
 const char *hvml_dom_type_str(HVML_DOM_TYPE t);
 
-typedef struct hvml_dom_s          hvml_dom_t;
-typedef struct hvml_dom_gen_s      hvml_dom_gen_t;
-typedef struct hvml_doms_s         hvml_doms_t;
+typedef struct hvml_dom_s                      hvml_dom_t;
+typedef struct hvml_dom_gen_s                  hvml_dom_gen_t;
+typedef struct hvml_doms_s                     hvml_doms_t;
+typedef struct hvml_dom_context_node_s         hvml_dom_context_node_t;
 
 struct hvml_doms_s {
     hvml_dom_t      **doms;
     size_t            ndoms;
+};
+
+struct hvml_dom_context_node_s {
+    hvml_doms_t             *doms;
+    hvml_dom_t              *dom;
+    size_t                   idx;
 };
 
 extern const hvml_doms_t null_doms;
@@ -56,6 +63,7 @@ int  hvml_doms_append_doms(hvml_doms_t *doms, hvml_doms_t *in);
 int  hvml_doms_reverse(hvml_doms_t *doms);
 int  hvml_doms_sort(hvml_doms_t *doms, hvml_doms_t *in);
 void hvml_doms_cleanup(hvml_doms_t *doms);
+void hvml_doms_destroy(hvml_doms_t *doms);
 
 
 hvml_dom_t* hvml_dom_create();
@@ -82,11 +90,14 @@ void        hvml_dom_detach(hvml_dom_t *dom);
 
 hvml_dom_t* hvml_dom_select(hvml_dom_t *dom, const char *selector);
 
-void        hvml_dom_str_serialize_stream(const char *str, size_t len, FILE *out);
-void        hvml_dom_attr_val_serialize_stream(const char *str, size_t len, FILE *out);
+void        hvml_dom_str_serialize_file(const char *str, size_t len, FILE *out);
+void        hvml_dom_attr_val_serialize_file(const char *str, size_t len, FILE *out);
 void        hvml_dom_attr_set_key(hvml_dom_t *dom, const char *key, size_t key_len);
 void        hvml_dom_attr_set_val(hvml_dom_t *dom, const char *val, size_t val_len);
 void        hvml_dom_set_text(hvml_dom_t *dom, const char *txt, size_t txt_len);
+
+int hvml_dom_str_serialize(const char *str, size_t len, hvml_stream_t *stream);
+int hvml_dom_attr_val_serialize(const char *str, size_t len, hvml_stream_t *stream);
 
 HVML_DOM_TYPE hvml_dom_type(hvml_dom_t *dom);
 const char*   hvml_dom_tag_name(hvml_dom_t *dom);      // tag's name
@@ -119,6 +130,8 @@ hvml_dom_t*       hvml_dom_load_from_stream(FILE *in);
 // https://www.freeformatter.com/xpath-tester.html#ad-output
 // xpath'y query
 int hvml_dom_query(hvml_dom_t *dom, const char *path, hvml_doms_t *doms);
+int hvml_dom_qry(hvml_dom_t *dom, const char *path, hvml_doms_t *doms);
+int hvml_dom_string_for_xpath(hvml_dom_t *dom, const char **v, int *allocated);
 
 #ifdef __cplusplus
 }

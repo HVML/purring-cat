@@ -18,6 +18,8 @@
 #ifndef _hvml_dom_xpath_parser_h_
 #define _hvml_dom_xpath_parser_h_
 
+#include "hvml/hvml_dom.h"
+
 #include <stdint.h>
 #include <stdio.h>
 
@@ -27,6 +29,30 @@ extern "C" {
 
 extern const char *hvml_dom_xpath_dot;
 extern const char *hvml_dom_xpath_dot2;
+
+typedef enum {
+    HVML_DOM_XPATH_EVAL_UNKNOWN,
+    HVML_DOM_XPATH_EVAL_BOOL,
+    HVML_DOM_XPATH_EVAL_NUMBER,
+    HVML_DOM_XPATH_EVAL_STRING,
+    HVML_DOM_XPATH_EVAL_DOMS
+} HVML_DOM_XPATH_EVAL_TYPE;
+
+const char *hvml_dom_xpath_eval_type_str(HVML_DOM_XPATH_EVAL_TYPE t);
+
+typedef struct hvml_dom_xpath_eval_s           hvml_dom_xpath_eval_t;
+
+struct hvml_dom_xpath_eval_s {
+    HVML_DOM_XPATH_EVAL_TYPE     et;
+    union {
+        unsigned char    b:1;
+        long double      ldbl;
+        char            *str;
+        hvml_doms_t      doms;
+    };
+};
+
+extern const hvml_dom_xpath_eval_t      null_eval;
 
 typedef enum {
     HVML_DOM_XPATH_OP_UNSPECIFIED,
@@ -66,6 +92,13 @@ typedef enum {
     // extension
     HVML_DOM_XPATH_AXIS_SLASH,  /* "/" */
 } HVML_DOM_XPATH_AXIS_TYPE;
+
+typedef enum {
+    HVML_DOM_XPATH_PRINCIPAL_UNSPECIFIED,
+    HVML_DOM_XPATH_PRINCIPAL_ATTRIBUTE,
+    HVML_DOM_XPATH_PRINCIPAL_NAMESPACE,
+    HVML_DOM_XPATH_PRINCIPAL_ELEMENT,
+} HVML_DOM_XPATH_PRINCIPAL_TYPE;
 
 typedef enum {
     HVML_DOM_XPATH_NT_UNSPECIFIED,
@@ -217,6 +250,11 @@ void hvml_dom_xpath_filter_expr_destroy(hvml_dom_xpath_filter_expr_t *filter_exp
 void hvml_dom_xpath_path_expr_destroy(hvml_dom_xpath_path_expr_t *path_expr);
 void hvml_dom_xpath_union_expr_destroy(hvml_dom_xpath_union_expr_t *union_expr);
 void hvml_dom_xpath_exprs_destroy(hvml_dom_xpath_exprs_t *exprs);
+
+int hvml_dom_xpath_exprs_append_expr(hvml_dom_xpath_exprs_t *exprs, hvml_dom_xpath_expr_t *expr);
+
+
+
 
 int hvml_dom_xpath_parse(const char *xpath, hvml_dom_xpath_steps_t *steps);
 

@@ -1297,25 +1297,53 @@ void hvml_json_parser_set_offset(hvml_json_parser_t *parser, size_t line, size_t
 }
 
 void hvml_json_str_printf(FILE *out, const char *s, size_t len) {
-    fprintf(out, "\"");
+    hvml_stream_t *stream= hvml_stream_bind_file(out, 0);
+    if (!stream) return;
+    hvml_json_str_serialize(stream, s, len);
+    hvml_stream_destroy(stream);
+}
+
+int hvml_json_str_serialize(hvml_stream_t *stream, const char *s, size_t len) {
+    int r = 0;
+    r = hvml_stream_printf(stream, "\"");
+    if (r<0) return -1;
     const char *p = s;
     for (size_t i=0; i<len; ++i, ++p) {
         const char c = *p;
         switch (c) {
-            case '"':  { fprintf(out, "\\\"");    break; }
-            case '\\': { fprintf(out, "\\\\");    break; }
-            case '\b': { fprintf(out, "\\b");     break; }
-            case '\t': { fprintf(out, "\\t");     break; }
-            case '\f': { fprintf(out, "\\f");     break; }
-            case '\r': { fprintf(out, "\\r");     break; }
-            case '\n': { fprintf(out, "\\n");     break; }
-            case '\0': { fprintf(out, "\\u0000"); break; }
-            default:   { fprintf(out, "%c", c);   break; }
+            case '"': {
+                r = hvml_stream_printf(stream, "\\\"");
+            } break;
+            case '\\': {
+                r = hvml_stream_printf(stream, "\\\\");
+            } break;
+            case '\b': {
+                r = hvml_stream_printf(stream, "\\b");
+            } break;
+            case '\t': {
+                r = hvml_stream_printf(stream, "\\t");
+            } break;
+            case '\f': {
+                r = hvml_stream_printf(stream, "\\f");
+            } break;
+            case '\r': {
+                r = hvml_stream_printf(stream, "\\r");
+            } break;
+            case '\n': {
+                r = hvml_stream_printf(stream, "\\n");
+            } break;
+            case '\0': {
+                r = hvml_stream_printf(stream, "\\u0000");
+            } break;
+            default: {
+                r = hvml_stream_printf(stream, "%c", c);
+            } break;
         }
     }
-    fprintf(out, "\"");
+    if (r<0) return -1;
+    r = hvml_stream_printf(stream, "\"");
+    return r<0 ? -1 : 0;
 }
-
 
 
 

@@ -76,14 +76,14 @@ void Interpreter_Basic::traverse_for_printf(hvml_dom_t *dom, int lvl, int tag_op
             fprintf(parg->out, "%s", key);
             if (val) {
                 fprintf(parg->out, "=\"");
-                hvml_dom_attr_val_serialize_stream(val, strlen(val), parg->out);
+                hvml_dom_attr_val_serialize_file(val, strlen(val), parg->out);
                 fprintf(parg->out, "\"");
             }
         } break;
         case MKDOT(D_TEXT):
         {
             const char *text = hvml_dom_text(dom);
-            hvml_dom_str_serialize_stream(text, strlen(text), parg->out);
+            hvml_dom_str_serialize_file(text, strlen(text), parg->out);
             parg->lvl = lvl;
         } break;
         case MKDOT(D_JSON):

@@ -30,6 +30,7 @@
 #include <string.h>
 
 static int with_clone = 0;
+static int with_antlr4 = 0;
 
 static const char* file_ext(const char *file);
 static int process(FILE *in, const char *ext, hvml_dom_t *hvml);
@@ -64,6 +65,10 @@ int main(int argc, char *argv[]) {
                 ok = 0;
                 break;
             }
+            continue;
+        }
+        if (strcmp(arg, "--antlr4")==0) {
+            with_antlr4 = 1;
             continue;
         }
         const char *file = argv[i];
@@ -247,7 +252,11 @@ static int process_xpath(FILE *in, hvml_dom_t *hvml) {
         if (strlen(p)==0) continue;
         fprintf(stderr, "parsing xpath @[%d]: [%s]\n", i, p);
         hvml_doms_t doms = {0};
-        r = hvml_dom_query(hvml, p, &doms);
+        if (with_antlr4) {
+            r = hvml_dom_qry(hvml, p, &doms);
+        } else {
+            r = hvml_dom_query(hvml, p, &doms);
+        }
         if (r) {
             fprintf(stderr, "parsing xpath: failed\n");
             break;
