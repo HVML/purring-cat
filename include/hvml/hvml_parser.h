@@ -67,6 +67,10 @@ int            hvml_parser_parse(hvml_parser_t *parser, const char *buf, size_t 
 int            hvml_parser_parse_string(hvml_parser_t *parser, const char *str);
 int            hvml_parser_parse_end(hvml_parser_t *parser);
 
+const char* match_escapes(const char *str, char *raw);
+const char* conv_escape(const char raw);
+
+
 #ifdef __cplusplus
 }
 #endif

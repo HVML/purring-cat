@@ -101,6 +101,7 @@ struct hvml_parser_s {
     HVML_PARSER_STATE             *ar_states;
     size_t                         states;
     string_t                       cache;
+    size_t                         escape;
 
     string_t                       curr;
 
@@ -549,8 +550,9 @@ static int hvml_parser_at_str(hvml_parser_t *parser, const char c, const char *s
             hvml_parser_pop_state(parser);
             if (ret) return ret;
         } break;
-        case '\\':
+        case '&':
         {
+            parser->escape = parser->cache.len;
             hvml_parser_push_state(parser, MKSTATE(ESCAPE));
         } break;
         case '<':
@@ -578,8 +580,9 @@ static int hvml_parser_at_str1(hvml_parser_t *parser, const char c, const char *
             hvml_parser_pop_state(parser);
             if (ret) return ret;
         } break;
-        case '\\':
+        case '&':
         {
+            parser->escape = parser->cache.len;
             hvml_parser_push_state(parser, MKSTATE(ESCAPE));
         } break;
         case '<':
@@ -595,52 +598,61 @@ static int hvml_parser_at_str1(hvml_parser_t *parser, const char c, const char *
     return 0;
 }
 
+typedef struct escape_s             escape_t;
+struct escape_s {
+    const char *escape;
+    const char raw;
+};
+static const escape_t escapes[] = {
+    { "amp",       '&'  },
+    { "quot",      '"'  },
+    { "apos",      '\'' },
+    { "lt",        '<'  },
+    { "gt",        '>'  }
+};
+
+const char* match_escapes(const char *str, char *raw) {
+    for (size_t i=0; i<sizeof(escapes)/sizeof(escapes[0]); ++i) {
+        const char *e = escapes[i].escape;
+        if (strstr(e, str)==e) {
+            if (strcmp(e, str)==0 && raw) *raw = escapes[i].raw;
+
+            return e;
+        }
+    }
+    return NULL;
+}
+
+const char* conv_escape(const char raw) {
+    for (size_t i=0; i<sizeof(escapes)/sizeof(escapes[0]); ++i) {
+        if (raw == escapes[i].raw) return escapes[i].escape;
+    }
+    return NULL;
+}
+
 static int hvml_parser_at_escape(hvml_parser_t *parser, const char c, const char *str_state) {
     switch (c) {
-        case 'b':
+        case ';':
         {
-            string_append(&parser->cache, '\b');
-            hvml_parser_pop_state(parser);
-        } break;
-        case 't':
-        {
-            string_append(&parser->cache, '\t');
-            hvml_parser_pop_state(parser);
-        } break;
-        case 'f':
-        {
-            string_append(&parser->cache, '\f');
-            hvml_parser_pop_state(parser);
-        } break;
-        case 'r':
-        {
-            string_append(&parser->cache, '\r');
-            hvml_parser_pop_state(parser);
-        } break;
-        case 'n':
-        {
-            string_append(&parser->cache, '\n');
-            hvml_parser_pop_state(parser);
-        } break;
-        case '\\':
-        {
-            string_append(&parser->cache, '\\');
-            hvml_parser_pop_state(parser);
-        } break;
-        case '\'':
-        {
-            string_append(&parser->cache, '\'');
-            hvml_parser_pop_state(parser);
-        } break;
-        case '"':
-        { // '"'
-            string_append(&parser->cache, '"');
+            char raw = '\0';
+            const char* e = match_escapes(string_get(&parser->cache) + parser->escape, &raw);
+            if (e==NULL || raw=='\0') {
+                EPARSE();
+                return -1;
+            }
+            parser->cache.len -= strlen(e);
+            string_append(&parser->cache, raw);
             hvml_parser_pop_state(parser);
         } break;
         default:
         {
-            EPARSE();
-            return -1;
+            string_append(&parser->cache, c);
+            const char* e = match_escapes(string_get(&parser->cache) + parser->escape, NULL);
+            if (e==NULL) {
+                parser->cache.len -= 1;
+                EPARSE();
+                return -1;
+            }
         } break;
     }
     return 0;
@@ -676,6 +688,11 @@ static int hvml_parser_at_element(hvml_parser_t *parser, const char c, const cha
                 hvml_json_parser_reset(parser->jp);
                 hvml_parser_push_state(parser, MKSTATE(MARKUP));
             }
+        } break;
+        case '&':
+        {
+            parser->escape = parser->cache.len;
+            hvml_parser_push_state(parser, MKSTATE(ESCAPE));
         } break;
         default:
         {

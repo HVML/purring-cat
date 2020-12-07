@@ -495,11 +495,7 @@ int hvml_dom_str_serialize(const char *str, size_t len, hvml_stream_t *stream) {
                 r = hvml_stream_printf(stream, "&amp;");
             } break;
             case '<': {
-                if (i<len-1 && !isspace(p[1])) {
-                    r = hvml_stream_printf(stream, "&lt;");
-                } else {
-                    r = hvml_stream_printf(stream, "%c", c);
-                }
+                r = hvml_stream_printf(stream, "&lt;");
             } break;
             default: {
                 r = hvml_stream_printf(stream, "%c", c);
@@ -518,6 +514,9 @@ int hvml_dom_attr_val_serialize(const char *str, size_t len, hvml_stream_t *stre
         switch (c) {
             case '&': {
                 r = hvml_stream_printf(stream, "&amp;");
+            } break;
+            case '<': {
+                r = hvml_stream_printf(stream, "&lt;");
             } break;
             case '"': {
                 r = hvml_stream_printf(stream, "&quot;");
