@@ -262,7 +262,7 @@ static int process_xpath(FILE *in, hvml_dom_t *hvml) {
             break;
         }
         fprintf(stdout, "==================\n");
-        fprintf(stdout, "parsing xpath: @[%d]: [%s] => # of nodes [%" PRId64 "]\n", i, p, doms.ndoms);
+        fprintf(stdout, "parsing xpath: @[%d]: [%s] => # of nodes [%zu]\n", i, p, doms.ndoms);
         for (size_t i=0; i<doms.ndoms; ++i) {
             hvml_dom_t *d = doms.doms[i];
             const char *title = 0;
@@ -276,7 +276,7 @@ static int process_xpath(FILE *in, hvml_dom_t *hvml) {
                     A(0, "internal logic error");
                 } break;
             }
-            fprintf(stdout, "%" PRId64 ":[%s]=", i, title);
+            fprintf(stdout, "%zu:[%s]=", i, title);
             hvml_dom_printf(d, stdout);
             fprintf(stdout, "\n");
         }

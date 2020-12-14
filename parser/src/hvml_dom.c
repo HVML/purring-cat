@@ -1420,7 +1420,7 @@ static int do_hvml_dom_eval_filter(hvml_dom_context_node_t *node, hvml_dom_xpath
             case HVML_DOM_XPATH_EVAL_NUMBER: {
                 int64_t position = hvml_dom_context_node_position(node);
                 A(position>=0, "internal logic error");
-                if (fabs(e.ldbl-(position+1))<LDBL_EPSILON) {
+                if (fabsl(e.ldbl-(position+1))<LDBL_EPSILON) {
                     ok = 1;
                 }
                 if (!ok) break;
@@ -1537,7 +1537,7 @@ static int do_hvml_doms_eval_expr(hvml_doms_t *in, hvml_dom_xpath_expr_t *expr, 
             case HVML_DOM_XPATH_EVAL_NUMBER: {
                 int64_t position = hvml_dom_context_node_position(&node);
                 A(position>=0, "internal logic error");
-                if (fabs(ev.ldbl-(position+1))>LDBL_EPSILON) break;
+                if (fabsl(ev.ldbl-(position+1))>LDBL_EPSILON) break;
                 r = hvml_doms_append_dom(out, node.dom);
             } break;
             case HVML_DOM_XPATH_EVAL_STRING: {
@@ -1984,10 +1984,11 @@ int hvml_dom_string_for_xpath(hvml_dom_t *dom, const char **v, int *allocated) {
         } break;
         default: {
             A(0, "internal logic error");
-            // never reached here
-            return -1;
         } break;
     }
+
+    // never reached here
+    return -1;
 }
 
 static int hvml_dom_xpath_eval_to_bool(hvml_dom_xpath_eval_t *ev, int *v) {
