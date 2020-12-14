@@ -24,6 +24,7 @@
 #include <float.h>
 #include <math.h>
 #include <string.h>
+#include <libgen.h>
 
 __attribute__ ((format (printf, 4, 5)))
 static void hvml_throw(const char *cfile, int cline, const char *cfunc, const char *fmt, ...) {

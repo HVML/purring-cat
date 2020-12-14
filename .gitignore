@@ -2,4 +2,15 @@
 .vimrc
 debug/
 build/
+.DS_Store
+parser/src/*.tab.*
+parser/src/*.lex.*
+parser/src/*.interp
+parser/src/*.tokens
+parser/src/xpathBaseListener.*
+parser/src/xpathBaseVisitor.*
+parser/src/xpathLexer.*
+parser/src/xpathListener.*
+parser/src/xpathParser.*
+parser/src/xpathVisitor.*
 

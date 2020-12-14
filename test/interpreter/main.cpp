@@ -46,7 +46,11 @@ static int process_hvml(FILE *in,
 static int process_json(FILE *in);
 static int process_utf8(FILE *in);
 
+// Most of *nices defined PATH_MAX macro in limits.h
+#ifndef PATH_MAX 
 #define PATH_MAX    512
+#endif 
+
 static char output_filename[PATH_MAX+1];
 static char mustache_part_filename[PATH_MAX+1];
 static char archetype_part_filename[PATH_MAX+1];

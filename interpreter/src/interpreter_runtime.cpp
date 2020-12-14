@@ -83,6 +83,9 @@ void Interpreter_Runtime::DumpMustachePart(MustacheGroup_t* mustache_part,
                          fprintf(mustache_part_f, "%s\n", text);
                      }
                      break;
+
+                     default:
+                        break;
                  }
              });
 }

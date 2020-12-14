@@ -19,3 +19,4 @@ add_library(hvml_interpreter SHARED ${hvml_interpreter_src})
 target_include_directories(hvml_interpreter PUBLIC
                            "${PROJECT_SOURCE_DIR}/include"
 )
+target_link_libraries(hvml_interpreter hvml_parser)
