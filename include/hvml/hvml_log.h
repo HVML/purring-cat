@@ -34,18 +34,27 @@ void hvml_log_printf(const char *cfile, int cline, const char *cfunc, FILE *out,
 __attribute__ ((format (printf, 6, 7)));
 
 
-#define D(fmt, ...) hvml_log_printf(__FILE__, __LINE__, __func__, stderr, 'D', "%s" fmt "", "", ##__VA_ARGS__)
-#define I(fmt, ...) hvml_log_printf(__FILE__, __LINE__, __func__, stderr, 'I', "%s" fmt "", "", ##__VA_ARGS__)
-#define W(fmt, ...) hvml_log_printf(__FILE__, __LINE__, __func__, stderr, 'W', "%s" fmt "", "", ##__VA_ARGS__)
-#define E(fmt, ...) hvml_log_printf(__FILE__, __LINE__, __func__, stderr, 'E', "%s" fmt "", "", ##__VA_ARGS__)
-#define V(fmt, ...) hvml_log_printf(__FILE__, __LINE__, __func__, stderr, 'V', "%s" fmt "", "", ##__VA_ARGS__)
-#define A(statement, fmt, ...)                                                  \
+#define DX(_x3098, fmt, ...) hvml_log_printf(__FILE__, __LINE__, __func__, stderr, 'D', "%s" fmt "", "", ##__VA_ARGS__)
+#define IX(_x3098, fmt, ...) hvml_log_printf(__FILE__, __LINE__, __func__, stderr, 'I', "%s" fmt "", "", ##__VA_ARGS__)
+#define WX(_x3098, fmt, ...) hvml_log_printf(__FILE__, __LINE__, __func__, stderr, 'W', "%s" fmt "", "", ##__VA_ARGS__)
+#define EX(_x3098, fmt, ...) hvml_log_printf(__FILE__, __LINE__, __func__, stderr, 'E', "%s" fmt "", "", ##__VA_ARGS__)
+#define VX(_x3098, fmt, ...) hvml_log_printf(__FILE__, __LINE__, __func__, stderr, 'V', "%s" fmt "", "", ##__VA_ARGS__)
+#define AX(_x3098, statement, fmt, ...)                                         \
 do {                                                                            \
     if (statement) break;                                                       \
-    hvml_log_printf(__FILE__, __LINE__, __func__, stderr, 'A',              \
+    hvml_log_printf(__FILE__, __LINE__, __func__, stderr, 'A',                  \
                     "Assert failure:[%s];" fmt "", #statement, ##__VA_ARGS__);  \
     abort();                                                                    \
 } while (0)
+
+// tweak: ISO C99 requires at least one argument for the "..." in a variadic macro
+#define D(...) DX("", ##__VA_ARGS__)
+#define I(...) IX("", ##__VA_ARGS__)
+#define W(...) WX("", ##__VA_ARGS__)
+#define E(...) EX("", ##__VA_ARGS__)
+#define V(...) VX("", ##__VA_ARGS__)
+#define A(...) AX("", ##__VA_ARGS__)
+
 
 #ifdef __cplusplus
 }
