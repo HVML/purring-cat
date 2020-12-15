@@ -56,11 +56,11 @@ typedef struct hvml_jo_object_s       hvml_jo_object_t;
 typedef struct hvml_jo_array_s        hvml_jo_array_t;
 typedef struct hvml_jo_object_kv_s    hvml_jo_object_kv_t;
 
-struct hvml_jo_true_s { };
+struct hvml_jo_true_s { int dummy; };
 
-struct hvml_jo_false_s { };
+struct hvml_jo_false_s { int dummy; };
 
-struct hvml_jo_null_s { };
+struct hvml_jo_null_s { int dummy; };
 
 struct hvml_jo_number_s {
     long double    ldbl;
@@ -72,11 +72,9 @@ struct hvml_jo_string_s {
     size_t  len;
 };
 
-struct hvml_jo_object_s {
-};
+struct hvml_jo_object_s { int dummy; };
 
-struct hvml_jo_array_s {
-};
+struct hvml_jo_array_s { int dummy; };
 
 struct hvml_jo_object_kv_s {
     char                    *key;
@@ -97,7 +95,7 @@ struct hvml_jo_value_s {
         hvml_jo_array_t     jarray;
 
         hvml_jo_object_kv_t jkv;
-    };
+    } u;
 
     VAL_MEMBERS();
 };
@@ -151,11 +149,11 @@ hvml_jo_value_t* hvml_jo_number(const long double v, const char *origin) {
     hvml_jo_value_t *jo = (hvml_jo_value_t*)calloc(1, sizeof(*jo));
     if (!jo) return NULL;
 
-    jo->jot           = MKJOT(J_NUMBER);
-    jo->jnum.ldbl     = v;
-    jo->jnum.origin   = strdup(origin);
+    jo->jot             = MKJOT(J_NUMBER);
+    jo->u.jnum.ldbl     = v;
+    jo->u.jnum.origin   = strdup(origin);
 
-    if (!jo->jnum.origin) {
+    if (!jo->u.jnum.origin) {
         hvml_jo_value_free(jo);
         return NULL;
     }
@@ -167,15 +165,15 @@ hvml_jo_value_t* hvml_jo_string(const char *v, size_t len) {
     hvml_jo_value_t *jo = (hvml_jo_value_t*)calloc(1, sizeof(*jo));
     if (!jo) return NULL;
 
-    jo->jot = MKJOT(J_STRING);
-    jo->jstr.str = (char*)malloc(len+1);
-    if (!jo->jstr.str) {
+    jo->jot        = MKJOT(J_STRING);
+    jo->u.jstr.str = (char*)malloc(len+1);
+    if (!jo->u.jstr.str) {
         free(jo);
         return NULL;
     }
-    memcpy(jo->jstr.str, v, len);
-    jo->jstr.str[len] = '\0';
-    jo->jstr.len = len;
+    memcpy(jo->u.jstr.str, v, len);
+    jo->u.jstr.str[len] = '\0';
+    jo->u.jstr.len      = len;
 
     return jo;
 }
@@ -202,15 +200,15 @@ hvml_jo_value_t* hvml_jo_object_kv(const char *key, size_t len) {
     hvml_jo_value_t *jo = (hvml_jo_value_t*)calloc(1, sizeof(*jo));
     if (!jo) return NULL;
 
-    jo->jot = MKJOT(J_OBJECT_KV);
-    jo->jkv.key = (char*)malloc(len+1);
-    if (!jo->jkv.key) {
+    jo->jot       = MKJOT(J_OBJECT_KV);
+    jo->u.jkv.key = (char*)malloc(len+1);
+    if (!jo->u.jkv.key) {
         free(jo);
         return NULL;
     }
-    memcpy(jo->jkv.key, key, len);
-    jo->jkv.key[len] = '\0';
-    jo->jkv.len = len;
+    memcpy(jo->u.jkv.key, key, len);
+    jo->u.jkv.key[len] = '\0';
+    jo->u.jkv.len      = len;
 
     return jo;
 }
@@ -218,7 +216,7 @@ hvml_jo_value_t* hvml_jo_object_kv(const char *key, size_t len) {
 int hvml_jo_value_push(hvml_jo_value_t *jo, hvml_jo_value_t *val) {
     if (!val) return -1;
     if (!VAL_IS_ORPHAN(val)) {
-        E("val[%p/%s] is NOT orphan", val, hvml_jo_value_type_str(val));
+        E("val[%p/%s] is NOT orphan", (void*)val, hvml_jo_value_type_str(val));
         return -1;
     }
 
@@ -232,23 +230,23 @@ int hvml_jo_value_push(hvml_jo_value_t *jo, hvml_jo_value_t *val) {
         case MKJOT(J_OBJECT):
         {
             if (val->jot != MKJOT(J_OBJECT_KV)) {
-                E("val[%p/%s] is NOT object k/v paire", val, hvml_jo_value_type_str(val));
+                E("val[%p/%s] is NOT object k/v paire", (void*)val, hvml_jo_value_type_str(val));
                 return -1;
             }
             VAL_APPEND(jo, val);
         } break;
         case MKJOT(J_OBJECT_KV):
         {
-            if (jo->jkv.val) {
-                A(jo->jkv.val != val, "internal logic error");
-                hvml_jo_value_free(jo->jkv.val);
+            if (jo->u.jkv.val) {
+                A(jo->u.jkv.val != val, "internal logic error");
+                hvml_jo_value_free(jo->u.jkv.val);
             }
-            jo->jkv.val = val;
+            jo->u.jkv.val = val;
             VAL_APPEND(jo, val);
         } break;
         default:
         {
-            E("jo[%p/%s] can not hold sub-val", jo, hvml_jo_value_type_str(jo));
+            E("jo[%p/%s] can not hold sub-val", (void*)jo, hvml_jo_value_type_str(jo));
             return -1;
         } break;
     }
@@ -261,7 +259,7 @@ hvml_jo_value_t* hvml_jo_object_get_kv_by_key(hvml_jo_value_t *jo, const char *k
 
     hvml_jo_value_t *kv = VAL_HEAD(jo);
     while (kv) {
-        if (kv->jkv.len == len && memcmp(kv->jkv.key, key, len)==0) break;
+        if (kv->u.jkv.len == len && memcmp(kv->u.jkv.key, key, len)==0) break;
         kv = VAL_NEXT(kv);
     }
 
@@ -273,15 +271,15 @@ hvml_jo_value_t* hvml_jo_object_get_kv_by_key(hvml_jo_value_t *jo, const char *k
 
 hvml_jo_value_t* hvml_jo_object_append_kv(hvml_jo_value_t *jo, hvml_jo_value_t *val) {
     if (jo->jot != MKJOT(J_OBJECT)) {
-        E("jo[%p/%s] is NOT object", jo, hvml_jo_value_type_str(jo));
+        E("jo[%p/%s] is NOT object", (void*)jo, hvml_jo_value_type_str(jo));
         return NULL;
     }
     if (!VAL_IS_ORPHAN(val)) {
-        E("val[%p/%s] is NOT orphan", val, hvml_jo_value_type_str(val));
+        E("val[%p/%s] is NOT orphan", (void*)val, hvml_jo_value_type_str(val));
         return NULL;
     }
     if (val->jot != MKJOT(J_OBJECT_KV)) {
-        E("val[%p/%s] is NOT object k/v pair", jo, hvml_jo_value_type_str(val));
+        E("val[%p/%s] is NOT object k/v pair", (void*)jo, hvml_jo_value_type_str(val));
         return NULL;
     }
 
@@ -303,7 +301,7 @@ void hvml_jo_value_detach(hvml_jo_value_t *jo) {
     A(VAL_OWNER(jo)==NULL, "internal logic error");
 
     if (owner->jot == MKJOT(J_OBJECT_KV)) {
-        owner->jkv.val = NULL;
+        owner->u.jkv.val = NULL;
     }
 }
 
@@ -315,15 +313,15 @@ void hvml_jo_value_free(hvml_jo_value_t *jo) {
         case MKJOT(J_FALSE):
         case MKJOT(J_NULL):
         case MKJOT(J_NUMBER): {
-            if (jo->jnum.origin) {
-                free(jo->jnum.origin);
-                jo->jnum.origin = NULL;
+            if (jo->u.jnum.origin) {
+                free(jo->u.jnum.origin);
+                jo->u.jnum.origin = NULL;
             }
         } break;
         case MKJOT(J_STRING): {
-            free(jo->jstr.str);
-            jo->jstr.str = NULL;
-            jo->jstr.len = 0;
+            free(jo->u.jstr.str);
+            jo->u.jstr.str = NULL;
+            jo->u.jstr.len = 0;
         } break;
         case MKJOT(J_OBJECT): {
             while (VAL_COUNT(jo)>0) {
@@ -346,14 +344,14 @@ void hvml_jo_value_free(hvml_jo_value_t *jo) {
             }
         } break;
         case MKJOT(J_OBJECT_KV): {
-            if (jo->jkv.key) {
-                free(jo->jkv.key);
-                jo->jkv.key = NULL;
-                jo->jkv.len = 0;
+            if (jo->u.jkv.key) {
+                free(jo->u.jkv.key);
+                jo->u.jkv.key = NULL;
+                jo->u.jkv.len = 0;
             }
-            if (jo->jkv.val) {
-                hvml_jo_value_free(jo->jkv.val);
-                jo->jkv.val = NULL;
+            if (jo->u.jkv.val) {
+                hvml_jo_value_free(jo->u.jkv.val);
+                jo->u.jkv.val = NULL;
             }
         } break;
         default: {
@@ -439,9 +437,9 @@ int hvml_jo_number_get(hvml_jo_value_t *jo, long double *d, const char **s) {
 
     if (jo->jot!=MKJOT(J_NUMBER)) return -1;
 
-    if (d) *d = jo->jnum.ldbl;
+    if (d) *d = jo->u.jnum.ldbl;
 
-    if (s) *s = jo->jnum.origin;
+    if (s) *s = jo->u.jnum.origin;
 
     return 0;
 }
@@ -451,7 +449,7 @@ int hvml_jo_string_get(hvml_jo_value_t *jo, const char **s) {
 
     if (jo->jot!=MKJOT(J_STRING)) return -1;
 
-    if (s) *s = jo->jstr.str;
+    if (s) *s = jo->u.jstr.str;
 
     return 0;
 }
@@ -461,8 +459,8 @@ int hvml_jo_kv_get(hvml_jo_value_t *jo, const char **key, hvml_jo_value_t **val)
 
     if (jo->jot!=MKJOT(J_OBJECT_KV)) return -1;
 
-    if (key) *key = jo->jkv.key;
-    if (val) *val = jo->jkv.val;
+    if (key) *key = jo->u.jkv.key;
+    if (val) *val = jo->u.jkv.val;
 
     return 0;
 }

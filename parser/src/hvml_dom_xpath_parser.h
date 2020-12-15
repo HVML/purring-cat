@@ -49,7 +49,7 @@ struct hvml_dom_xpath_eval_s {
         long double      ldbl;
         char            *str;
         hvml_doms_t      doms;
-    };
+    } u;
 };
 
 extern const hvml_dom_xpath_eval_t      null_eval;
@@ -147,7 +147,7 @@ struct hvml_dom_xpath_node_test_s {
     union {
         hvml_dom_xpath_qname_t          name_test;
         HVML_DOM_XPATH_NT_TYPE          node_type;
-    };
+    } u;
 };
 
 struct hvml_dom_xpath_exprs_s {
@@ -192,7 +192,7 @@ struct hvml_dom_xpath_primary_s {
         long double             ldbl;
         char                   *literal;
         hvml_dom_xpath_func_t   func_call;
-    };
+    } u;
 };
 
 struct hvml_dom_xpath_filter_expr_s {

@@ -51,7 +51,7 @@ void hvml_dom_xpath_node_test_cleanup(hvml_dom_xpath_node_test_t *node_test) {
     if (node_test->is_cleanedup) return;
 
     if (node_test->is_name_test) {
-        hvml_dom_xpath_qname_cleanup(&node_test->name_test);
+        hvml_dom_xpath_qname_cleanup(&node_test->u.name_test);
     }
 
     node_test->is_cleanedup = 1;
@@ -106,18 +106,18 @@ void hvml_dom_xpath_primary_cleanup(hvml_dom_xpath_primary_t *primary) {
     switch (primary->primary_type) {
         case HVML_DOM_XPATH_PRIMARY_UNSPECIFIED: break;
         case HVML_DOM_XPATH_PRIMARY_VARIABLE: {
-            hvml_dom_xpath_qname_cleanup(&primary->variable);
+            hvml_dom_xpath_qname_cleanup(&primary->u.variable);
         } break;
         case HVML_DOM_XPATH_PRIMARY_EXPR: {
-            hvml_dom_xpath_expr_cleanup(&primary->expr);
+            hvml_dom_xpath_expr_cleanup(&primary->u.expr);
         } break;
         case HVML_DOM_XPATH_PRIMARY_NUMBER:  break;
         case HVML_DOM_XPATH_PRIMARY_LITERAL: {
-            free(primary->literal);
-            primary->literal = NULL;
+            free(primary->u.literal);
+            primary->u.literal = NULL;
         } break;
         case HVML_DOM_XPATH_PRIMARY_FUNC: {
-            hvml_dom_xpath_func_cleanup(&primary->func_call);
+            hvml_dom_xpath_func_cleanup(&primary->u.func_call);
         } break;
         default: {
             A(0, "internal logic error");

@@ -112,19 +112,19 @@
     }
 
     int hvml_dom_xpath_steps_append_slash(hvml_dom_xpath_steps_t *steps) {
-        hvml_dom_xpath_step_t slash  = null_step;
-        slash.axis                   = HVML_DOM_XPATH_AXIS_SLASH;
-        slash.node_test.is_name_test = 0;
-        slash.node_test.node_type    = HVML_DOM_XPATH_NT_NODE;
+        hvml_dom_xpath_step_t slash    = null_step;
+        slash.axis                     = HVML_DOM_XPATH_AXIS_SLASH;
+        slash.node_test.is_name_test   = 0;
+        slash.node_test.u.node_type    = HVML_DOM_XPATH_NT_NODE;
         return hvml_dom_xpath_steps_append_step(steps, &slash);
     }
 
     int hvml_dom_xpath_steps_append_slash2(hvml_dom_xpath_steps_t *steps) {
-        hvml_dom_xpath_step_t slash2  = null_step;
-        slash2.axis                   = HVML_DOM_XPATH_AXIS_DESCENDANT_OR_SELF;
-        slash2.node_test              = null_node_test;
-        slash2.node_test.is_name_test = 0;
-        slash2.node_test.node_type    = HVML_DOM_XPATH_NT_NODE;
+        hvml_dom_xpath_step_t slash2    = null_step;
+        slash2.axis                     = HVML_DOM_XPATH_AXIS_DESCENDANT_OR_SELF;
+        slash2.node_test                = null_node_test;
+        slash2.node_test.is_name_test   = 0;
+        slash2.node_test.u.node_type    = HVML_DOM_XPATH_NT_NODE;
         return hvml_dom_xpath_steps_append_step(steps, &slash2);
     }
 }
@@ -343,11 +343,11 @@ step:
 | '.'                                   { $$ = null_step;
                                           $$.axis = HVML_DOM_XPATH_AXIS_SELF;
                                           $$.node_test.is_name_test = 0;
-                                          $$.node_test.node_type = HVML_DOM_XPATH_NT_NODE; }
+                                          $$.node_test.u.node_type  = HVML_DOM_XPATH_NT_NODE; }
 | DOT2                                  { $$ = null_step;
                                           $$.axis = HVML_DOM_XPATH_AXIS_PARENT;
                                           $$.node_test.is_name_test = 0;
-                                          $$.node_test.node_type = HVML_DOM_XPATH_NT_NODE; }
+                                          $$.node_test.u.node_type  = HVML_DOM_XPATH_NT_NODE; }
 ;
 
 axis_name:
@@ -369,23 +369,23 @@ axis_name:
 node_test:
   '*'               { $$ = null_node_test;
                       $$.is_name_test = 1;
-                      $$.name_test.local_part = strdup("*");
-                      if (!$$.name_test.local_part) {
+                      $$.u.name_test.local_part = strdup("*");
+                      if (!$$.u.name_test.local_part) {
                         YYABORT;
                       } }
 | qname             { $$ = null_node_test;
                       $$.is_name_test = 1;
-                      $$.name_test = $1; }
+                      $$.u.name_test = $1; }
 | ncname ':' '*'    { $$ = null_node_test;
                       $$.is_name_test = 1;
-                      $$.name_test.prefix = $1;
-                      $$.name_test.local_part = strdup("*");
-                      if (!$$.name_test.local_part) {
+                      $$.u.name_test.prefix = $1;
+                      $$.u.name_test.local_part = strdup("*");
+                      if (!$$.u.name_test.local_part) {
                         YYABORT;
                       } }
 | node_type '(' ')' { $$ = null_node_test;
                       $$.is_name_test = 0;
-                      $$.node_type = $1; }
+                      $$.u.node_type = $1; }
 ;
 
 node_type:
@@ -594,18 +594,18 @@ literal:
 | LITERAL2          { $$ = strdup($1); if (!$$) YYABORT; }
 
 primary_expr:
-  '$' qname         { $$ = null_primary; $$.primary_type = HVML_DOM_XPATH_PRIMARY_VARIABLE; $$.variable = $2; }
-| '(' expr ')'      { $$ = null_primary; $$.primary_type = HVML_DOM_XPATH_PRIMARY_EXPR; $$.expr = $2; }
-| '"' literal '"'   { $$ = null_primary; $$.primary_type = HVML_DOM_XPATH_PRIMARY_LITERAL; $$.literal = $2;
-                      if (!($$.literal)) { hvml_dom_xpath_primary_cleanup(&($$)); free($2); YYABORT; } }
-| SQ literal SQ     { $$ = null_primary; $$.primary_type = HVML_DOM_XPATH_PRIMARY_LITERAL; $$.literal = $2;
-                      if (!($$.literal)) { hvml_dom_xpath_primary_cleanup(&($$)); free($2); YYABORT; } }
+  '$' qname         { $$ = null_primary; $$.primary_type = HVML_DOM_XPATH_PRIMARY_VARIABLE; $$.u.variable = $2; }
+| '(' expr ')'      { $$ = null_primary; $$.primary_type = HVML_DOM_XPATH_PRIMARY_EXPR; $$.u.expr = $2; }
+| '"' literal '"'   { $$ = null_primary; $$.primary_type = HVML_DOM_XPATH_PRIMARY_LITERAL; $$.u.literal = $2;
+                      if (!($$.u.literal)) { hvml_dom_xpath_primary_cleanup(&($$)); free($2); YYABORT; } }
+| SQ literal SQ     { $$ = null_primary; $$.primary_type = HVML_DOM_XPATH_PRIMARY_LITERAL; $$.u.literal = $2;
+                      if (!($$.u.literal)) { hvml_dom_xpath_primary_cleanup(&($$)); free($2); YYABORT; } }
 | INTEGER           { $$ = null_primary; int64_t v; sscanf($1, "%" PRId64 "", &v);
-                      $$.primary_type = HVML_DOM_XPATH_PRIMARY_NUMBER; $$.ldbl = v; }
+                      $$.primary_type = HVML_DOM_XPATH_PRIMARY_NUMBER; $$.u.ldbl = v; }
 | DOUBLE            { $$ = null_primary; long double v; sscanf($1, "%Lf", &v);
-                      $$.primary_type = HVML_DOM_XPATH_PRIMARY_NUMBER; $$.ldbl = v; }
+                      $$.primary_type = HVML_DOM_XPATH_PRIMARY_NUMBER; $$.u.ldbl = v; }
 | function_call     { $$ = null_primary;
-                      $$.primary_type = HVML_DOM_XPATH_PRIMARY_FUNC; $$.func_call = $1; }
+                      $$.primary_type = HVML_DOM_XPATH_PRIMARY_FUNC; $$.u.func_call = $1; }
 ;
 
 function_call:

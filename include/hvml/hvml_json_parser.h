@@ -51,10 +51,10 @@ struct hvml_json_parser_conf_s {
 
     void *arg;
     // if this parser can handle embedded-json-fragment within another `token` stream
-    int   embedded:1;
+    unsigned int   embedded:1;
     // valid only when `embedded` is set
-    size_t     offset_line;
-    size_t     offset_col;
+    size_t         offset_line;
+    size_t         offset_col;
 };
 
 // create a json parser
