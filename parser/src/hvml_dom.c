@@ -2080,8 +2080,8 @@ static int hvml_dom_xpath_eval_to_string(hvml_dom_xpath_eval_t *ev, const char *
             return 0;
         } break;
         case HVML_DOM_XPATH_EVAL_NUMBER: {
-            char buf[64];
-            int n = snprintf(buf, sizeof(buf), "%.*Lf", (int)(sizeof(buf)-1), ev->u.ldbl);
+            char buf[128];
+            int n = snprintf(buf, sizeof(buf), "%.*Lf", (int)(sizeof(buf)/2), ev->u.ldbl);
             A(n>=0 && (size_t)n<sizeof(buf), "internal logic error");
             *v = strdup(buf);
             if (!*v) return -1; // out of memory
