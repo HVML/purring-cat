@@ -50,7 +50,7 @@ static char *observe_for_type_flag[] = {
 OBSERVE_FOR_TYPE get_observe_for_type(const char *str)
 {
     //I("-------- get_observe_for_type input: %s ---------", str);
-    int i;
+    size_t i;
     for (i = 0; i < OBSERVE_FOR_FLAG_COUNT; i ++) {
         if (0 == strncmp(observe_for_type_flag[i], str, OBSERVE_FOR_STRING_LEN_MAX)) {
             //I("-------- get_observe_for_type return: %d ---------", i);

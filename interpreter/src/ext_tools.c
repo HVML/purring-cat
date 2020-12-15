@@ -58,7 +58,7 @@ const char *get_mustache_inner(const char *s, size_t *ret_len) {
     const char *ret = strstr(s, "{{");
     if (ret) {
         ret += 2;
-        while (*ret == ' ' || *ret == '\t' && *ret != '\0') ret++;
+        while (*ret == ' ' || *ret == '\t' /* && *ret != '\0' */) ret++;
         if (*ret == '\0') return NULL;
         const char *end = strstr(ret, "}}");
         if (end) {
@@ -74,7 +74,7 @@ const char *get_mustache_inner(const char *s, size_t *ret_len) {
 
 char *str_trim(char *s) {
     char *p = s;
-    while (*p == ' ' || *p == '\t' && *p != '\0') p++;
+    while (*p == ' ' || *p == '\t' /* && *p != '\0' */) p++;
     if (*p == '\0') {
         *s = '\0';
         return s;

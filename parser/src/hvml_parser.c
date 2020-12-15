@@ -123,7 +123,6 @@ static int               hvml_parser_push_state(hvml_parser_t *parser, HVML_PARS
 static HVML_PARSER_STATE hvml_parser_pop_state(hvml_parser_t *parser);
 static HVML_PARSER_STATE hvml_parser_peek_state(hvml_parser_t *parser);
 static HVML_PARSER_STATE hvml_parser_chg_state(hvml_parser_t *parser, HVML_PARSER_STATE state);
-static void              dump_states(hvml_parser_t *parser);
 
 static int         hvml_parser_push_tag(hvml_parser_t *parser, const char *tag);
 static void        hvml_parser_pop_tag(hvml_parser_t *parser);
@@ -1071,14 +1070,6 @@ static HVML_PARSER_STATE hvml_parser_chg_state(hvml_parser_t *parser, HVML_PARSE
     parser->ar_states[parser->states - 1] = state;
 
     return st;
-}
-
-static void dump_states(hvml_parser_t *parser) {
-    D("states:");
-    for (size_t i=0; i<parser->states; ++i) {
-        D("state: %ld, %d", i, parser->ar_states[i]);
-    }
-    D("==");
 }
 
 

@@ -43,6 +43,10 @@ set(xpath_misc  "${CMAKE_CURRENT_BINARY_DIR}/xpath.interp"
                 "${CMAKE_CURRENT_BINARY_DIR}/xpathLexer.tokens"
                 "${CMAKE_CURRENT_BINARY_DIR}/xpath.tokens")
 
+set(hvml_cpp ${xpath_cpp}
+             hvml_dom_xpath_qry.cpp
+             xpathDomVisitor.cpp)
+
 set(antlr4_install "${PROJECT_SOURCE_DIR}/third-party/antlr4/runtime/Cpp/build/install")
 set(antlr4_jar "${PROJECT_SOURCE_DIR}/third-party/antlr4/tool/target/antlr4-4.9.1-SNAPSHOT-complete.jar")
 
@@ -57,7 +61,6 @@ set(hvml_parser_src
     hvml_dom.c
     hvml_dom_printf.c
     hvml_dom_xpath_parser.c
-    hvml_dom_xpath_qry.cpp
     hvml_jo.c
     hvml_jo_printf.c
     hvml_json_parser.c
@@ -65,9 +68,10 @@ set(hvml_parser_src
     hvml_parser.c
     hvml_string.c
     hvml_utf8.c
-    ${xpath_cpp}
-    xpathDomVisitor.cpp
+    ${hvml_cpp}
 )
+
+set_source_files_properties(${hvml_cpp} PROPERTIES COMPILE_FLAGS -Wno-attributes)
 
 # static
 add_library(hvml_parser_static STATIC ${hvml_parser_src} ${hvml_dom_xpath_src})

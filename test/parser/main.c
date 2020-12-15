@@ -207,7 +207,7 @@ static int process_utf8(FILE *in) {
                     ret = -1;
                     break;
                 }
-                if (len<0 || len>4) {
+                if (len>4) {
                     E("internal logic error");
                     ret = -1;
                     break;

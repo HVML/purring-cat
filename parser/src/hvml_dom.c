@@ -469,6 +469,8 @@ void hvml_dom_detach(hvml_dom_t *dom) {
 
 hvml_dom_t* hvml_dom_select(hvml_dom_t *dom, const char *selector) {
     A(0, "not implemented yet");
+    (void)dom;
+    (void)selector;
 }
 
 void hvml_dom_str_serialize_file(const char *str, size_t len, FILE *out) {
@@ -576,7 +578,7 @@ hvml_jo_value_t* hvml_dom_jo(hvml_dom_t *dom) {
 
 int hvml_dom_context_node_position(hvml_dom_context_node_t *node) {
     A(node, "internal logic error");
-    A(node->doms && node->idx>=0 && node->idx<node->doms->ndoms, "internal logic error");
+    A(node->doms && node->idx<node->doms->ndoms, "internal logic error");
     return node->idx;
 }
 
@@ -618,6 +620,7 @@ struct dom_clone_s {
 };
 
 static void traverse_for_clone(hvml_dom_t *dom, int lvl, int tag_open_close, void *arg, int *breakout) {
+    (void)lvl;
     dom_clone_t *dc = (dom_clone_t*)arg;
 
     HVML_DOM_TYPE dt = hvml_dom_type(dom);
@@ -872,6 +875,7 @@ struct collect_relative_s {
 };
 
 static void collect_relative_cb(hvml_dom_t *dom, int lvl, int tag_open_close, void *arg, int *breakout) {
+    (void)lvl;
     collect_relative_t *parg = (collect_relative_t*)arg;
     A(parg,               "internal logic error");
     A(parg->out,          "internal logic error");
@@ -1915,10 +1919,11 @@ struct collect_string_value_s {
 };
 
 static void collect_string_value_cb(hvml_dom_t *dom, int lvl, int tag_open_close, void *arg, int *breakout) {
+    (void)lvl;
+    (void)tag_open_close;
     collect_string_value_t *parg = (collect_string_value_t*)arg;
 
     HVML_DOM_TYPE dt = hvml_dom_type(dom);
-    hvml_dom_t *v = NULL;
     *breakout = 0;
 
     switch (dt) {
@@ -1981,14 +1986,14 @@ int hvml_dom_string_for_xpath(hvml_dom_t *dom, const char **v, int *allocated) {
         case MKDOT(D_JSON): {
             W("not implemented yet");    // what to compare? serialized form or not?
             *v = "";
+            return 0;
         } break;
         default: {
             A(0, "internal logic error");
+            // never reached here
+            return -1;
         } break;
     }
-
-    // never reached here
-    return -1;
 }
 
 static int hvml_dom_xpath_eval_to_bool(hvml_dom_xpath_eval_t *ev, int *v) {
@@ -2077,7 +2082,7 @@ static int hvml_dom_xpath_eval_to_string(hvml_dom_xpath_eval_t *ev, const char *
         case HVML_DOM_XPATH_EVAL_NUMBER: {
             char buf[64];
             int n = snprintf(buf, sizeof(buf), "%.*Lf", (int)(sizeof(buf)-1), ev->ldbl);
-            A(n<sizeof(buf), "internal logic error");
+            A(n>=0 && (size_t)n<sizeof(buf), "internal logic error");
             *v = strdup(buf);
             if (!*v) return -1; // out of memory
             *allocated = 1;
@@ -2620,7 +2625,7 @@ static int on_text(void *arg, const char *txt) {
 }
 
 static int on_begin(void *arg) {
-    hvml_dom_gen_t *gen = (hvml_dom_gen_t*)arg;
+    (void)arg;
     return 0;
 }
 
@@ -3001,7 +3006,7 @@ static int do_hvml_dom_back_traverse(hvml_dom_t *dom, back_traverse_t *tvs) {
     A(tvs, "internal logic error");
     int lvl = 0;
     int r = 0;
-    int pop = 0; // 1:pop from attr, 2:pop from child
+    // int pop = 0; // 1:pop from attr, 2:pop from child
     while (r==0 && dom) {
         switch (dom->dt) {
             case MKDOT(D_TAG):

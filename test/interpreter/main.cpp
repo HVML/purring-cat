@@ -34,7 +34,6 @@
 #include <algorithm>
 using namespace std;
 
-static int process(FILE *in, const char *ext);
 static int process_hvml(FILE *in,
                         FILE *out,
                         FILE *mustache_part_f,
@@ -43,8 +42,6 @@ static int process_hvml(FILE *in,
                         FILE *init_part_f,
                         FILE *observe_part_f,
                         FILE *vdom_f);
-static int process_json(FILE *in);
-static int process_utf8(FILE *in);
 
 // Most of *nices defined PATH_MAX macro in limits.h
 #ifndef PATH_MAX 

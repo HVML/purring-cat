@@ -626,11 +626,9 @@ struct jo_clone_s {
 };
 
 static int traverse_for_clone(hvml_jo_value_t *jo, int lvl, int action, void *arg) {
+    (void)lvl;
     jo_clone_t *jc = (jo_clone_t*)arg;
     A(jc, "internal logic error");
-    int breakout = 0;
-    hvml_jo_value_t *parent = hvml_jo_value_owner(jo);
-    hvml_jo_value_t *prev   = hvml_jo_value_sibling_prev(jo);
     hvml_jo_value_t *v      = NULL;
     HVML_JO_TYPE jot = hvml_jo_value_type(jo);
     switch (jot) {
@@ -1065,6 +1063,7 @@ static int on_val_done(void *arg) {
 }
 
 static int on_end(void *arg) {
+    (void)arg;
     return 0;
 }
 

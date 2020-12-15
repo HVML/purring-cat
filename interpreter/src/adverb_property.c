@@ -42,7 +42,7 @@ static char *adverb_abbreviation_flag[] = {
 
 ADVERB_PROPERTY get_adverb_type(const char *str)
 {
-    int i;
+    size_t i;
     for (i = 0; i < ADVERB_PROPERTY_COUNT; i ++) {
         if (0 == strncmp(adverb_abbreviation_flag[i], str, ADVERB_STRING_LEN_MAX)) {
             return i;

@@ -57,11 +57,6 @@ do {                                    \
     yy_pop_state(yyscanner);            \
 } while (0)
 
-#define UNPUT()                                 \
-do {                                            \
-    while (yyleng) unput(yytext[yyleng-1]);     \
-} while (0)
-
 #define M()                                     \
 do {                                            \
     yylloc->last_column += strlen(yytext);      \
@@ -76,7 +71,6 @@ do {                                            \
 %option noinput nounput
 %option debug verbose
 %option stack
-%option unput
 %option nodefault
 %option warn
 %option perf-report

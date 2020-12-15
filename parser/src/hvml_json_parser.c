@@ -79,7 +79,6 @@ static int                    hvml_json_parser_push_state(hvml_json_parser_t *pa
 static HVML_JSON_PARSER_STATE hvml_json_parser_pop_state(hvml_json_parser_t *parser);
 static HVML_JSON_PARSER_STATE hvml_json_parser_peek_state(hvml_json_parser_t *parser);
 static HVML_JSON_PARSER_STATE hvml_json_parser_chg_state(hvml_json_parser_t *parser, HVML_JSON_PARSER_STATE state);
-static void                   dump_states(hvml_json_parser_t *parser);
 
 #define get_line(parser) (parser->conf.offset_line + parser->line + 1)
 #define get_col(parser)  (parser->conf.offset_col  + parser->col  + 1)
@@ -1382,13 +1381,5 @@ static HVML_JSON_PARSER_STATE hvml_json_parser_chg_state(hvml_json_parser_t *par
     parser->ar_states[parser->states - 1] = state;
 
     return st;
-}
-
-static void dump_states(hvml_json_parser_t *parser) {
-    D("states:");
-    for (size_t i=0; i<parser->states; ++i) {
-        D("state: %ld, %d", i, parser->ar_states[i]);
-    }
-    D("==");
 }
 

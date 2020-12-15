@@ -73,6 +73,7 @@ struct doms_collect_relative_s {
 };
 
 static void doms_collect_relative_cb(hvml_dom_t *dom, int lvl, int tag_open_close, void *arg, int *breakout) {
+    (void)lvl;
     doms_collect_relative_t *parg = (doms_collect_relative_t*)arg;
     A(parg,               "internal logic error");
     A(parg->out,          "internal logic error");
@@ -154,7 +155,8 @@ static int do_doms_append_relative(hvml_doms_t *out, int forward, int self, int 
     A(out,    "internal logic error");
     A(start,  "internal logic error");
     A(dom,    "internal logic error");
-    doms_collect_relative_t      collect = {0};
+    doms_collect_relative_t      collect;
+    memset(&collect, 0, sizeof(collect));
     collect.out       = out;
     collect.relative  = dom;
     collect.forward   = forward;
@@ -175,7 +177,6 @@ xpathDomVisitor::xpathDomVisitor(hvml_dom_t *dom, size_t idx, size_t size)
 ,principal_(HVML_DOM_XPATH_PRINCIPAL_UNSPECIFIED)
 {
     A(dom_,       "internal logic error");
-    A(idx_>=0,    "internal logic error");
     A(idx_<size_, "internal logic error");
 }
 
@@ -365,7 +366,6 @@ antlrcpp::Any xpathDomVisitor::visitPredicate(xpathParser::PredicateContext *ctx
     // antlr4::tree::TerminalNode *LBRAC();
     // ExprContext *expr();
     // antlr4::tree::TerminalNode *RBRAC();
-    bool ok = false;
     antlrcpp::Any any = visitExpr(ctx->expr());
     return do_predicate(any);
 }
@@ -709,6 +709,7 @@ antlrcpp::Any xpathDomVisitor::visitAdditiveExpr(xpathParser::AdditiveExprContex
             found = 1;
             break;
         }
+        A(found, "internal logic error");
 
         l = do_op(op, l, r);
     }
@@ -832,6 +833,7 @@ antlrcpp::Any xpathDomVisitor::visitFunctionName(xpathParser::FunctionNameContex
 }
 
 antlrcpp::Any xpathDomVisitor::visitVariableReference(xpathParser::VariableReferenceContext *ctx) {
+    (void)ctx;
     T("internal logic error");
 }
 
@@ -840,7 +842,6 @@ antlrcpp::Any xpathDomVisitor::visitNameTest(xpathParser::NameTestContext *ctx) 
     // NCNameContext *nCName();
     // antlr4::tree::TerminalNode *COLON();
     // QNameContext *qName();
-    int r = 0;
     if (ctx->MUL()) {
         return do_name_test(dom_, NULL, "*");
     }
@@ -1156,11 +1157,18 @@ antlrcpp::Any xpathDomVisitor::do_lte(const antlrcpp::Any &left, const antlrcpp:
 }
 
 antlrcpp::Any xpathDomVisitor::do_op(const std::string &op, const antlrcpp::Any &left, const antlrcpp::Any &right) {
+    (void)left;
+    (void)right;
     if (op == "+") {
+        T("not implemented yet");
     } else if (op == "-") {
+        T("not implemented yet");
     } else if (op == "*") {
+        T("not implemented yet");
     } else if (op == "/") {
+        T("not implemented yet");
     } else if (op == "%") {
+        T("not implemented yet");
     } else {
         A(0, "internal logic error");
     }

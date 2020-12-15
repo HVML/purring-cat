@@ -156,7 +156,7 @@ int hvml_string_to_number(const char *s, long double *v) {
     int bytes = 0;
     int n = sscanf(s, "%Lf%n", &ldbl, &bytes);
     if (n!=1) return -1;
-    if (bytes!=strlen(s)) return -1;
+    if (bytes>=0 && (size_t)bytes!=strlen(s)) return -1;
 
     *v = ldbl;
 
@@ -183,7 +183,7 @@ static int hvml_string_append_vprintf(hvml_string_t *str, size_t total, const ch
 
     int n = vsnprintf(s+str->len, total+1, fmt, ap);
 
-    A(n==total, "internal logic error");
+    A(n>=0 && (size_t)n==total, "internal logic error");
 
     str->str  = s;
     str->len += total + 1;

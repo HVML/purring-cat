@@ -33,6 +33,7 @@ struct jo_value_printf_s {
 };
 
 static int traverse_for_printf(hvml_jo_value_t *jo, int lvl, int action, void *arg) {
+    (void)lvl;
     jo_value_printf_t *parg = (jo_value_printf_t*)arg;
     if (parg->failed) return -1;
 

@@ -220,6 +220,7 @@ void Interpreter_Runtime::traverse_for_divide(hvml_dom_t *dom,
                                               void *arg,
                                               int *breakout)
 {
+    (void)lvl;
     TraverseParam_t *param = (TraverseParam_t*)arg;
     A(param, "internal logic error");
 
