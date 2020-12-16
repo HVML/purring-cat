@@ -96,3 +96,4 @@ bookstore/book
 //attribute::*
 //book[5]/preceding::node()[position()>=5 and position()<=8]
 //book[5]/preceding::node()[position()>=5 and position()<=8][2]
+//book[5]/preceding::node()[position()>=5 and position()<=8][2][(5 mod 4.3)=0.7]

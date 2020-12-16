@@ -1000,3 +1000,6 @@ parsing xpath: @[97]: [//book[5]/preceding::node()[position()>=5 and position()<
 ==================
 parsing xpath: @[98]: [//book[5]/preceding::node()[position()>=5 and position()<=8][2]] => # of nodes [1]
 0:[Text]=2003
+==================
+parsing xpath: @[99]: [//book[5]/preceding::node()[position()>=5 and position()<=8][2][(5 mod 4.3)=0.7]] => # of nodes [1]
+0:[Text]=2003

@@ -349,7 +349,7 @@ bool xpathDomVisitor::do_predicate(const antlrcpp::Any &any) {
         ok = any;
     } else if (any.is<long double>()) {
         long double number = any;
-        if (fabs(number - (idx_+1))<LDBL_EPSILON) ok = true;
+        if (fabsl(number - (idx_+1))<DBL_EPSILON) ok = true;
     } else if (any.is<std::string>()) {
         const std::string &literal = any;
         if (!literal.empty()) ok = true;
@@ -531,7 +531,7 @@ antlrcpp::Any xpathDomVisitor::visitFilterExpr(xpathParser::FilterExprContext *c
         }
         if (any.is<long double>()) {
             long double ldbl = any;
-            if (!(fabs(ldbl - (idx_ + 1)) < LDBL_EPSILON)) return false;
+            if (!(fabsl(ldbl - (idx_ + 1)) < DBL_EPSILON)) return false;
             if (hvml_doms_append_dom(doms.get(), dom_)) T("out of memory");
             break;
         }
@@ -576,7 +576,7 @@ antlrcpp::Any xpathDomVisitor::visitOrExpr(xpathParser::OrExprContext *ctx) {
         }
         if (any.is<long double>()) {
             long double ldbl = any;
-            if (fabs(ldbl - (idx_ + 1)) < LDBL_EPSILON) return true;
+            if (fabsl(ldbl - (idx_ + 1)) < DBL_EPSILON) return true;
             continue;
         }
         if (any.is<xpathNodeset>()) {
@@ -609,7 +609,7 @@ antlrcpp::Any xpathDomVisitor::visitAndExpr(xpathParser::AndExprContext *ctx) {
         }
         if (any.is<long double>()) {
             long double ldbl = any;
-            if (fabs(ldbl - (idx_ + 1)) >= LDBL_EPSILON) return false;
+            if (fabsl(ldbl - (idx_ + 1)) >= DBL_EPSILON) return false;
             continue;
         }
         if (any.is<xpathNodeset>()) {
@@ -1157,18 +1157,25 @@ antlrcpp::Any xpathDomVisitor::do_lte(const antlrcpp::Any &left, const antlrcpp:
 }
 
 antlrcpp::Any xpathDomVisitor::do_op(const std::string &op, const antlrcpp::Any &left, const antlrcpp::Any &right) {
-    (void)left;
-    (void)right;
+    long double l = to_number(left);
+    long double r = to_number(right);
     if (op == "+") {
-        T("not implemented yet");
+        return l + r;
     } else if (op == "-") {
-        T("not implemented yet");
+        return l - r;
     } else if (op == "*") {
-        T("not implemented yet");
+        return l * r;
     } else if (op == "/") {
-        T("not implemented yet");
+        return l / r;
     } else if (op == "%") {
-        T("not implemented yet");
+        int s = signbit(l);
+        l = fabsl(l);
+        r = fabsl(r);
+        long double v = l / r;
+        A(v<=INT64_MAX, "overflow, not supported");
+        int64_t t = (int64_t)v;
+        l -= r * t;
+        return s ? -l : l;
     } else {
         A(0, "internal logic error");
     }
@@ -1392,7 +1399,7 @@ static antlrcpp::Any do_compare(HVML_DOM_XPATH_OP_TYPE op, const antlrcpp::Any &
         if (left.is<long double>() || right.is<long double>()) {
             long double l = xpathDomVisitor::to_number(left);
             long double r = xpathDomVisitor::to_number(right);
-            return fabs(l-r) < LDBL_EPSILON;
+            return fabsl(l-r) < DBL_EPSILON;
         }
         if (left.is<std::string>() || right.is<std::string>()) {
             std::string l = xpathDomVisitor::to_string(left);
