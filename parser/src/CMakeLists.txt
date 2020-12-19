@@ -16,7 +16,7 @@ BISON_TARGET(hvmlDomXPathParser
 FLEX_TARGET(hvmlDomXPathScanner
             hvml_dom_xpath_scanner.l
             ${CMAKE_CURRENT_BINARY_DIR}/hvml_dom_xpath_scanner.lex.c
-            COMPILE_FLAGS "--header-file=${CMAKE_CURRENT_BINARY_DIR}/hvml_dom_xpath_scanner.lex.h"
+            COMPILE_FLAGS "--header-file=${CMAKE_CURRENT_BINARY_DIR}/hvml_dom_xpath_scanner.lex.h --wincompat"
 )
 ADD_FLEX_BISON_DEPENDENCY(hvmlDomXPathScanner hvmlDomXPathParser)
 
@@ -75,12 +75,17 @@ set_source_files_properties(${hvml_cpp} PROPERTIES COMPILE_FLAGS -Wno-attributes
 
 # static
 add_library(hvml_parser_static STATIC ${hvml_parser_src} ${hvml_dom_xpath_src})
+# To link to static library of antlr4 in Windows, ANTLR4CPP_STATIC is required
+target_compile_options(hvml_parser_static PRIVATE "-DANTLR4CPP_STATIC")
+# Since antlr4-runtime-static is compiled with /MT, this library also should do.
+set_target_properties(hvml_parser_static PROPERTIES MSVC_RUNTIME_LIBRARY "MultiThreaded")
 target_include_directories(hvml_parser_static PUBLIC "${PROJECT_SOURCE_DIR}/include")
 target_include_directories(hvml_parser_static PRIVATE ".")
 target_include_directories(hvml_parser_static PRIVATE "${antlr4_install}/include/antlr4-runtime")
 target_include_directories(hvml_parser_static PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
-target_link_libraries(hvml_parser_static "${antlr4_install}/lib/libantlr4-runtime.a")
-set_target_properties(hvml_parser_static PROPERTIES OUTPUT_NAME hvml_parser)
+find_library(antlr4-rs antlr4-runtime-static PATHS "${antlr4_install}/lib")
+target_link_libraries(hvml_parser_static ${antlr4-rs})
+set_target_properties(hvml_parser_static PROPERTIES OUTPUT_NAME hvml_parser_static)
 add_dependencies(hvml_parser_static xpath)
 
 # shared

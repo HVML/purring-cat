@@ -21,12 +21,30 @@
 #include "hvml/hvml_string.h"
 #include "hvml_dom_xpath_parser.h"
 
+
 #include <float.h>
 #include <math.h>
 #include <string.h>
-#include <libgen.h>
 
+#ifdef _MSC_VER
+
+#pragma comment(lib, "shlwapi.lib")
+#include <shlwapi.h>
+
+static 
+char * basename(char * path)
+{
+    char * p = PathFindFileNameA(path);
+    return p == path ? NULL : p;
+}
+
+#else
+  #include <libgen.h>
+#endif
+
+#ifdef __GNUC__
 __attribute__ ((format (printf, 4, 5)))
+#endif
 static void hvml_throw(const char *cfile, int cline, const char *cfunc, const char *fmt, ...) {
     char   buf[4096];
     int    bytes = sizeof(buf);

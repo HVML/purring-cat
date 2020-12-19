@@ -30,8 +30,10 @@ void hvml_log_set_thread_type(const char *type);
 // if set, no prefix/surfix part would be printed in log funcs
 void hvml_log_set_output_only(int set);
 
-void hvml_log_printf(const char *cfile, int cline, const char *cfunc, FILE *out, const char level, const char *fmt, ...)
-__attribute__ ((format (printf, 6, 7)));
+#ifdef __GNUC__
+__attribute__ ((format (printf, 6, 7)))
+#endif
+void hvml_log_printf(const char *cfile, int cline, const char *cfunc, FILE *out, const char level, const char *fmt, ...);
 
 
 #define D(fmt, ...) hvml_log_printf(__FILE__, __LINE__, __func__, stderr, 'D', "%s" fmt "", "", ##__VA_ARGS__)

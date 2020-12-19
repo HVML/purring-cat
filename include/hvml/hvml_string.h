@@ -48,11 +48,15 @@ int  hvml_string_append(hvml_string_t *str, const char *s);
 int  hvml_string_get(hvml_string_t *str, char **buf, size_t *len);
 int  hvml_string_set(hvml_string_t *str, const char *buf, size_t len);
 
-int  hvml_string_printf(hvml_string_t *str, const char *fmt, ...)
-__attribute__ ((format (printf, 2, 3)));
-int  hvml_string_append_printf(hvml_string_t *str, const char *fmt, ...)
-__attribute__ ((format (printf, 2, 3)));
+#ifdef __GNUC__
+__attribute__ ((format (printf, 2, 3)))
+#endif
+int  hvml_string_printf(hvml_string_t *str, const char *fmt, ...);
 
+#ifdef __GNUC__
+__attribute__ ((format (printf, 2, 3)))
+#endif
+int  hvml_string_append_printf(hvml_string_t *str, const char *fmt, ...);
 
 int  hvml_string_to_number(const char *s, long double *v);
 
@@ -64,9 +68,6 @@ typedef struct hvml_stream_s            hvml_stream_t;
 hvml_stream_t* hvml_stream_bind_file(FILE *out, int take_ownership);
 hvml_stream_t* hvml_stream_bind_string(hvml_string_t *str);
 void           hvml_stream_destroy(hvml_stream_t *stream);
-
-int hvml_stream_printf(hvml_stream_t *stream, const char *fmt, ...);
-
 
 #ifdef __cplusplus
 }
