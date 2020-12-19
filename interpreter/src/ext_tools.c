@@ -22,6 +22,7 @@ const char *file_ext(const char *file) {
     return p ? p : "";
 }
 
+#if 0
 int strnicmp(const char *s1, const char *s2, size_t len) {
     unsigned char c1, c2;
     c1 = c2 = 0;
@@ -39,6 +40,7 @@ int strnicmp(const char *s1, const char *s2, size_t len) {
 
     return (int)c1 - (int)c2;
 }
+#endif // 0
 
 const char *find_mustache(const char *s, size_t *ret_len) {
     const char *ret = strstr(s, "{{");

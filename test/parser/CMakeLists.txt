@@ -4,6 +4,9 @@ if(NOT PYTHON3)
 endif()
 
 add_executable(hp main.c)
+if (MSVC)
+    target_compile_options(hp PRIVATE "/MT")
+endif()
 target_link_libraries(hp hvml_parser_static)
 
 string(REPLACE "${PROJECT_SOURCE_DIR}" "" relative "${CMAKE_CURRENT_SOURCE_DIR}")

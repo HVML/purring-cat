@@ -17,16 +17,43 @@
 
 #include "hvml/hvml_log.h"
 
-#include <inttypes.h>
-#include <libgen.h>
-#include <pthread.h>
-#include <stdarg.h>
-#include <sys/syscall.h>
-#include <sys/time.h>
-#include <time.h>
-#include <unistd.h>
+#ifdef _MSC_VER
+  #include <Windows.h>
+  #include <Shlwapi.h>
+#else  
+  #include <libgen.h>
+  #include <pthread.h>
+  #include <sys/syscall.h>
+  #include <sys/time.h>
+  #include <unistd.h>
+#endif
 
-static __thread char               thread_name[64] = {0};
+#include <inttypes.h>
+#include <stdarg.h>
+#include <time.h>
+
+#ifdef _MSC_VER
+
+#pragma comment(lib, "shlwapi.lib")
+
+static 
+char * basename(char * path)
+{
+    char * p = PathFindFileNameA(path);
+    return p == path ? NULL : p;
+}
+
+#endif // _MSC_VER
+
+
+#ifdef __GNUC__
+  static __thread char               thread_name[64] = {0};
+#elif defined(_MSC_VER)
+  __declspec(thread) static char thread_name[64] = {0};
+#else
+  #error Please look for an approach to declare tls variable in this compiler
+#endif
+
 static int                         output_only     = 0;
 
 void hvml_log_set_thread_type(const char *type) {
@@ -37,6 +64,9 @@ void hvml_log_set_thread_type(const char *type) {
 #ifdef __linux__
     tid = syscall(__NR_gettid);
 #endif
+#ifdef _MSC_VER
+    tid = GetCurrentThreadId();
+#endif
     snprintf(thread_name, sizeof(thread_name), "[%"PRId64"/%s]", tid, type);
 }
 
@@ -45,7 +75,9 @@ void hvml_log_set_output_only(int set) {
     output_only = set;
 }
 
+#ifdef __GNUC__
 __attribute__ ((format (printf, 6, 7)))
+#endif
 void hvml_log_printf(const char *cfile, int cline, const char *cfunc, FILE *out, const char level, const char *fmt, ...) {
     if (thread_name[0]=='\0') hvml_log_set_thread_type("unknown");
 
@@ -62,9 +94,18 @@ void hvml_log_printf(const char *cfile, int cline, const char *cfunc, FILE *out,
 
     do {
         if (!output_only_set) {
+#ifdef _WIN32
+            SYSTEMTIME localtime;
+            GetLocalTime(&localtime);
+            tm.tm_hour = localtime.wHour;
+            tm.tm_min = localtime.wMinute;
+            tm.tm_sec = localtime.wSecond;
+            tv_usec = localtime.wMilliseconds * 1000L; 
+#else            
             gettimeofday(&tv, NULL);
             localtime_r(&tv.tv_sec, &tm);
             tv_usec = tv.tv_usec;
+#endif            
             n = snprintf(p, bytes, "%c %02d:%02d:%02d.%06ld@%s: ", level,
                     tm.tm_hour, tm.tm_min, tm.tm_sec, tv_usec, thread_name);
 

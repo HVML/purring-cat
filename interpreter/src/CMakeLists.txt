@@ -12,7 +12,8 @@ add_library(hvml_interpreter_static STATIC ${hvml_interpreter_src})
 target_include_directories(hvml_interpreter_static PUBLIC
                            "${PROJECT_SOURCE_DIR}/include"
 )
-set_target_properties(hvml_interpreter_static PROPERTIES OUTPUT_NAME hvml_interpreter)
+set_target_properties(hvml_interpreter_static PROPERTIES MSVC_RUNTIME_LIBRARY "MultiThreaded")
+set_target_properties(hvml_interpreter_static PROPERTIES OUTPUT_NAME hvml_interpreter_static)
 
 # shared
 add_library(hvml_interpreter SHARED ${hvml_interpreter_src})

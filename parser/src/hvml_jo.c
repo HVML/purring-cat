@@ -56,11 +56,20 @@ typedef struct hvml_jo_object_s       hvml_jo_object_t;
 typedef struct hvml_jo_array_s        hvml_jo_array_t;
 typedef struct hvml_jo_object_kv_s    hvml_jo_object_kv_t;
 
-struct hvml_jo_true_s { };
+// Empty struct is a GCC extension only. In C99 it is invalid - holly
+#ifdef __GNUC__ 
+  #define EMPTY_STRUCT_DEF
+#else
+  #define EMPTY_STRUCT_DEF int placeholder[0];
+#endif
 
-struct hvml_jo_false_s { };
+struct hvml_jo_true_s { 
+    EMPTY_STRUCT_DEF
+};
 
-struct hvml_jo_null_s { };
+struct hvml_jo_false_s { EMPTY_STRUCT_DEF };
+
+struct hvml_jo_null_s { EMPTY_STRUCT_DEF };
 
 struct hvml_jo_number_s {
     long double    ldbl;
@@ -73,9 +82,11 @@ struct hvml_jo_string_s {
 };
 
 struct hvml_jo_object_s {
+    EMPTY_STRUCT_DEF
 };
 
 struct hvml_jo_array_s {
+    EMPTY_STRUCT_DEF
 };
 
 struct hvml_jo_object_kv_s {

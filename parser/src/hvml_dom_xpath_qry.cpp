@@ -47,7 +47,7 @@ int hvml_dom_qry(hvml_dom_t *dom, const char *path, hvml_doms_t *doms) {
     } catch (std::exception &e) {
         D("exception: [%s]", e.what());
         r = -1;
-        throw;
+        // throw; // It is a C function, so it cannot throw any exception
     }
 
     return r ? -1 : 0;

@@ -4,6 +4,7 @@ project(hvml)
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED TRUE)
 set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
 option(UPDATE_SUBMODULES
        "if you don't wanna update submodules, set -DUPDATE_SUBMODULES=OFF"

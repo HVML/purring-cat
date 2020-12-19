@@ -100,7 +100,9 @@ int hvml_string_set(hvml_string_t *str, const char *buf, size_t len) {
 }
 
 
+#ifdef __GNUC__
 __attribute__ ((format (printf, 2, 3)))
+#endif
 int hvml_string_printf(hvml_string_t *str, const char *fmt, ...) {
     int n = 0;
 
@@ -124,8 +126,9 @@ int hvml_string_printf(hvml_string_t *str, const char *fmt, ...) {
     return str->len;
 }
 
-
+#ifdef __GNUC__
 __attribute__ ((format (printf, 2, 3)))
+#endif
 int hvml_string_append_printf(hvml_string_t *str, const char *fmt, ...) {
     int n = 0;
 
