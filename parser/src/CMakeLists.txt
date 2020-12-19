@@ -13,10 +13,20 @@ BISON_TARGET(hvmlDomXPathParser
              ${CMAKE_CURRENT_BINARY_DIR}/hvml_dom_xpath_parser.tab.c
             COMPILE_FLAGS "--graph=${CMAKE_CURRENT_BINARY_DIR}/hvml_dom_xpath_parser.tab.gv"
 )
+
+# We need --wincompat option in Windows.
+if (WIN32)
+   set(flex_flags "--header-file=${CMAKE_CURRENT_BINARY_DIR}/hvml_dom_xpath_scanner.lex.h --wincompat")
+else()
+   set(flex_flags "--header-file=${CMAKE_CURRENT_BINARY_DIR}/hvml_dom_xpath_scanner.lex.h")
+endif()
+
+message(STATUS ${flex_flags})
+
 FLEX_TARGET(hvmlDomXPathScanner
             hvml_dom_xpath_scanner.l
             ${CMAKE_CURRENT_BINARY_DIR}/hvml_dom_xpath_scanner.lex.c
-            COMPILE_FLAGS "--header-file=${CMAKE_CURRENT_BINARY_DIR}/hvml_dom_xpath_scanner.lex.h --wincompat"
+            COMPILE_FLAGS ${flex_flags}
 )
 ADD_FLEX_BISON_DEPENDENCY(hvmlDomXPathScanner hvmlDomXPathParser)
 
@@ -83,8 +93,7 @@ target_include_directories(hvml_parser_static PUBLIC "${PROJECT_SOURCE_DIR}/incl
 target_include_directories(hvml_parser_static PRIVATE ".")
 target_include_directories(hvml_parser_static PRIVATE "${antlr4_install}/include/antlr4-runtime")
 target_include_directories(hvml_parser_static PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
-find_library(antlr4-rs antlr4-runtime-static PATHS "${antlr4_install}/lib")
-target_link_libraries(hvml_parser_static ${antlr4-rs})
+target_link_libraries(hvml_parser_static $<IF:$<BOOL:${WIN32}>,${antlr4_install}/lib/antlr4-runtime-static.lib,${antlr4_install}/lib/libantlr4-runtime.a>)
 set_target_properties(hvml_parser_static PROPERTIES OUTPUT_NAME hvml_parser_static)
 add_dependencies(hvml_parser_static xpath)
 

@@ -69,6 +69,8 @@ hvml_stream_t* hvml_stream_bind_file(FILE *out, int take_ownership);
 hvml_stream_t* hvml_stream_bind_string(hvml_string_t *str);
 void           hvml_stream_destroy(hvml_stream_t *stream);
 
+int hvml_stream_printf(hvml_stream_t *stream, const char *fmt, ...);
+
 #ifdef __cplusplus
 }
 #endif
