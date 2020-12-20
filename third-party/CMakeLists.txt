@@ -28,8 +28,8 @@ add_custom_command(OUTPUT ${antlr4_demo}
                              -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
                              -DCMAKE_INSTALL_PREFIX=build/install
                              -B build
-  COMMAND "${CMAKE_COMMAND}" --build build --config ${CONFIG}
-  COMMAND "${CMAKE_COMMAND}" --install build --config ${CONFIG}
+  COMMAND "${CMAKE_COMMAND}" --build build --config Release
+  COMMAND "${CMAKE_COMMAND}" --install build --config Release
   WORKING_DIRECTORY "${antlr4_cpp_folder}")
 
 add_dependencies(antlr4demo antlr4)

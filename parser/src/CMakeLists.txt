@@ -21,8 +21,6 @@ else()
    set(flex_flags "--header-file=${CMAKE_CURRENT_BINARY_DIR}/hvml_dom_xpath_scanner.lex.h")
 endif()
 
-message(STATUS ${flex_flags})
-
 FLEX_TARGET(hvmlDomXPathScanner
             hvml_dom_xpath_scanner.l
             ${CMAKE_CURRENT_BINARY_DIR}/hvml_dom_xpath_scanner.lex.c
@@ -81,7 +79,9 @@ set(hvml_parser_src
     ${hvml_cpp}
 )
 
-set_source_files_properties(${hvml_cpp} PROPERTIES COMPILE_FLAGS -Wno-attributes)
+if (NOT MSVC)
+    set_source_files_properties(${hvml_cpp} PROPERTIES COMPILE_FLAGS -Wno-attributes)
+endif()
 
 # static
 add_library(hvml_parser_static STATIC ${hvml_parser_src} ${hvml_dom_xpath_src})
