@@ -62,6 +62,67 @@ int main(int argc, char *argv[]) {
     int ok = 1;
     for (int i=1; i<argc && ok; ++i) {
         const char *arg = argv[i];
+        if (strcmp(arg, "--to")==0) {
+            ++i;
+            if (i>=argc) {
+                E("expecting <dos/unix>, but got nothing");
+                ok = 0;
+                break;
+            }
+            int to_dos = 0;
+            if (strcmp(argv[i], "dos")==0) {
+                to_dos = 1;
+            } else if (strcmp(argv[i], "unix")==0) {
+                to_dos = 0;
+            } else {
+                E("expecting <dos/unix>, but got [%s]", argv[i]);
+                ok = 0;
+                break;
+            }
+
+            int    cr = 0;
+            char   buf[8192];
+            size_t n = 0;
+            char  *p = NULL;
+
+            while (n>0 || !feof(stdin)) {
+                if (n==0) {
+                    n = fread(buf, 1, sizeof(buf)-1, stdin);
+                    buf[n] = '\0';
+                    p = buf;
+                    if (n==0) break;
+                }
+
+                if (cr) {
+                    if (*p=='\n') {
+                        ++p; --n;
+                    }
+                    cr = 0;
+                }
+
+                if (n==0) continue;
+
+                char *pcr = p;
+                while (*pcr && *pcr!='\r' && *pcr!='\n') ++pcr;
+
+                if (!*pcr) {
+                    fwrite(p, 1, n, stdout);
+                    p = NULL;
+                    n = 0;
+                    continue;
+                }
+
+                fwrite(p, 1, pcr-p, stdout);
+                n -= pcr+1-p;
+                p = pcr+1;
+                if (to_dos) fwrite("\r\n", 1, 2, stdout);
+                else        fwrite("\n", 1, 1, stdout);
+
+                if (*pcr=='\r') cr = 1;
+            }
+
+            break;
+        }
         if (strcmp(arg, "-c")==0) {
             with_clone = 1;
             continue;
