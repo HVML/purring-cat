@@ -122,17 +122,9 @@ void hvml_log_printf(const char *cfile, int cline, const char *cfunc, FILE *out,
     } while (0);
 
     if (!output_only_set) {
-#ifdef _MSC_VER
-        fprintf(out, "%s =%s[%d]%s()=\r\n", buf, basename((char*)cfile), cline, cfunc);
-#else
         fprintf(out, "%s =%s[%d]%s()=\n", buf, basename((char*)cfile), cline, cfunc);
-#endif
     } else {
-#ifdef _MSC_VER
-        fprintf(out, "%s\r\n", buf);
-#else
         fprintf(out, "%s\n", buf);
-#endif
     }
 }
 

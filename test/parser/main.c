@@ -226,11 +226,7 @@ static int process_hvml(FILE *in) {
         r = 0;
     } while (0);
     if (dom) hvml_dom_destroy(dom);
-#ifdef _MSC_VER
-    printf("\r\n");
-#else
     printf("\n");
-#endif
     return r ? 1 : 0;
 }
 
@@ -252,11 +248,7 @@ static int process_json(FILE *in) {
     } while (0);
 
     if (jo) hvml_jo_value_free(jo);
-#ifdef _MSC_VER
-    printf("\r\n");
-#else
     printf("\n");
-#endif
     return r ? 1 : 0;
 }
 
@@ -346,15 +338,26 @@ ssize_t getline(char **lineptr, size_t *n, FILE *stream) {
     while(c != EOF) {
         if ((p - bufptr) > (size - 1)) {
             size = size + 128;
-            bufptr = realloc(bufptr, size);
-            if (bufptr == NULL) {
+            char *pb = realloc(bufptr, size);
+            if (pb == NULL) {
+                free(bufptr);
                 return -1;
             }
+            p += pb-bufptr;
+            bufptr = pb;
         }
-        *p++ = c;
         if (c == '\n') {
+            *p++ = c;
             break;
         }
+        if (c == '\r') {
+            *p++ = '\n';
+            c = fgetc(stream);
+            if (c==EOF || c=='\n') break;
+            ungetc(c, stream);
+            break;
+        }
+        *p++ = c;
         c = fgetc(stream);
     }
 
@@ -382,11 +385,7 @@ static int process_xpath(FILE *in, hvml_dom_t *hvml) {
         const char *p = line;
         while (*p && isspace(*p)) ++p;
         if (strlen(p)==0) continue;
-#ifdef _MSC_VER
-        fprintf(stderr, "parsing xpath @[%d]: [%s]\r\n", i, p);
-#else
         fprintf(stderr, "parsing xpath @[%d]: [%s]\n", i, p);
-#endif
         hvml_doms_t doms = {0};
         if (with_antlr4) {
             r = hvml_dom_qry(hvml, p, &doms);
@@ -394,20 +393,11 @@ static int process_xpath(FILE *in, hvml_dom_t *hvml) {
             r = hvml_dom_query(hvml, p, &doms);
         }
         if (r) {
-#ifdef _MSC_VER
-            fprintf(stderr, "parsing xpath: failed\r\n");
-#else
             fprintf(stderr, "parsing xpath: failed\n");
-#endif
             break;
         }
-#ifdef _MSC_VER
-        fprintf(stdout, "==================\r\n");
-        fprintf(stdout, "parsing xpath: @[%d]: [%s] => # of nodes [%zu]\r\n", i, p, doms.ndoms);
-#else
         fprintf(stdout, "==================\n");
         fprintf(stdout, "parsing xpath: @[%d]: [%s] => # of nodes [%zu]\n", i, p, doms.ndoms);
-#endif
         for (size_t i=0; i<doms.ndoms; ++i) {
             hvml_dom_t *d = doms.doms[i];
             const char *title = 0;
@@ -423,11 +413,7 @@ static int process_xpath(FILE *in, hvml_dom_t *hvml) {
             }
             fprintf(stdout, "%zu:[%s]=", i, title);
             hvml_dom_printf(d, stdout);
-#ifdef _MSC_VER
-            fprintf(stdout, "\r\n");
-#else
             fprintf(stdout, "\n");
-#endif
         }
         hvml_doms_cleanup(&doms);
     }

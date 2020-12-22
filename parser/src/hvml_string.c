@@ -166,11 +166,124 @@ int hvml_string_to_number(const char *s, long double *v) {
     return 0;
 }
 
-int  hvml_string_is_empty(hvml_string_t *str) {
+int hvml_string_is_empty(hvml_string_t *str) {
     if (!str) return -1;
     return (0 == str->len);
 }
 
+int hvml_string_getline(const char *str, const char **end, const char **next) {
+    if (!str) return -1;
+    if (!end) return -1;
+    if (!next) return -1;
+
+    if (!*str) {
+        *end  = str;
+        *next = NULL;
+        return 0;
+    }
+
+    const char *p = str;
+    while (*p && *p!='\r' && *p!='\n') ++p;
+    *end  = p;
+    if (!*p) {
+        *next = NULL;
+    } else if (*p=='\n') {
+        *next = p+1;
+    } else {
+        ++p;
+        if (*p=='\n') {
+            *next = p+1;
+        } else {
+            *next = p;
+        }
+    }
+
+    return 0;
+}
+
+int hvml_string_to_dos(hvml_string_t *str) {
+    if (!str) return -1;
+    if (!str->str) return 0;
+
+    hvml_string_t s = {0};
+    char *start = str->str;
+    char *p = start;
+    int r = 0;
+    while (1) {
+        while (*p && *p!='\r' && *p!='\n') ++p;
+        if (!*p) {
+            if (!s.str) return 0;
+            r = hvml_string_append(&s, start);
+            if (r) break;
+            hvml_string_clear(str);
+            *str = s;
+            return 0;
+        }
+
+        const char c = *p;
+        *p = '\0';
+        r = hvml_string_append(&s, start);
+        *p = c;
+        if (r) break;
+        r = hvml_string_append(&s, "\r\n");
+        if (r) break;
+
+        if (*p=='\n') {
+            ++p;
+            start = p;
+            continue;
+        }
+
+        ++p;
+        if (*p=='\n') {
+            ++p;
+        }
+        start = p;
+    }
+
+    hvml_string_clear(&s);
+    return -1;
+}
+
+int hvml_string_to_unix(hvml_string_t *str) {
+    if (!str) return -1;
+    if (!str->str) return -1;
+
+    hvml_string_t s = {0};
+    char *start = str->str;
+    char *p = start;
+    int r = 0;
+    while (1) {
+        while (*p && *p!='\r') ++p;
+        if (!*p) {
+            if (!s.str) return 0;
+            r = hvml_string_append(&s, start);
+            if (r) break;
+            hvml_string_clear(str);
+            *str = s;
+            return 0;
+        }
+
+        if (p[1]!='\n') {
+            *p = '\n';
+            ++p;
+            continue;
+        }
+
+        *p = '\0';
+        r = hvml_string_append(&s, start);
+        *p = '\r';
+        if (r) break;
+        r = hvml_string_append(&s, "\n");
+        if (r) break;
+
+        ++p;
+        start = p;
+    }
+
+    hvml_string_clear(&s);
+    return -1;
+}
 
 
 
