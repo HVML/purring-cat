@@ -1254,7 +1254,7 @@ int hvml_json_parser_parse_char(hvml_json_parser_t *parser, const char c) {
         }
     } while (ret==1); // ret==1: to retry
     if (ret==0) {
-        if (c=='\n') {
+        if (c=='\r' || c=='\n') {
             hvml_string_reset(&parser->curr);
             ++parser->line;
             parser->conf.offset_col = 0;

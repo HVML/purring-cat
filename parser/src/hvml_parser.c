@@ -926,7 +926,7 @@ static int do_hvml_parser_parse_char(hvml_parser_t *parser, const char c) {
 
 #define APPEND_TO_CURR()                         \
 do {                                             \
-    if (c=='\n') {                               \
+    if (c=='\r' || c=='\n') {                    \
         string_reset(&parser->curr);             \
         ++parser->line;                          \
         parser->col = 0;                         \
