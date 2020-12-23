@@ -2328,14 +2328,35 @@ static int hvml_dom_xpath_eval_compare(hvml_dom_xpath_eval_t *left, hvml_dom_xpa
             if (r) break;
             r = hvml_dom_xpath_eval_to_number(right, &rv);
             if (r) break;
-            long double delta = lv - rv;
-            int sign = signbit(delta);
-            if (sign) {
-                delta = -1;
-            } else {
-                delta = (fabsl(delta)<=DBL_EPSILON) ? 0 : 1;
+            int cl = fpclassify(lv);
+            int cr = fpclassify(rv);
+            if (cl==FP_NAN || cr==FP_NAN) {
+                ev->u.b = 0;
+                break;
             }
-            ev->u.b = hvml_dom_xpath_to_bool(op, delta);
+            if (cl==FP_ZERO && cr==FP_ZERO) {
+                ev->u.b = hvml_dom_xpath_to_bool(op, 0);
+                break;
+            }
+            long double delta = lv - rv;
+            switch (fpclassify(delta)) {
+                case FP_ZERO: {
+                    ev->u.b = hvml_dom_xpath_to_bool(op, 0);
+                } break;
+                case FP_NAN: {
+                    ev->u.b = 0;
+                } break;
+                case FP_INFINITE: {
+                    ev->u.b = 0;
+                } break;
+                default: {
+                    if (fabsl(delta)<=DBL_EPSILON) {
+                        ev->u.b = hvml_dom_xpath_to_bool(op, 0);
+                        break;
+                    }
+                    ev->u.b = hvml_dom_xpath_to_bool(op, signbit(delta) ? -1 : 1);
+                } break;
+            }
         } break;
         case HVML_DOM_XPATH_EVAL_STRING: {
             const char *lv = NULL, *rv = NULL;
