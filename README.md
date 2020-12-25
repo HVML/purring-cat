@@ -223,6 +223,10 @@ valgrind --leak-check=full ./build/test/parser/hp ./test/parser/test/sample.hvml
 1. Run `rm -rf build && cmake -DCMAKE_BUILD_TYPE=Debug -B build && cmake --build build`.
 1. Run `pushd build/test/parser && ctest -VV; popd`
 
+for (.json, .utf8, .xpath), follow the above-mentioned steps, especially for .xpath, you shall
+provide a .xpath.hvml and a .xpath.hvml.output as well , the former one is for .xpath to query by,
+the latter one is because .xpath.hvml would be selected in hvml-test-procedure.
+
 
 ## Building in Windows
 
@@ -241,10 +245,8 @@ valgrind --leak-check=full ./build/test/parser/hp ./test/parser/test/sample.hvml
 2. Start a Visual Studio building environment, like 'x64 Native Tool Command Prompt for VS 2019'
 3. Enter purring-cat directory, execute commands:
 ```
-   mkdir build
-   cd build
-   cmake ..
-   "cmake --build . --config Release" or "cmake --build . --config Debug", according to what kind of configuration you want in Windows.
+   cmake -B build
+   "cmake --build build --config Release" or "cmake --build build --config Debug", according to what kind of configuration you want in Windows.
 ```   
 
 ### Other documents

@@ -32,5 +32,6 @@ add_custom_command(OUTPUT ${antlr4_demo}
   COMMAND "${CMAKE_COMMAND}" --install build --config Release
   WORKING_DIRECTORY "${antlr4_cpp_folder}")
 
+add_dependencies(antlr4 git-submodules)
 add_dependencies(antlr4demo antlr4)
 

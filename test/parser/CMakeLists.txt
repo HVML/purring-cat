@@ -11,20 +11,18 @@ string(REPLACE "${PROJECT_SOURCE_DIR}" "" relative "${CMAKE_CURRENT_SOURCE_DIR}"
 
 enable_testing()
 
-if (MSVC)
-    set(HP_PROC "${PROJECT_BINARY_DIR}${relative}/${CMAKE_BUILD_TYPE}/hp.exe")
-    set(TMP_FILE "${CMAKE_CURRENT_BINARY_DIR}/tmp.file")
-else ()
+if(MSVC)
+    file(TO_NATIVE_PATH "$<TARGET_FILE:hp>" HP_PROC)
+    file(TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}/tmp.file" tmp_file)
+else()
     set(HP_PROC "${PROJECT_BINARY_DIR}${relative}/hp")
 endif()
 
 file(GLOB hvmls "test/*.hvml")
 foreach(hvml ${hvmls})
-if (MSVC)
-    add_test(NAME ${hvml}
-             COMMAND ${HP_PROC} ${hvml} > ${TMP_FILE} && fc ${TMP_FILE} ${hvml}.output)
+if(MSVC)
     add_test(NAME ${hvml}_c
-             COMMAND ${HP_PROC} -c ${hvml} > ${TMP_FILE} && fc ${TMP_FILE} ${hvml}.output)
+             COMMAND ${CMAKE_COMMAND} -E chdir $<TARGET_FILE_DIR:hp> $ENV{ComSpec} /c "$<TARGET_FILE_NAME:hp> ${hvml} > tmp.file && fc tmp.file ${hvml}.output")
 else()
     add_test(NAME ${hvml}
              COMMAND sh -c "${HP_PROC} ${hvml} | diff - ${hvml}.output")
@@ -35,12 +33,10 @@ endforeach()
 
 file(GLOB jsons "test/*.json")
 foreach(json ${jsons})
-if (MSVC)
-    add_test(NAME ${json}
-             COMMAND ${HP_PROC} ${json} | python3 -m json.tool > ${TMP_FILE} && fc ${TMP_FILE} ${json}.output)
+if(MSVC)
     add_test(NAME ${json}_c
-             COMMAND ${HP_PROC} -c ${json} | python3 -m json.tool > ${TMP_FILE} && fc ${TMP_FILE} ${json}.output)
-else ()
+             COMMAND ${CMAKE_COMMAND} -E chdir $<TARGET_FILE_DIR:hp> $ENV{ComSpec} /c "$<TARGET_FILE_NAME:hp> -c ${json} | python3 -X utf8 -m json.tool > tmp.file && fc tmp.file ${json}.output")
+else()
     add_test(NAME ${json}
              COMMAND sh -c "${HP_PROC} ${json} | python3 -m json.tool | diff - ${json}.output")
     add_test(NAME ${json}_c
@@ -50,9 +46,9 @@ endforeach()
 
 file(GLOB utf8s "test/*.utf8")
 foreach(utf8 ${utf8s})
-if (MSVC)
+if(MSVC)
     add_test(NAME ${utf8}
-             COMMAND ${HP_PROC} ${utf8} > ${TMP_FILE} && fc ${TMP_FILE} ${utf8}.output)
+             COMMAND ${CMAKE_COMMAND} -E chdir $<TARGET_FILE_DIR:hp> $ENV{ComSpec} /c "$<TARGET_FILE_NAME:hp> ${utf8} > tmp.file && fc tmp.file ${utf8}.output")
 else()
     add_test(NAME ${utf8}
              COMMAND sh -c "${HP_PROC} ${utf8} | diff - ${utf8}.output")
@@ -61,12 +57,10 @@ endforeach()
 
 file(GLOB xpaths "test/*.xpath")
 foreach(xpath ${xpaths})
-if (MSVC)
-    add_test(NAME ${xpath}
-             COMMAND ${HP_PROC} ${xpath})
+if(MSVC)
     add_test(NAME ${xpath}_diff
-             COMMAND ${HP_PROC} ${xpath} > ${TMP_FILE} && fc ${TMP_FILE} ${xpath}.output)
-else ()
+             COMMAND ${CMAKE_COMMAND} -E chdir $<TARGET_FILE_DIR:hp> $ENV{ComSpec} /c "$<TARGET_FILE_NAME:hp> ${xpath} > tmp.file && fc tmp.file ${xpath}.output")
+else()
     add_test(NAME ${xpath}
              COMMAND sh -c "${HP_PROC} ${xpath}")
     if ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
@@ -75,17 +69,15 @@ else ()
     endif ()
     add_test(NAME ${xpath}_diff
              COMMAND sh -c "${HP_PROC} ${xpath} | diff - ${xpath}.output")
-endif ()
+endif()
 endforeach()
 
 file(GLOB antlr4s "test/*.xpath")
 foreach(antlr4 ${antlr4s})
-if (MSVC)
-    add_test(NAME ${antlr4}_a
-             COMMAND ${HP_PROC} --antlr4 ${antlr4})
+if(MSVC)
     add_test(NAME ${antlr4}_a_diff
-             COMMAND ${HP_PROC} --antlr4 ${antlr4} > ${TMP_FILE} && fc ${TMP_FILE} ${antlr4}.output)
-else ()
+             COMMAND ${CMAKE_COMMAND} -E chdir $<TARGET_FILE_DIR:hp> $ENV{ComSpec} /c "$<TARGET_FILE_NAME:hp> --antlr4 ${antlr4} > tmp.file && fc tmp.file ${antlr4}.output")
+else()
     add_test(NAME ${antlr4}_a
              COMMAND sh -c "${HP_PROC} --antlr4 ${antlr4}")
     if ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
@@ -94,6 +86,6 @@ else ()
     endif ()
     add_test(NAME ${antlr4}_a_diff
              COMMAND sh -c "${HP_PROC} --antlr4 ${antlr4} | diff - ${antlr4}.output")
-endif ()
+endif()
 endforeach()
 

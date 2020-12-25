@@ -17,7 +17,7 @@ endif()
 
 add_subdirectory(third-party)
 add_subdirectory(parser)
-add_subdirectory(interpreter)
+#add_subdirectory(interpreter)
 add_subdirectory(json-eval)
 add_subdirectory(json-objects)
 add_subdirectory(test)
