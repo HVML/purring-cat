@@ -62,6 +62,10 @@ int  hvml_string_to_number(const char *s, long double *v);
 
 int  hvml_string_is_empty(hvml_string_t *str);
 
+int  hvml_string_getline(const char *str, const char **end, const char **next);
+
+int  hvml_string_to_dos(hvml_string_t *str);
+int  hvml_string_to_unix(hvml_string_t *str);
 
 typedef struct hvml_stream_s            hvml_stream_t;
 

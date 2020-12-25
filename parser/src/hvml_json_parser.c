@@ -73,6 +73,7 @@ struct hvml_json_parser_s {
     uint16_t                       shi;
     uint16_t                       slo;
     unsigned int                   shi_:1; // indicate if shi_ done
+    unsigned int                   cr:1;   // if CR cached
 };
 
 static int                    hvml_json_parser_push_state(hvml_json_parser_t *parser, HVML_JSON_PARSER_STATE state);
@@ -1241,10 +1242,19 @@ static int do_hvml_json_parser_parse_char(hvml_json_parser_t *parser, const char
 int hvml_json_parser_parse_char(hvml_json_parser_t *parser, const char c) {
     int ret = 1;
     do {
-        ret = do_hvml_json_parser_parse_char(parser, c);
+        if (parser->cr) {
+            parser->cr = 0;
+            if (c=='\n') return 0;
+        }
+        if (c=='\r') {
+            ret = do_hvml_json_parser_parse_char(parser, '\n');
+            parser->cr = 1;
+        } else {
+            ret = do_hvml_json_parser_parse_char(parser, c);
+        }
     } while (ret==1); // ret==1: to retry
     if (ret==0) {
-        if (c=='\n') {
+        if (c=='\r' || c=='\n') {
             hvml_string_reset(&parser->curr);
             ++parser->line;
             parser->conf.offset_col = 0;

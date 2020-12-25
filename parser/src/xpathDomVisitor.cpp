@@ -367,7 +367,7 @@ bool xpathDomVisitor::do_predicate(const antlrcpp::Any &any) {
         ok = any;
     } else if (any.is<long double>()) {
         long double number = any;
-        if (fabsl(number - (idx_+1))<DBL_EPSILON) ok = true;
+        if (fabsl(number - (idx_+1))<=DBL_EPSILON) ok = true;
     } else if (any.is<std::string>()) {
         const std::string &literal = any;
         if (!literal.empty()) ok = true;
@@ -549,7 +549,7 @@ antlrcpp::Any xpathDomVisitor::visitFilterExpr(xpathParser::FilterExprContext *c
         }
         if (any.is<long double>()) {
             long double ldbl = any;
-            if (!(fabsl(ldbl - (idx_ + 1)) < DBL_EPSILON)) return false;
+            if (!(fabsl(ldbl - (idx_ + 1)) <= DBL_EPSILON)) return false;
             if (hvml_doms_append_dom(doms.get(), dom_)) T("out of memory");
             break;
         }
@@ -594,7 +594,7 @@ antlrcpp::Any xpathDomVisitor::visitOrExpr(xpathParser::OrExprContext *ctx) {
         }
         if (any.is<long double>()) {
             long double ldbl = any;
-            if (fabsl(ldbl - (idx_ + 1)) < DBL_EPSILON) return true;
+            if (fabsl(ldbl - (idx_ + 1)) <= DBL_EPSILON) return true;
             continue;
         }
         if (any.is<xpathNodeset>()) {
@@ -627,7 +627,7 @@ antlrcpp::Any xpathDomVisitor::visitAndExpr(xpathParser::AndExprContext *ctx) {
         }
         if (any.is<long double>()) {
             long double ldbl = any;
-            if (fabsl(ldbl - (idx_ + 1)) >= DBL_EPSILON) return false;
+            if (fabsl(ldbl - (idx_ + 1)) > DBL_EPSILON) return false;
             continue;
         }
         if (any.is<xpathNodeset>()) {
@@ -1417,7 +1417,7 @@ static antlrcpp::Any do_compare(HVML_DOM_XPATH_OP_TYPE op, const antlrcpp::Any &
         if (left.is<long double>() || right.is<long double>()) {
             long double l = xpathDomVisitor::to_number(left);
             long double r = xpathDomVisitor::to_number(right);
-            return fabsl(l-r) < DBL_EPSILON;
+            return fabsl(l-r) <= DBL_EPSILON;
         }
         if (left.is<std::string>() || right.is<std::string>()) {
             std::string l = xpathDomVisitor::to_string(left);

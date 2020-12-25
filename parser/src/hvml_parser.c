@@ -111,6 +111,7 @@ struct hvml_parser_s {
     unsigned int                   declared:2; // 0:undefined;1:defining;2:defined;3:notexist
     unsigned int                   commenting:1;
     unsigned int                   rooted:1;
+    unsigned int                   cr:1;       // if CR cached
 
     size_t                         line;
     size_t                         col;
@@ -925,7 +926,7 @@ static int do_hvml_parser_parse_char(hvml_parser_t *parser, const char c) {
 
 #define APPEND_TO_CURR()                         \
 do {                                             \
-    if (c=='\n') {                               \
+    if (c=='\r' || c=='\n') {                    \
         string_reset(&parser->curr);             \
         ++parser->line;                          \
         parser->col = 0;                         \
@@ -938,7 +939,16 @@ do {                                             \
 static int hvml_parser_parse_char_(hvml_parser_t *parser, const char c) {
     int ret = 1;
     do {
-        ret = do_hvml_parser_parse_char(parser, c);
+        if (parser->cr) {
+            parser->cr = 0;
+            if (c == '\n') return 0;
+        }
+        if (c=='\r') {
+            ret = do_hvml_parser_parse_char(parser, '\n');
+            parser->cr = 1;
+        } else {
+            ret = do_hvml_parser_parse_char(parser, c);
+        }
     } while (ret==1); // ret==1: to retry
     if (ret==0) {
         APPEND_TO_CURR();
