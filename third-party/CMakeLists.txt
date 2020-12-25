@@ -4,6 +4,11 @@ set(antlr4_jar "${antlr4_folder}/tool/target/antlr4-4.9.1-SNAPSHOT-complete.jar"
 set(antlr4_demo "${antlr4_cpp_folder}/build/install/share/antlr4-demo")
 set(antlr4_main "${antlr4_cpp_folder}/demo/Linux/main.cpp")
 
+if(EXISTS "${antlr4_folder}/README.md")
+    message(STATUS "${antlr4_folder}/README.md exits")
+else()
+    message(STATUS "${antlr4_folder}/README.md not exits")
+endif()
 #
 # -DskipTests=true is enough. The -pl line isn't accepted by cmake 3.18.20081302-MSVC_2 in my Windows. - holly
 #
@@ -32,6 +37,6 @@ add_custom_command(OUTPUT ${antlr4_demo}
   COMMAND "${CMAKE_COMMAND}" --install build --config Release
   WORKING_DIRECTORY "${antlr4_cpp_folder}")
 
-add_dependencies(antlr4 git-submodules)
+# add_dependencies(antlr4 git-submodules)
 add_dependencies(antlr4demo antlr4)
 
