@@ -4,6 +4,12 @@ set(antlr4_jar "${antlr4_folder}/tool/target/antlr4-4.9.1-SNAPSHOT-complete.jar"
 set(antlr4_demo "${antlr4_cpp_folder}/build/install/share/antlr4-demo")
 set(antlr4_main "${antlr4_cpp_folder}/demo/Linux/main.cpp")
 
+if(UPDATE_SUBMODULES)
+    message(STATUS "update_submodules is set")
+    add_custom_target(git-submodules ALL
+        COMMAND git submodule update --init)
+endif()
+
 #
 # -DskipTests=true is enough. The -pl line isn't accepted by cmake 3.18.20081302-MSVC_2 in my Windows. - holly
 #

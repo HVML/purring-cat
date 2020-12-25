@@ -10,11 +10,6 @@ option(UPDATE_SUBMODULES
        "if you don't wanna update submodules, set -DUPDATE_SUBMODULES=OFF"
        ON)
 
-if(UPDATE_SUBMODULES)
-    add_custom_target(git-submodules ALL
-        COMMAND git submodule update --init)
-endif()
-
 add_subdirectory(third-party)
 add_subdirectory(parser)
 #add_subdirectory(interpreter)
