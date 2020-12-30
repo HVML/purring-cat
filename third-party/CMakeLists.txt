@@ -5,10 +5,16 @@ set(antlr4_demo "${antlr4_cpp_folder}/build/install/share/antlr4-demo")
 set(antlr4_main "${antlr4_cpp_folder}/demo/Linux/main.cpp")
 
 if(EXISTS "${antlr4_folder}/README.md")
-    message(STATUS "${antlr4_folder}/README.md exits")
+    message(STATUS "${antlr4_folder}/README.md exists")
 else()
-    message(STATUS "${antlr4_folder}/README.md not exits")
+    message(STATUS "${antlr4_folder}/README.md does not exist")
 endif()
+
+set(antlr4_jar_prebuilt "${CMAKE_CURRENT_SOURCE_DIR}/prebuilt/antlr4/antlr4-4.9.1-SNAPSHOT-complete.jar")
+if (NOT EXISTS "${antlr4_jar}" AND EXISTS "${antlr4_jar_prebuilt}")
+    file(COPY "${antlr4_jar_prebuilt" DESTINATION "${antlr4_jar_prebuilt}")
+endif()
+
 #
 # -DskipTests=true is enough. The -pl line isn't accepted by cmake 3.18.20081302-MSVC_2 in my Windows. - holly
 #
