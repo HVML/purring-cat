@@ -5,18 +5,21 @@ set(antlr4_demo "${antlr4_cpp_folder}/build/install/share/antlr4-demo")
 set(antlr4_main "${antlr4_cpp_folder}/demo/Linux/main.cpp")
 
 if(EXISTS "${antlr4_folder}/README.md")
-    message(STATUS "${antlr4_folder}/README.md exits")
+    message(STATUS "${antlr4_folder}/README.md exists")
 else()
-    message(STATUS "${antlr4_folder}/README.md not exits")
+    message(STATUS "${antlr4_folder}/README.md does not exist")
 endif()
+
+set(antlr4_jar_prebuilt "${CMAKE_CURRENT_SOURCE_DIR}/prebuilt/antlr4/antlr4-4.9.1-SNAPSHOT-complete.jar")
+
 #
 # -DskipTests=true is enough. The -pl line isn't accepted by cmake 3.18.20081302-MSVC_2 in my Windows. - holly
 #
 add_custom_target(antlr4 DEPENDS "${antlr4_jar}")
 add_custom_command(OUTPUT "${antlr4_jar}"
-  COMMAND mvn -f "${antlr4_folder}"
-#              -pl '!tool-testsuite,!runtime-testsuite/annotations,!runtime-testsuite/processors,!runtime-testsuite'
-              -DskipTests=true install)
+  COMMAND "${CMAKE_COMMAND}" -D antlr4_jar="${antlr4_jar}" -D antlr4_jar_prebuilt="${antlr4_jar_prebuilt}" 
+                             -D antlr4_folder="${antlr4_folder}" -D antlr4_jar_dir="${antlr4_folder}/tool/target"
+                             -P "${CMAKE_CURRENT_SOURCE_DIR}/prepare_antlr4_jar.cmake")
 
 
 add_custom_target(antlr4demo ALL DEPENDS ${antlr4_demo})
